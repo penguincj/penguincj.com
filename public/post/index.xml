@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>技术博客 on L CJ的博客</title>
+    <link>/post/</link>
+    <description>Recent content in 技术博客 on L CJ的博客</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>penguincj &amp;copy; 2019</copyright>
+    <lastBuildDate>Tue, 07 May 2019 00:00:00 +0800</lastBuildDate>
+    
+	<atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Why 容器云</title>
+      <link>/post/cloud/container/201905-why-container-cloud/why-container/</link>
+      <pubDate>Tue, 07 May 2019 00:00:00 +0800</pubDate>
+      
+      <guid>/post/cloud/container/201905-why-container-cloud/why-container/</guid>
+      <description>容器云解决大量项目构建运营环境的效率问题</description>
+    </item>
+    
+    <item>
+      <title>Kubernetes声明式API</title>
+      <link>/post/cloud/k8s/201904-k8s-declarative-api/</link>
+      <pubDate>Wed, 26 Dec 2018 00:00:00 +0800</pubDate>
+      
+      <guid>/post/cloud/k8s/201904-k8s-declarative-api/</guid>
+      <description>声明式API是Kubernetes成为容器编排事实标准的利器</description>
+    </item>
+    
+  </channel>
+</rss>

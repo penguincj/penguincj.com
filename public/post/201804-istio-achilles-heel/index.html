@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="generator" content="Source Themes Academic 4.3.1">
+
+  
+
+  
+  
+  
+  
+  
+    
+    
+    
+  
+  
+
+  <meta name="author" content="L CJ">
+
+  
+  
+  
+    
+  
+  <meta name="description" content="为了架构的优雅，Istio设计了Mixer，将大量的功能从Sidecar中搬了出来。为了减少Mixer远程调用带来的性能，又精心设计了一套复杂的缓存。只是，这个Mixer Cache，有一个地方需要探讨......">
+
+  
+  <link rel="alternate" hreflang="en-us" href="/post/201804-istio-achilles-heel/">
+
+  
+
+
+  
+
+  
+  
+  
+  <meta name="theme-color" content="hsl(339, 90%, 68%)">
+  
+
+  
+  
+  
+  
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.8.6/css/academicons.min.css" integrity="sha256-uFVgMKfistnJAfoCUQigIl+JfUaP47GrRKjf6CTPVmw=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.0/css/all.css" integrity="sha384-aOkxzJ5uQz7WBObEZcHvV5JvRW3TUc2rNPA7pe3AwnsUohiw1Vj2Rgx2KSOkF5+h" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" integrity="sha256-ygkqlh3CYSUri3LhQxzdcm0n1EQvH2Y+U5S2idbLtxs=" crossorigin="anonymous">
+
+    
+    
+    
+      
+    
+    
+      
+      
+        
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css" crossorigin="anonymous" title="hl-light" disabled>
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/dracula.min.css" crossorigin="anonymous" title="hl-dark">
+        
+      
+    
+
+    
+
+    
+
+  
+
+  
+  
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Montserrat:400,700|Roboto:400,400italic,700|Roboto+Mono">
+  
+
+  
+  
+  
+  <link rel="stylesheet" href="/css/academic.min.1e852168a71b1d60344c68e45668a1ac.css">
+
+  
+
+  
+  
+  
+
+  
+
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" type="image/png" href="/img/icon.png">
+  <link rel="apple-touch-icon" type="image/png" href="/img/icon-192.png">
+
+  <link rel="canonical" href="/post/201804-istio-achilles-heel/">
+
+  
+  
+  
+  
+    
+  
+  <meta property="twitter:card" content="summary_large_image">
+  
+  <meta property="og:site_name" content="L CJ的博客">
+  <meta property="og:url" content="/post/201804-istio-achilles-heel/">
+  <meta property="og:title" content="Mixer Cache: Istio的阿克琉斯之踵? | L CJ的博客">
+  <meta property="og:description" content="为了架构的优雅，Istio设计了Mixer，将大量的功能从Sidecar中搬了出来。为了减少Mixer远程调用带来的性能，又精心设计了一套复杂的缓存。只是，这个Mixer Cache，有一个地方需要探讨......"><meta property="og:image" content="/img/headers/post/201804-istio-achilles-heel.jpg">
+  <meta property="og:locale" content="en-us">
+  
+  <meta property="article:published_time" content="2018-04-27T00:00:00&#43;08:00">
+  
+  <meta property="article:modified_time" content="2018-04-27T00:00:00&#43;08:00">
+  
+
+  
+
+  
+
+  <title>Mixer Cache: Istio的阿克琉斯之踵? | L CJ的博客</title>
+
+</head>
+<body id="top" data-spy="scroll" data-target="#TableOfContents" data-offset="71" class="dark">
+  <aside class="search-results" id="search">
+  <div class="container">
+    <section class="search-header">
+
+      <div class="row no-gutters justify-content-between mb-3">
+        <div class="col-6">
+          <h1>Search</h1>
+        </div>
+        <div class="col-6 col-search-close">
+          <a class="js-search" href="#"><i class="fas fa-times-circle text-muted" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div id="search-box">
+        
+        <input name="q" id="search-query" placeholder="Search..." autocapitalize="off"
+        autocomplete="off" autocorrect="off" role="textbox" spellcheck="false" type="search">
+        
+      </div>
+
+    </section>
+    <section class="section-search-results">
+
+      <div id="search-hits">
+        
+      </div>
+
+    </section>
+  </div>
+</aside>
+
+
+
+<nav class="navbar navbar-light fixed-top navbar-expand-lg py-0" id="navbar-main">
+  <div class="container">
+
+    
+      <a class="navbar-brand" href="/">L CJ的博客</a>
+      
+      <button type="button" class="navbar-toggler" data-toggle="collapse"
+              data-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+        <span><i class="fas fa-bars"></i></span>
+      </button>
+      
+
+    
+    <div class="collapse navbar-collapse" id="navbar">
+
+      
+      
+      <ul class="navbar-nav mr-auto">
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#posts">
+            
+            <span>首页</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+
+        <li class="nav-item">
+          <a class="nav-link  active" href="/post/">
+            
+            <span>技术博客</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#projects">
+            
+            <span>开源项目</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#tags">
+            
+            <span>内容标签</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#about">
+            
+            <span>关于</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+      
+      </ul>
+      <ul class="navbar-nav ml-auto">
+      
+
+        
+
+        
+        <li class="nav-item">
+          <a class="nav-link js-search" href="#"><i class="fas fa-search" aria-hidden="true"></i></a>
+        </li>
+        
+
+        
+
+        
+        <li class="nav-item">
+          <a class="nav-link js-dark-toggle" href="#"><i class="fas fa-moon" aria-hidden="true"></i></a>
+        </li>
+        
+
+      </ul>
+
+    </div>
+  </div>
+</nav>
+
+
+<article class="article" itemscope itemtype="http://schema.org/Article">
+
+  
+
+
+
+
+
+
+
+
+
+<div class="article-header">
+  
+  
+  <img src="/img/headers/post/201804-istio-achilles-heel.jpg" class="article-banner" itemprop="image" alt="">
+  
+
+  
+</div>
+
+
+
+
+  
+
+  
+  
+  
+<div class="article-container pt-3">
+  <h1 itemprop="name">Mixer Cache: Istio的阿克琉斯之踵?</h1>
+
+  
+
+  
+    
+
+
+
+<meta content="2018-04-27 00:00:00 &#43;0800 CST" itemprop="datePublished">
+<meta content="2018-04-27 00:00:00 &#43;0800 CST" itemprop="dateModified">
+
+<div class="article-metadata">
+
+  
+  
+
+  
+  <span class="article-date">
+    
+    
+      
+    
+    <time>Apr 27, 2018</time>
+  </span>
+  
+
+  
+
+  
+  <span class="middot-divider"></span>
+  <span class="article-reading-time">
+    2 min read
+  </span>
+  
+
+  
+  
+
+  
+  
+
+  
+    
+<div class="share-box" aria-hidden="true">
+  <ul class="share">
+    <li>
+      <a class="twitter"
+         href="https://twitter.com/intent/tweet?text=&amp;url="
+         target="_blank" rel="noopener">
+        <i class="fab fa-twitter"></i>
+      </a>
+    </li>
+    <li>
+      <a class="facebook"
+         href="https://www.facebook.com/sharer.php?u="
+         target="_blank" rel="noopener">
+        <i class="fab fa-facebook-f"></i>
+      </a>
+    </li>
+    <li>
+      <a class="linkedin"
+         href="https://www.linkedin.com/shareArticle?mini=true&amp;url=&amp;title="
+         target="_blank" rel="noopener">
+        <i class="fab fa-linkedin-in"></i>
+      </a>
+    </li>
+    <li>
+      <a class="weibo"
+         href="http://service.weibo.com/share/share.php?url=&amp;title="
+         target="_blank" rel="noopener">
+        <i class="fab fa-weibo"></i>
+      </a>
+    </li>
+    <li>
+      <a class="email"
+         href="mailto:?subject=&amp;body=">
+        <i class="fas fa-envelope"></i>
+      </a>
+    </li>
+  </ul>
+</div>
+
+
+  
+
+</div>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+</div>
+
+
+
+  <div class="article-container">
+
+    <div class="article-style" itemprop="articleBody">
+      
+
+<h2 id="前情回顾">前情回顾</h2>
+
+<p>在我的上一个博客文章中，出于对性能的担心，我和大家探讨并反思了Service Mesh的架构。关注的焦点在于mixer的职责和设计的初衷，以及由此带来的问题：</p>
+
+<p><a href="../201804-servicemesh-architecture-introspection/">Service Mesh架构反思：数据平面和控制平面的界线该如何划定？</a></p>
+
+<blockquote>
+<p>注：如果对Mixer不太了解，推荐在阅读本文之前先阅读上面这个文章。</p>
+</blockquote>
+
+<p>期间，对于Mixer Cache我存在几个质疑，由于官方文档和网上资料都几乎找不到任何相关的详细信息。因此，我不得不通过阅读源代码的方式来深入了解细节。</p>
+
+<p>而从目前分析的情况看，Istio的这个mixer cache实现有些复杂，设计倒是挺精巧的。只是发现，<strong>在特定场景可能会失效</strong>。为了确认这个问题是否真实存在，我决定将问题消息描述出来，希望和大家一起分析和推断。</p>
+
+<p>事情有一点复杂，让我们从mixer的工作原理，缓存的设计开始本文。</p>
+
+<h2 id="mixer缓存工作原理">Mixer缓存工作原理</h2>
+
+<p>我们先看看mixer是如何工作的， 简单的说，是envoy从每次请求中获取信息，然后发起两次对mixer的请求：</p>
+
+<ol>
+<li>在转发请求之前：这时需要做前提条件检查和配额管理，只有满足条件的请求才会做转发</li>
+<li>在转发请求之后：这时要上报日志等，术语上称为遥感信息，<strong>Telemetry</strong>，或者<strong>Reporting</strong>。</li>
+</ol>
+
+<h3 id="check方法介绍">Check方法介绍</h3>
+
+<p>我们的焦点落在转发之前的这次请求，称为Check方法，方法如下：</p>
+
+<pre><code class="language-properties">rpc Check(CheckRequest) returns (CheckResponse)
+</code></pre>
+
+<p>请求 <code>CheckRequest</code> 的内容如下（其他字段暂时忽略）：</p>
+
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>attributes</td>
+<td>CompressedAttribute</td>
+<td>用于此次请求的属性。<br> mixer的配置决定这些属性将被如何使用以创建在应答中返回的结果。</td>
+</tr>
+</tbody>
+</table>
+
+<p>attributes 属性是envoy从请求中提取出来的，其内容类似如下：</p>
+
+<pre><code class="language-properties">request.path: xyz/abc
+request.size: 234
+request.time: 12:34:56.789 04/17/2017
+source.ip: 192.168.0.1
+target.service: example
+</code></pre>
+
+<p>Mixer中的Adapter将根据这些 attributes 属性来进行判断和处理，比如进行前置条件检查。然后将结果发送回envoy。简单起见，我们只看前置条件检查相关的内容。应答返回名为precondition的字段，表示前置条件检查的结果，具体如下(忽略其他字段)：</p>
+
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>status</td>
+<td><a href="#google.rpc.Status">google.rpc.Status</a></td>
+<td>状态码OK表示所有前置条件均满足。任何其它状态码表示不是所有的前置条件都满足，并且在detail中描述为什么。</td>
+</tr>
+
+<tr>
+<td>referencedAttributes</td>
+<td>ReferencedAttributes</td>
+<td>在匹配条件并生成结果的过程中使用到的全部属性集合。</td>
+</tr>
+</tbody>
+</table>
+
+<p>从Check方法的输入输出，我们可以看到：</p>
+
+<ol>
+<li>前置条件检查输入主要是attributes字段，这是envoy提取的属性列表，注意此时envoy是没有办法得知mixer中的adapter到底会关心哪些属性，因此envoy只能选择将所有属性都发送给mixer</li>
+<li>前置条件检查的输出中，status代表检查结果，referencedAttributes则有些费解，而这个referencedAttributes的设计，则是本次讨论的焦点。</li>
+</ol>
+
+<h3 id="referencedattributes的特殊设计">referencedAttributes的特殊设计</h3>
+
+<p>referencedAttributes是mixer中的adapter在做条件匹配并生成结果的过程中使用到的全部属性集合。</p>
+
+<p>为什么要有这么一个设计呢？我们来看mixer请求过程中输入情况：我们假定当前mixer中有三个生效的adapter，其中每个adapter的逻辑都和特定的属性相关。</p>
+
+<p><img src="images/referencedAttributes.jpg" alt="" /></p>
+
+<p>再假设envoy在处理traffic请求时，从请求中提取出5个属性，这五个属性中a/b/c是三个adapter分别使用到的属性，然后e/f两个属性当前没有adapter使用（实际情况属性会远比这个复杂，提取的属性有十几二十，其中有更多的属性不被adapter使用）。</p>
+
+<p>在这个请求应答模型中，注意envoy是不能提前知道adapter要哪些属性的，因此只能选择全部属性提交。按照通常的缓存设计思路，我们应该将输入作为key，输出作为value。但是，如果我们将“a=1,b=2,c=3,e=0,f=0”作为key时，我们会发现，当e/f两个属性发生变化时，产生的新key “a=1,b=2,c=3,e=1,f=1”/“a=1,b=2,c=3,e=3,f=4”/“a=1,b=2,c=3,e=10,f=30” 对应的value会大量的重复，而这些属性值的变化对于adapter来说完全没有意义：e/f两个属性根本不被adapter使用。</p>
+
+<p>因此，Istio在设计mixer cache时，选择了一个特殊方式来处理缓存的key：</p>
+
+<ol>
+<li>在mixer的response中，返回adapter使用到的属性名，在这个例子中就是&rdquo;a/b/c&rdquo;。</li>
+<li>envoy在收到response之后，检查这个使用的属性列表，发现只有&rdquo;a/b/c&rdquo;三个属性被adapter使用</li>
+<li>envoy在缓存这个应答结果时，会选择将属性列表简化为只有adapter使用的属性，如“a=1,b=2,c=3”</li>
+<li>因此mixer在构建缓存项时，可以就针对简化后的属性进行hash计算，mixer中将此称为签名</li>
+</ol>
+
+<blockquote>
+<p>这些被adapter使用的属性在Check 方法的response中以 referencedAttributes 字段表示。</p>
+</blockquote>
+
+<p>这样缓存的key的数量就大为减少，否则每次提交的key有十几二十个，有些属性的值还每次都变化如request.id。如果不进行这样的优化，则缓存根本无从谈起。</p>
+
+<h3 id="缓存的保存和查找方式">缓存的保存和查找方式</h3>
+
+<p>经过 referencedAttributes 字段的优化之后，输入的属性就被简化为“a=1,b=2,c=3”，然后envoy将保存这个输入到缓存中：</p>
+
+<ol>
+<li>envoy将记录mixer关注&rdquo;a/b/c&rdquo;这样一组属性组合（注意会不止一组）</li>
+<li>envoy将“a=1,b=2,c=3”这个实际被使用的属性值进行签名（理解为某种hash算法）得到缓存的key</li>
+</ol>
+
+<p>缓存保存之后，envoy在处理后面的请求，如“a=1,b=2,c=3,e=1,f=1”/“a=1,b=2,c=3,e=3,f=4”/“a=1,b=2,c=3,e=10,f=30” 这三个请求时，就会尝试从缓存中查找：</p>
+
+<ol>
+<li>envoy会先根据保存的被关注属性组合，看请求是否命中，比如这里的&rdquo;a/b/c&rdquo;属性组合就可以匹配这三个请求。</li>
+<li>然后根据&rdquo;a/b/c&rdquo;组合简化请求的属性为“a=1,b=2,c=3”，再进行签名计算</li>
+<li>然后再以计算得到的签名为key在缓存中查找。</li>
+<li>如果找到，返回缓存结果。如果没有找到，继续发送请求到mixer，然后保存得到的response到缓存中</li>
+</ol>
+
+<p>这就是mixer cache的工作原理，而实际上，mixer cache的实现细节远比这里描述的复杂，有很多细节如absence key，有效时间，有效使用次数，匹配方式的优化。理论上说，有了这么一个明显是精心设计的mixer cache的加持，Istio中mixer和sidecar分离造成的性能问题得以解决，而mixer从sidecar拆分出来带来的架构优势就更加明显。</p>
+
+<p>就如图中，英勇无敌的阿克琉斯，手持盾牌，就不惧箭雨。</p>
+
+<p><img src="images/achilles.jpg" alt="" /></p>
+
+<blockquote>
+<p>备注：后面会单独出一个系列文章，详细介绍mixer cache的工作机制，外加源码分析。在本文中我尽量简化以便聚焦我们的关注点。</p>
+</blockquote>
+
+<h2 id="mixer缓存的问题">Mixer缓存的问题</h2>
+
+<p>有了这个知识作为背景，我们开始本文的正题：这个mixer缓存的问题在哪里？</p>
+
+<p>我们将关注点放在这里：“a=1,b=2,c=3”。这是经过简化之后的实际被adapter使用的属性名和属性值的表示，表示这里有三个属性以及他们的当前值。</p>
+
+<h3 id="缓存总数的计算">缓存总数的计算</h3>
+
+<p>我们给出一个简单的场景：如果a/b/c三个属性的取值范围都固定为100个，那么，envoy中的mixer cache理论上最多有多少缓存项？</p>
+
+<p><img src="images/cache-account.jpg" alt="" /></p>
+
+<p>相信这么简单的问题难不倒大家，我们很容易的得到答案：Mixer Cache的数量=属性a的取值数量 * 属性b的取值数量 * 属性c的取值数量 = 100 * 100 * 100 = 100万。从数学的角度说，是每个取值范围的笛卡尔乘积。</p>
+
+<p>有没有发现这个缓存数量总数有点夸张？明明是3个属性的取值范围都只有100这么小，为何直接膨胀变成100万？</p>
+
+<p>我们对比一下，如果缓存不是存放在envoy一侧，而是存放在Mixer中，让每个adapter各自缓存自家的处理结果。那得到的缓存总数会是如何？</p>
+
+<p><img src="images/cache-account2.jpg" alt="" /></p>
+
+<p>这是小学二年级的数学题了，总数=100+100+100=300，和前面的100万差异巨大。</p>
+
+<p>为什么会有这么大的差异？根据在于计算方式，当缓存在Mixer一侧时，缓存总数是各个adapter缓存的总数，也就是每个属性数量的简单相加。而当缓存在Mixer一侧时，缓存总数是每个属性取值数量的笛卡尔乘积。</p>
+
+<h3 id="为何不能把缓存放mixer">为何不能把缓存放Mixer？</h3>
+
+<p>从上面的计算我们可以看到，当缓存在mixer一侧时，缓存数量是简单相加，只要不出现单个缓存数量过大，总和就不会离谱。多几个属性，如果取值范围只是几个，几十，甚至几百，几千也不会对结果有任何实质性的影响。</p>
+
+<p>而当缓存放在envoy一侧时，由于算法从各项和变成了各项的笛卡尔乘积，导致数量急剧增加，甚至有些本来取值范围非常小的属性，哪怕只是个位数，也会因为乘法的原因，*2 *3 *10 *100 导致最终总数量爆炸性膨胀。</p>
+
+<p>两相对比，将缓存放在mixer一侧，从缓存的角度上说毫无疑问是更好的选择。但是，在Istio的架构设计中，明确的要求Mixer和Envoy划分开，将Envoy归为数据平面，而Mixer归为控制平面。在具体实现上，Envoy是重用原有项目，Mixer是全新编写。在编程语言上，Envoy是c++，而Mixer是Golang。</p>
+
+<p>以上种种，一步一步演进，终于造就了我们目前不得不面对的尴尬局面：</p>
+
+<ul>
+<li>要明确划分数据平面和控制平面的界限，Mixer就必须独立于Envoy</li>
+<li>Mixer和Envoy之间就变成了远程访问，存在性能瓶颈</li>
+<li>为了解决性能问题，避免远程访问，就需要将cache加在envoy一侧</li>
+<li>然后就不得不面对缓存总数呈现笛卡尔乘积的威胁</li>
+</ul>
+
+<p>或者说，只要Istio不重新规划数据平面和控制平面的界限，不将Mixer的功能移到sidecar，此问题，貌似就无解？</p>
+
+<blockquote>
+<p>TBD: 这个结论暂时只是我的个人理解，需要等待大家讨论和分析，给出权威的结论之后根据讨论情况更新。</p>
+</blockquote>
+
+<h2 id="问题严重程度">问题严重程度</h2>
+
+<p>然而，并非所有的问题都一定需要解决，如果问题不造成不可接受的影响，也未尝不能接受。</p>
+
+<h3 id="缓存数量的影响">缓存数量的影响</h3>
+
+<p>我们重新回到问题所在，让我们来评估一下，在实际的使用中，这个缓存数量是否真有膨胀到不可忍受的地步。计算公式：</p>
+
+<p><u>Mixer Cache的数量=各个引用属性取值数量的笛卡尔乘积</u></p>
+
+<p>要控制缓存总数，有两个思路：</p>
+
+<ol>
+<li>控制引用属性的个数：也就是别开启太多的adapter，或者别开启那些使用多个属性的adapter。这条路很难行得通，因为开启哪些adapter是由功能需求决定的，如果担心缓存数量太多就不开启，未免有些&hellip;&hellip;</li>
+<li>控制引用属性的取值范围：尽量不要用取值范围较大的属性，绝对要躲开那些危险的属性比如每次都变化的 <code>request.id</code>，这条路同样不容易，要对adapter和它使用的属性有明确的了解和控制</li>
+</ol>
+
+<p>也就是说，从此之后，在使用mixer的adapter时，最好检查一下这些adapter使用了哪些属性，这些属性的可能取值范围，大致评估一下缓存的理论最大总量。如果自己开发adapter，那么在使用属性时也要特别谨慎。</p>
+
+<h3 id="lru的帮助">LRU的帮助</h3>
+
+<p>Mixer Cache的实现，是基于LRU算法。所以，对于单个属性，如果取值范围非常大，但是分布集中，则LRU算法可以帮助我们，缓存大部分经常使用的项，少数偶尔出现的项无法命中对全局的影响也不止于太大。</p>
+
+<p>Mixer的缓存可以通过在构造cache时传递的option对象来设置最大缓存数量，配合LRU算法来平衡缓存数量和命中率。</p>
+
+<p>不过这里也有个限制，因为mixer的缓存key是需要计算所有被使用的属性的。因此，即便有一个分布很集中的理想属性，但是如果还有其他值域变化的属性参与签名计算，则计算结果将无法再保持分布集中。</p>
+
+<blockquote>
+<p>鸣谢Hu Yusuo同学在讨论中针对此处给出的说明。</p>
+</blockquote>
+
+<h3 id="缓存其他设置的影响">缓存其他设置的影响</h3>
+
+<p>Mixer缓存还有有效时间和有效使用次数的设置，这会进一步削弱缓存的使用效果。如果强调加强缓存减少对mixer的调用，则需要修改这两个的配置。</p>
+
+<h3 id="属性的风险系数分析">属性的风险系数分析</h3>
+
+<p>简单分析了一下现有属性词汇中各个属性的危险程度：</p>
+
+<table>
+<thead>
+<tr>
+<th>属性名</th>
+<th>描述</th>
+<th>危险程度</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>source.user</td>
+<td>请求的直接发送者的身份，由mTLS验证</td>
+<td>取决于user的数量，会让总数*N</td>
+</tr>
+
+<tr>
+<td>destination.ip</td>
+<td>服务器IP地址</td>
+<td>如果目标服务有很多实例，那么这里的取值范围就会变大，比如几十上百</td>
+</tr>
+
+<tr>
+<td>request.headers</td>
+<td>HTTP 请求 headers. 对于 gRPC, 则是它的 metadata.</td>
+<td>取决于具体的header名称，会让总数*N</td>
+</tr>
+
+<tr>
+<td>request.id</td>
+<td>请求的ID，具有统计上较低的碰撞概率。</td>
+<td>绝对不能使用！</td>
+</tr>
+
+<tr>
+<td>request.path</td>
+<td>HTTP URL 路径，包括 query string</td>
+<td>非常危险，尤其query string包含参数时</td>
+</tr>
+
+<tr>
+<td>request.host</td>
+<td>HTTP/1.x host header 或者 HTTP/2 authority header.</td>
+<td>取决于服务器端实例的个数，会让总数*N</td>
+</tr>
+
+<tr>
+<td>request.method</td>
+<td>HTTP method.</td>
+<td>数量不多，但也会让总数*N</td>
+</tr>
+
+<tr>
+<td>request.referer</td>
+<td>HTTP referer header.</td>
+<td>非常危险，尤其客户从外部地址直接进入时，可能会有非常多的取值可能性</td>
+</tr>
+
+<tr>
+<td>request.scheme</td>
+<td></td>
+<td>数量不多，但也会让总数*N</td>
+</tr>
+
+<tr>
+<td>request.size</td>
+<td>以字节计算的请求大小。对于HTTP请求，等同于Content-Length header.</td>
+<td>非常危险，除非请求的大小非常固定</td>
+</tr>
+
+<tr>
+<td>request.time</td>
+<td>目的地接收到请求的时间戳。这等同于Firebase &ldquo;now&rdquo;.</td>
+<td>绝对不能使用！</td>
+</tr>
+
+<tr>
+<td>request.useragent</td>
+<td>HTTP User-Agent header.</td>
+<td>数量不多，但也可能有多个值，也会让总数*N</td>
+</tr>
+
+<tr>
+<td>connection.id</td>
+<td>对于一条连接，在最后一次Report()之后，目的地服务在此连接上接收到的字节数量</td>
+<td>绝对不能使用！</td>
+</tr>
+
+<tr>
+<td>connection.received.bytes_total</td>
+<td>在连接的生命周期中，目的地服务接收到的全部字节数量</td>
+<td>绝对不能使用！</td>
+</tr>
+
+<tr>
+<td>connection.sent.bytes</td>
+<td>对于一条连接，在最后一次Report()之后，目的地服务在此连接上发送的字节数量</td>
+<td>绝对不能使用！</td>
+</tr>
+
+<tr>
+<td>connection.sent.bytes_total</td>
+<td>在连接的生命周期中，目的地服务发送的全部字节数量</td>
+<td>绝对不能使用！</td>
+</tr>
+
+<tr>
+<td>connection.duration</td>
+<td>连接打开的时间总数量</td>
+<td>绝对不能使用！</td>
+</tr>
+
+<tr>
+<td>context.time</td>
+<td>Mixer 操作的时间戳.</td>
+<td>绝对不能使用！</td>
+</tr>
+
+<tr>
+<td>api.operation</td>
+<td>用于辨别操作的唯一字符串。在特定的<code>&lt;service, version&gt;</code> 描述的所有操作中，这个ID是唯一的。</td>
+<td>取决于操作的数量，会让总数*N</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="adapter的风险系数分析">Adapter的风险系数分析</h3>
+
+<blockquote>
+<p>TBD：稍后更新，需要逐个检查现有的adapter，看看会使用哪些属性，以及这些属性可能的取值数量。</p>
+</blockquote>
+
+<h2 id="总结">总结</h2>
+
+<p>对于istio，在使用时，需要留意adapter使用的属性，以避免mixer cache数量过大的风险。</p>
+
+<p>对于每个adapter，每个使用到的属性，以及这些属性的每一个可能的取值，都会让笛卡尔乘积的结果放大。而上面列出来的被标注为“绝对不能使用！”的属性，则是一个一个的致命点，务必小心谨慎。</p>
+
+<h2 id="讨论和反馈">讨论和反馈</h2>
+
+<p>TBD：等收集后整理更新</p>
+
+<h2 id="后记">后记</h2>
+
+<p>在前几日偶然间发现这个问题存在的可能性之后，我便有些为难，因为我无法确认这个问题的严重程度，也许只是皮肉之痒忍忍就过去了，也许真是致命弱点。而如前面推断的，如果问题成立，则矛头直指Istio的架构设计，这是一个非常严肃的质疑，以至于我在写下此文之后，深感压力。</p>
+
+<p>郑重申明：我保留因为才疏学浅能力不足造成错误判断从而修改/撤回本文的一切权力。此文只求为进一步深入讨论提供一个基础，可以描述清楚问题和可能的疑虑，欢迎参与技术讨论。</p>
+
+    </div>
+
+    
+
+<div class="article-tags">
+  
+  <a class="badge badge-light" href="/tags/istio/">Istio</a>
+  
+  <a class="badge badge-light" href="/tags/mixer/">Mixer</a>
+  
+</div>
+
+
+
+    
+      
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  <div class="media author-card" itemscope itemtype="http://schema.org/Person">
+    
+      
+      <img class="portrait mr-3" src="/authors/admin/avatar_hu52a603635ecebd45650b162dadabb4e5_12861_250x250_fill_q90_lanczos_center.jpg" itemprop="image" alt="Avatar">
+    
+
+    <div class="media-body">
+      <h5 class="card-title" itemprop="name"><a href="/authors/admin/">L CJ</a></h5>
+      <h6 class="card-subtitle">码农</h6>
+      <p class="card-text" itemprop="description">我目前研究的方向主要在Microservice、Servicemesh、Serverless等和Cloud Native相关的领域，欢迎交流和指导</p>
+      <ul class="network-icon" aria-hidden="true">
+        
+          
+          
+          
+            
+          
+          
+          
+          
+          
+          <li>
+            <a itemprop="sameAs" href="mailto:penguincj@163.com" >
+              <i class="fas fa-envelope"></i>
+            </a>
+          </li>
+        
+          
+          
+          
+            
+          
+          
+          
+          
+          
+            
+          
+          <li>
+            <a itemprop="sameAs" href="https://github.com/penguincj" target="_blank" rel="noopener">
+              <i class="fab fa-github"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+
+
+      
+      
+    
+
+    
+
+    
+
+
+  </div>
+</article>
+
+<div class="container">
+  <footer class="site-footer">
+  
+
+  <p class="powered-by">
+    penguincj &copy; 2019 &middot; 
+
+    Powered by the
+    <a href="https://sourcethemes.com/academic/" target="_blank" rel="noopener">Academic theme</a> for
+    <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a>.
+
+    
+    <span class="float-right" aria-hidden="true">
+      <a href="#" id="back_to_top">
+        <span class="button_icon">
+          <i class="fas fa-chevron-up fa-2x"></i>
+        </span>
+      </a>
+    </span>
+    
+  </p>
+</footer>
+
+</div>
+
+
+<div id="modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cite</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <pre><code class="tex hljs"></code></pre>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-primary my-1 js-copy-cite" href="#" target="_blank">
+          <i class="fas fa-copy"></i> Copy
+        </a>
+        <a class="btn btn-outline-primary my-1 js-download-cite" href="#" target="_blank">
+          <i class="fas fa-download"></i> Download
+        </a>
+        <div id="modal-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+    
+
+    
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/4.1.4/imagesloaded.pkgd.min.js" integrity="sha256-lqvxZrPLtfffUl2G/e7szqSvPBILGbwmsGE1MKlOi0Q=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.isotope/3.0.6/isotope.pkgd.min.js" integrity="sha256-CBrpuqrMhXwcLLUd5tvQ4euBHCdh7wGlDfNz8vbu/iI=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" integrity="sha256-X5PoE3KU5l+JcX+w09p/wHl9AzK333C4hJ2I9S5mD4M=" crossorigin="anonymous"></script>
+
+      
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js" integrity="sha256-aYTdUrn6Ow1DDgh5JTc3aDGnnju48y/1c8s1dgkYPQ8=" crossorigin="anonymous"></script>
+        
+      
+
+      
+      
+    
+
+    
+    
+
+    
+    
+    
+
+    
+    
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+
+    
+    
+    <script>
+      const search_index_filename = "/index.json";
+      const i18n = {
+        'placeholder': "Search...",
+        'results': "results found",
+        'no_results': "No results found"
+      };
+      const content_type = {
+        'post': "Posts",
+        'project': "Projects",
+        'publication' : "Publications",
+        'talk' : "Talks"
+        };
+    </script>
+    
+
+    
+    
+
+    
+    
+    <script id="search-hit-fuse-template" type="text/x-template">
+      <div class="search-hit" id="summary-{{key}}">
+      <div class="search-hit-content">
+        <div class="search-hit-name">
+          <a href="{{relpermalink}}">{{title}}</a>
+          <div class="article-metadata search-hit-type">{{type}}</div>
+          <p class="search-hit-description">{{snippet}}</p>
+        </div>
+      </div>
+      </div>
+    </script>
+    
+
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.2.1/fuse.min.js" integrity="sha256-VzgmKYmhsGNNN4Ph1kMW+BjoYJM2jV5i4IlFoeZA9XI=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+    
+
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+      
+    
+    
+    
+    
+    <script src="/js/academic.min.15494b02d66be9b96bab2e305f69c460.js"></script>
+
+  </body>
+</html>
+

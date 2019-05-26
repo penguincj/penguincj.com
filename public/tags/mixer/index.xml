@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mixer on L CJ的博客</title>
+    <link>/tags/mixer/</link>
+    <description>Recent content in Mixer on L CJ的博客</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>penguincj &amp;copy; 2019</copyright>
+    <lastBuildDate>Thu, 19 Jul 2018 00:00:00 +0800</lastBuildDate>
+    
+	<atom:link href="/tags/mixer/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Mixer Cache: Istio的阿克琉斯之踵?微信讨论实录</title>
+      <link>/post/201807-istio-achilles-heel-wechat/</link>
+      <pubDate>Thu, 19 Jul 2018 00:00:00 +0800</pubDate>
+      
+      <guid>/post/201807-istio-achilles-heel-wechat/</guid>
+      <description>在Service Mesh技术社区的微信群中，针对Istio Mixer Cache设计中缓存存放和逻辑分离的潜在分险，进行了深入探讨，截屏实录，原汁原味。</description>
+    </item>
+    
+    <item>
+      <title>Mixer Cache: Istio的阿克琉斯之踵?</title>
+      <link>/post/201804-istio-achilles-heel/</link>
+      <pubDate>Fri, 27 Apr 2018 00:00:00 +0800</pubDate>
+      
+      <guid>/post/201804-istio-achilles-heel/</guid>
+      <description>为了架构的优雅，Istio设计了Mixer，将大量的功能从Sidecar中搬了出来。为了减少Mixer远程调用带来的性能，又精心设计了一套复杂的缓存。只是，这个Mixer Cache，有一个地方需要探讨&amp;hellip;&amp;hellip;</description>
+    </item>
+    
+  </channel>
+</rss>

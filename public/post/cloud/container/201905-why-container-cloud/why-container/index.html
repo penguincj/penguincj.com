@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="generator" content="Source Themes Academic 4.3.1">
+
+  
+
+  
+  
+  
+  
+  
+    
+    
+    
+  
+  
+
+  <meta name="author" content="L CJ">
+
+  
+  
+  
+    
+  
+  <meta name="description" content="容器云解决大量项目构建运营环境的效率问题">
+
+  
+  <link rel="alternate" hreflang="en-us" href="/post/cloud/container/201905-why-container-cloud/why-container/">
+
+  
+
+
+  
+
+  
+  
+  
+  <meta name="theme-color" content="#4caf50">
+  
+
+  
+  
+  
+  
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.8.6/css/academicons.min.css" integrity="sha256-uFVgMKfistnJAfoCUQigIl+JfUaP47GrRKjf6CTPVmw=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.0/css/all.css" integrity="sha384-aOkxzJ5uQz7WBObEZcHvV5JvRW3TUc2rNPA7pe3AwnsUohiw1Vj2Rgx2KSOkF5+h" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" integrity="sha256-ygkqlh3CYSUri3LhQxzdcm0n1EQvH2Y+U5S2idbLtxs=" crossorigin="anonymous">
+
+    
+    
+    
+      
+    
+    
+      
+      
+        
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css" crossorigin="anonymous" title="hl-light">
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/dracula.min.css" crossorigin="anonymous" title="hl-dark" disabled>
+        
+      
+    
+
+    
+
+    
+
+  
+
+  
+  
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Montserrat:400,700|Roboto:400,400italic,700|Roboto+Mono">
+  
+
+  
+  
+  
+  <link rel="stylesheet" href="/css/academic.min.49dfa1f0690a8fd34d45bd1ad9b6524c.css">
+
+  
+
+  
+  
+  
+
+  
+
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" type="image/png" href="/img/icon.png">
+  <link rel="apple-touch-icon" type="image/png" href="/img/icon-192.png">
+
+  <link rel="canonical" href="/post/cloud/container/201905-why-container-cloud/why-container/">
+
+  
+  
+  
+  
+    
+    
+  
+  <meta property="twitter:card" content="summary">
+  
+  <meta property="og:site_name" content="L CJ的博客">
+  <meta property="og:url" content="/post/cloud/container/201905-why-container-cloud/why-container/">
+  <meta property="og:title" content="Why 容器云 | L CJ的博客">
+  <meta property="og:description" content="容器云解决大量项目构建运营环境的效率问题"><meta property="og:image" content="/img/icon-192.png">
+  <meta property="og:locale" content="en-us">
+  
+  <meta property="article:published_time" content="2019-05-07T00:00:00&#43;08:00">
+  
+  <meta property="article:modified_time" content="2019-05-07T00:00:00&#43;08:00">
+  
+
+  
+
+  
+
+  <title>Why 容器云 | L CJ的博客</title>
+
+</head>
+<body id="top" data-spy="scroll" data-target="#TableOfContents" data-offset="71" >
+  <aside class="search-results" id="search">
+  <div class="container">
+    <section class="search-header">
+
+      <div class="row no-gutters justify-content-between mb-3">
+        <div class="col-6">
+          <h1>Search</h1>
+        </div>
+        <div class="col-6 col-search-close">
+          <a class="js-search" href="#"><i class="fas fa-times-circle text-muted" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div id="search-box">
+        
+        <input name="q" id="search-query" placeholder="Search..." autocapitalize="off"
+        autocomplete="off" autocorrect="off" role="textbox" spellcheck="false" type="search">
+        
+      </div>
+
+    </section>
+    <section class="section-search-results">
+
+      <div id="search-hits">
+        
+      </div>
+
+    </section>
+  </div>
+</aside>
+
+
+
+<nav class="navbar navbar-light fixed-top navbar-expand-lg py-0" id="navbar-main">
+  <div class="container">
+
+    
+      <a class="navbar-brand" href="/">L CJ的博客</a>
+      
+      <button type="button" class="navbar-toggler" data-toggle="collapse"
+              data-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+        <span><i class="fas fa-bars"></i></span>
+      </button>
+      
+
+    
+    <div class="collapse navbar-collapse" id="navbar">
+
+      
+      
+      <ul class="navbar-nav mr-auto">
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#posts">
+            
+            <span>首页</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+
+        <li class="nav-item">
+          <a class="nav-link  active" href="/post/">
+            
+            <span>技术博客</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#projects">
+            
+            <span>开源项目</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#tags">
+            
+            <span>内容标签</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#about">
+            
+            <span>关于</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+      
+      </ul>
+      <ul class="navbar-nav ml-auto">
+      
+
+        
+
+        
+        <li class="nav-item">
+          <a class="nav-link js-search" href="#"><i class="fas fa-search" aria-hidden="true"></i></a>
+        </li>
+        
+
+        
+
+        
+        <li class="nav-item">
+          <a class="nav-link js-dark-toggle" href="#"><i class="fas fa-moon" aria-hidden="true"></i></a>
+        </li>
+        
+
+      </ul>
+
+    </div>
+  </div>
+</nav>
+
+
+<article class="article" itemscope itemtype="http://schema.org/Article">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  
+  
+<div class="article-container pt-3">
+  <h1 itemprop="name">Why 容器云</h1>
+
+  
+  <p class="page-subtitle">容器云解决大量项目构建运营环境的效率问题</p>
+  
+
+  
+    
+
+
+
+<meta content="2019-05-07 00:00:00 &#43;0800 CST" itemprop="datePublished">
+<meta content="2019-05-07 00:00:00 &#43;0800 CST" itemprop="dateModified">
+
+<div class="article-metadata">
+
+  
+  
+
+  
+  <span class="article-date">
+    
+    
+      
+    
+    <time>May 7, 2019</time>
+  </span>
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+    
+
+  
+
+</div>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+</div>
+
+
+
+  <div class="article-container">
+
+    <div class="article-style" itemprop="articleBody">
+      
+
+<p>人们对云计算提出了更高的要求，为大量项目构建运营环境的效率问题，缩短新业务的上线部署时间，大规模的计算机房快速迁移需求；提高服务器资源的利用率，同时确保相同的性能和可用性，又有降低成本的需求。相较于传统的虚拟化解决方案，容器云可以较好的实现上述目标。</p>
+
+<p>容器云的核心功能：</p>
+
+<ul>
+<li>快速扩容</li>
+<li>智能调度和编排</li>
+<li>弹性伸缩</li>
+</ul>
+
+<h2 id="快速扩容">快速扩容</h2>
+
+<ul>
+<li>扩容速度：
+
+<ul>
+<li>VM - 扩容20个实例需要4分钟（扩容完成后需要再执行服务发布）</li>
+<li>docker - 扩容20个实例仅需30s，秒级别扩容（扩容完成即服务启动）</li>
+</ul></li>
+<li>扩容速度提高 8~12倍</li>
+<li>节约了用户手动操作申请/发布的成本</li>
+</ul>
+
+<h2 id="智能调度">智能调度</h2>
+
+<p>调度系统是云集群的中央处理器，要解决的核心问题是为容器选择合适的宿主机。有如下的指标：</p>
+
+<ul>
+<li>资源利用率，提高整体物理集群的资源利用率</li>
+<li>业务可用性保障：业务容器容灾能力、保障运行业务的稳定高可用</li>
+<li>并发调度能力：调度系统请求处理能力的体现</li>
+</ul>
+
+<h3 id="资源最大化利用">资源最大化利用</h3>
+
+<ul>
+<li>按CPU/Mem/IO等类型对服务进行调度，最大化资源利用</li>
+<li>业务按需使用资源，提升资源利用率</li>
+</ul>
+
+<h3 id="混布与独占">混布与独占</h3>
+
+<ul>
+<li>在线服务与离线任务混布</li>
+<li>重要业务资源池独占</li>
+</ul>
+
+<h3 id="容器编排">容器编排</h3>
+
+<ul>
+<li>有调用关系的多个服务实例，优先部署到相同/相近的宿主机上</li>
+<li>同服务实例打散，分布到不同宿主机上，提高服务可用性</li>
+<li>高负载容器，自动迁移到低负载宿主机</li>
+<li>自动化容器实例健康检查，异常实例自动迁移</li>
+</ul>
+
+<h3 id="调度计算">调度计算</h3>
+
+<p>通过先过滤filter之后排序打分rank的方式找到最优的部署位置。</p>
+
+<p>在一批宿主机中先过滤掉超售的，然后考虑到打散、混部、减少碎片和负载均衡之后找到合适的宿主机</p>
+
+<h3 id="调度sla-service-level-agreement">调度SLA（Service Level Agreement）</h3>
+
+<ul>
+<li>高可用：99.999</li>
+<li>调度成功率：99.99</li>
+<li>并发调度：单机并发处理200+，并发调度机器1000+</li>
+<li>低延迟：TCP90 63ms</li>
+<li>HA：分布式调度，横向扩展，多IDC部署容灾</li>
+<li>监控报警：Falcon</li>
+</ul>
+
+<h2 id="弹性收缩">弹性收缩</h2>
+
+<p><strong>周期收缩</strong></p>
+
+<p>根据设定时间段伸缩（适合秒杀/直播等业务）</p>
+
+<p><strong>监控伸缩</strong></p>
+
+<ul>
+<li>根据QPS/CPU等触发条件伸缩</li>
+<li>线性可扩展的无状态服务</li>
+</ul>
+
+<p><strong>服务画像</strong></p>
+
+<p>针对数据建模，描绘服务特征：</p>
+
+<ul>
+<li>服务画像：仿照用户画像，根据服务数据，抽取服务Tag
+
+<ul>
+<li>QPS特征（高峰时段、QPS max/min等）</li>
+<li>资源利用率</li>
+<li>CPU密集型 or IO密集型</li>
+</ul></li>
+</ul>
+
+<p>基于历史数据建模的服务画像可以做服务特征值的预测，比如QPS的预测：</p>
+
+<ul>
+<li>QPS预测：RNN LSTM</li>
+<li>即使监控数据源完全不可用，无数据，也能较准确的扩缩容</li>
+</ul>
+
+<h2 id="异常处理">异常处理</h2>
+
+<ul>
+<li>监控数据异常，怎么办？会不会因监控值偏低而一直缩容？</li>
+<li>监控数据有延迟，怎么办？</li>
+<li>监控数据没了，怎么办？</li>
+</ul>
+
+<p>通过数据无关的缩容退避+熔断机制来保证异常情况下的正常运行：</p>
+
+<ul>
+<li>针对监控数据偏低（异常）而触发持续缩容</li>
+<li>数据无关，不关心数据是否异常</li>
+<li>如果连续缩容，那么缩容速度会越来越慢 —&gt; 退避</li>
+<li>如果连续缩容次数超过阈值，一段时间内禁止缩容 —&gt; 熔断</li>
+</ul>
+
+    </div>
+
+    
+
+<div class="article-tags">
+  
+  <a class="badge badge-light" href="/tags/docker/">Docker</a>
+  
+  <a class="badge badge-light" href="/tags/cloud/">Cloud</a>
+  
+</div>
+
+
+
+    
+      
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  <div class="media author-card" itemscope itemtype="http://schema.org/Person">
+    
+      
+      <img class="portrait mr-3" src="/authors/admin/avatar_hudbe7539925304d5143000a5cbf353a95_182511_250x250_fill_q90_lanczos_center.jpg" itemprop="image" alt="Avatar">
+    
+
+    <div class="media-body">
+      <h5 class="card-title" itemprop="name"><a href="/authors/admin/">L CJ</a></h5>
+      <h6 class="card-subtitle">码农</h6>
+      <p class="card-text" itemprop="description">我目前研究的方向主要在Microservice、Servicemesh、Serverless等和Cloud Native相关的领域，欢迎交流和指导</p>
+      <ul class="network-icon" aria-hidden="true">
+        
+          
+          
+          
+            
+          
+          
+          
+          
+          
+          <li>
+            <a itemprop="sameAs" href="mailto:penguincj@163.com" >
+              <i class="fas fa-envelope"></i>
+            </a>
+          </li>
+        
+          
+          
+          
+            
+          
+          
+          
+          
+          
+            
+          
+          <li>
+            <a itemprop="sameAs" href="https://github.com/penguincj" target="_blank" rel="noopener">
+              <i class="fab fa-github"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+
+
+      
+      
+    
+
+    
+
+    
+
+
+  </div>
+</article>
+
+<div class="container">
+  <footer class="site-footer">
+  
+
+  <p class="powered-by">
+    penguincj &copy; 2019 &middot; 
+
+    Powered by the
+    <a href="https://sourcethemes.com/academic/" target="_blank" rel="noopener">Academic theme</a> for
+    <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a>.
+
+    
+    <span class="float-right" aria-hidden="true">
+      <a href="#" id="back_to_top">
+        <span class="button_icon">
+          <i class="fas fa-chevron-up fa-2x"></i>
+        </span>
+      </a>
+    </span>
+    
+  </p>
+</footer>
+
+</div>
+
+
+<div id="modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cite</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <pre><code class="tex hljs"></code></pre>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-primary my-1 js-copy-cite" href="#" target="_blank">
+          <i class="fas fa-copy"></i> Copy
+        </a>
+        <a class="btn btn-outline-primary my-1 js-download-cite" href="#" target="_blank">
+          <i class="fas fa-download"></i> Download
+        </a>
+        <div id="modal-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+    
+
+    
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/4.1.4/imagesloaded.pkgd.min.js" integrity="sha256-lqvxZrPLtfffUl2G/e7szqSvPBILGbwmsGE1MKlOi0Q=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.isotope/3.0.6/isotope.pkgd.min.js" integrity="sha256-CBrpuqrMhXwcLLUd5tvQ4euBHCdh7wGlDfNz8vbu/iI=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" integrity="sha256-X5PoE3KU5l+JcX+w09p/wHl9AzK333C4hJ2I9S5mD4M=" crossorigin="anonymous"></script>
+
+      
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js" integrity="sha256-aYTdUrn6Ow1DDgh5JTc3aDGnnju48y/1c8s1dgkYPQ8=" crossorigin="anonymous"></script>
+        
+      
+
+      
+      
+    
+
+    
+    
+
+    
+    
+    
+
+    
+    
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+
+    
+    
+    <script>
+      const search_index_filename = "/index.json";
+      const i18n = {
+        'placeholder': "Search...",
+        'results': "results found",
+        'no_results': "No results found"
+      };
+      const content_type = {
+        'post': "Posts",
+        'project': "Projects",
+        'publication' : "Publications",
+        'talk' : "Talks"
+        };
+    </script>
+    
+
+    
+    
+
+    
+    
+    <script id="search-hit-fuse-template" type="text/x-template">
+      <div class="search-hit" id="summary-{{key}}">
+      <div class="search-hit-content">
+        <div class="search-hit-name">
+          <a href="{{relpermalink}}">{{title}}</a>
+          <div class="article-metadata search-hit-type">{{type}}</div>
+          <p class="search-hit-description">{{snippet}}</p>
+        </div>
+      </div>
+      </div>
+    </script>
+    
+
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.2.1/fuse.min.js" integrity="sha256-VzgmKYmhsGNNN4Ph1kMW+BjoYJM2jV5i4IlFoeZA9XI=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+    
+
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+      
+    
+    
+    
+    
+    <script src="/js/academic.min.15494b02d66be9b96bab2e305f69c460.js"></script>
+
+  </body>
+</html>
+

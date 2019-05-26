@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>L CJ的博客</title>
+    <link>/</link>
+    <description>Recent content on L CJ的博客</description>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator>
+    <language>en-us</language>
+    <copyright>penguincj &amp;copy; 2019</copyright>
+    <lastBuildDate>Tue, 07 May 2019 00:00:00 +0800</lastBuildDate>
+    
+	    <atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Why 容器云</title>
+      <link>/post/cloud/container/201905-why-container-cloud/why-container/</link>
+      <pubDate>Tue, 07 May 2019 00:00:00 +0800</pubDate>
+      
+      <guid>/post/cloud/container/201905-why-container-cloud/why-container/</guid>
+      <description>
+
+&lt;p&gt;人们对云计算提出了更高的要求，为大量项目构建运营环境的效率问题，缩短新业务的上线部署时间，大规模的计算机房快速迁移需求；提高服务器资源的利用率，同时确保相同的性能和可用性，又有降低成本的需求。相较于传统的虚拟化解决方案，容器云可以较好的实现上述目标。&lt;/p&gt;
+
+&lt;p&gt;容器云的核心功能：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;快速扩容&lt;/li&gt;
+&lt;li&gt;智能调度和编排&lt;/li&gt;
+&lt;li&gt;弹性伸缩&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;快速扩容&#34;&gt;快速扩容&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;扩容速度：
+
+&lt;ul&gt;
+&lt;li&gt;VM - 扩容20个实例需要4分钟（扩容完成后需要再执行服务发布）&lt;/li&gt;
+&lt;li&gt;docker - 扩容20个实例仅需30s，秒级别扩容（扩容完成即服务启动）&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;扩容速度提高 8~12倍&lt;/li&gt;
+&lt;li&gt;节约了用户手动操作申请/发布的成本&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;智能调度&#34;&gt;智能调度&lt;/h2&gt;
+
+&lt;p&gt;调度系统是云集群的中央处理器，要解决的核心问题是为容器选择合适的宿主机。有如下的指标：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;资源利用率，提高整体物理集群的资源利用率&lt;/li&gt;
+&lt;li&gt;业务可用性保障：业务容器容灾能力、保障运行业务的稳定高可用&lt;/li&gt;
+&lt;li&gt;并发调度能力：调度系统请求处理能力的体现&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;资源最大化利用&#34;&gt;资源最大化利用&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;按CPU/Mem/IO等类型对服务进行调度，最大化资源利用&lt;/li&gt;
+&lt;li&gt;业务按需使用资源，提升资源利用率&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;混布与独占&#34;&gt;混布与独占&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;在线服务与离线任务混布&lt;/li&gt;
+&lt;li&gt;重要业务资源池独占&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;容器编排&#34;&gt;容器编排&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;有调用关系的多个服务实例，优先部署到相同/相近的宿主机上&lt;/li&gt;
+&lt;li&gt;同服务实例打散，分布到不同宿主机上，提高服务可用性&lt;/li&gt;
+&lt;li&gt;高负载容器，自动迁移到低负载宿主机&lt;/li&gt;
+&lt;li&gt;自动化容器实例健康检查，异常实例自动迁移&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;调度计算&#34;&gt;调度计算&lt;/h3&gt;
+
+&lt;p&gt;通过先过滤filter之后排序打分rank的方式找到最优的部署位置。&lt;/p&gt;
+
+&lt;p&gt;在一批宿主机中先过滤掉超售的，然后考虑到打散、混部、减少碎片和负载均衡之后找到合适的宿主机&lt;/p&gt;
+
+&lt;h3 id=&#34;调度sla-service-level-agreement&#34;&gt;调度SLA（Service Level Agreement）&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;高可用：99.999&lt;/li&gt;
+&lt;li&gt;调度成功率：99.99&lt;/li&gt;
+&lt;li&gt;并发调度：单机并发处理200+，并发调度机器1000+&lt;/li&gt;
+&lt;li&gt;低延迟：TCP90 63ms&lt;/li&gt;
+&lt;li&gt;HA：分布式调度，横向扩展，多IDC部署容灾&lt;/li&gt;
+&lt;li&gt;监控报警：Falcon&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;弹性收缩&#34;&gt;弹性收缩&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;周期收缩&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;根据设定时间段伸缩（适合秒杀/直播等业务）&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;监控伸缩&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;根据QPS/CPU等触发条件伸缩&lt;/li&gt;
+&lt;li&gt;线性可扩展的无状态服务&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;服务画像&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;针对数据建模，描绘服务特征：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;服务画像：仿照用户画像，根据服务数据，抽取服务Tag
+
+&lt;ul&gt;
+&lt;li&gt;QPS特征（高峰时段、QPS max/min等）&lt;/li&gt;
+&lt;li&gt;资源利用率&lt;/li&gt;
+&lt;li&gt;CPU密集型 or IO密集型&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;基于历史数据建模的服务画像可以做服务特征值的预测，比如QPS的预测：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;QPS预测：RNN LSTM&lt;/li&gt;
+&lt;li&gt;即使监控数据源完全不可用，无数据，也能较准确的扩缩容&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;异常处理&#34;&gt;异常处理&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;监控数据异常，怎么办？会不会因监控值偏低而一直缩容？&lt;/li&gt;
+&lt;li&gt;监控数据有延迟，怎么办？&lt;/li&gt;
+&lt;li&gt;监控数据没了，怎么办？&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;通过数据无关的缩容退避+熔断机制来保证异常情况下的正常运行：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;针对监控数据偏低（异常）而触发持续缩容&lt;/li&gt;
+&lt;li&gt;数据无关，不关心数据是否异常&lt;/li&gt;
+&lt;li&gt;如果连续缩容，那么缩容速度会越来越慢 —&amp;gt; 退避&lt;/li&gt;
+&lt;li&gt;如果连续缩容次数超过阈值，一段时间内禁止缩容 —&amp;gt; 熔断&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Kubernetes声明式API</title>
+      <link>/post/cloud/k8s/201904-k8s-declarative-api/</link>
+      <pubDate>Wed, 26 Dec 2018 00:00:00 +0800</pubDate>
+      
+      <guid>/post/cloud/k8s/201904-k8s-declarative-api/</guid>
+      <description>
+
+&lt;h2 id=&#34;api对象&#34;&gt;API对象&lt;/h2&gt;
+
+&lt;p&gt;在Kubernetes中API对象是以树形结构表示的，一个API对象在Etcd里完整资源路径，是由Group（API组）、Version（API版本）和Resource（API资源类型）三个部分组成的。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/kube-api-1.png&#34; alt=&#34;kube-api-1&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;如果现在要声明一个CronJob对象，那么YAML的开始部分会这么写，CronJob就是这个API对象的资源类型，Batch就是它们的组，v2alpha1就是它的版本&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: batch/v2alpha1
+kind: CronJob
+...
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;api解析&#34;&gt;API解析&lt;/h3&gt;
+
+&lt;p&gt;Kubernetes通过对API解析找到对应的对象，分为如下3步：&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;解析API的组
+Kubernetes的对象分两种：
+
+&lt;ul&gt;
+&lt;li&gt;核心API对象（如Pod、Node），是不需要Group的，直接在 &lt;code&gt;/api&lt;/code&gt;这个下面进行解析&lt;/li&gt;
+&lt;li&gt;非核心API对象，在 &lt;code&gt;/apis&lt;/code&gt; 下先解析出Group，根据batch这个Group找到 &lt;code&gt;/apis/batch&lt;/code&gt;，API Group的分类是以对象功能为依据的。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;解析API对象的版本号&lt;/li&gt;
+&lt;li&gt;匹配API对象的资源类型&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&#34;创建对象&#34;&gt;创建对象&lt;/h3&gt;
+
+&lt;p&gt;在前面匹配到正确的版本之后，Kubernetes就知道要创建的是一个/apis/batch/v2alpha1下的CronJob对象，APIServer会继续创建这个Cronjob对象。创建过程如下图&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/kube-api-2.png&#34; alt=&#34;kube-api-2&#34; /&gt;&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;当发起创建CronJob的POST请求之后，YAML的信息就被提交给了APIServer，APIServer的第一个功能就是过滤这个请求，并完成一些前置性的工作，比如授权、超时处理、审计等&lt;/li&gt;
+&lt;li&gt;请求进入MUX和Routes流程，MUX和Routes是APIServer完成URL和Handler绑定的场所。APIServer的Handler要做的事情，就是按照上面介绍的匹配过程，找到对应的CronJob类型定义。&lt;/li&gt;
+&lt;li&gt;根据这个CronJob类型定义，使用用户提交的YAML文件里的字段，创建一个CronJob对象。这个过程中，APIServer会把用户提交的YAML文件，转换成一个叫做Super Version的对象，它正是该API资源类型所有版本的字段全集，这样用户提交的不同版本的YAML文件，就都可以用这个SuperVersion对象来进行处理了。&lt;/li&gt;
+&lt;li&gt;APIServer会先后进行Admission（如Admission Controller 和 Initializer）和Validation操作（负责验证这个对象里的各个字段是否何方，被验证过得API对象都保存在APIServer里一个叫做Registry的数据结构中）。&lt;/li&gt;
+&lt;li&gt;APIServer会把验证过得API对象转换成用户最初提交的版本，进行系列化操作，并调用Etcd的API把它保存起来。&lt;br /&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&#34;crd&#34;&gt;CRD&lt;/h3&gt;
+
+&lt;p&gt;API插件CRD（Custom Resource Definition） 允许用户在Kubernetes中添加一个跟Pod、Node类似的、新的API资源类型，即：自定义API资源&lt;/p&gt;
+
+&lt;p&gt;举个栗子，添加一个叫Network的API资源类型，它的作用是一旦用户创建一个Network对象，那么Kubernetes就可以使用这个对象定义的网络参数，调用真实的网络插件，为用户创建一个真正的网络，这个过程分为两步&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;首先定义CRD&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;定义一个group为samplecrd.k8s.io， version为v1的API信息，指定了这个CR的资源类型叫做Network，定义的这个Network是属于一个Namespace的对象，类似于Pod。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+name: networks.samplecrd.k8s.io
+spec:
+    group: samplecrd.k8s.io
+    version: v1
+    names:
+    kind: Network
+    plural: networks
+    scope: Namespaced
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ol&gt;
+&lt;li&gt;对象实例化&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;实例化名为example-network的Network对象，API组是samplecrd.k8s.io，版本是v1。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: samplecrd.k8s.io/v1
+kind: Network
+metadata:
+name: example-network
+spec:
+    cidr: &amp;quot;192.168.0.0/16&amp;quot;
+    gateway: &amp;quot;192.168.0.1&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Network对象YAML文件，名叫example-network.yaml,API资源类型是Network，API组是samplecrd.k8s.io，版本是v1&lt;/p&gt;
+
+&lt;p&gt;Kubernetes的声明式API能够对API对象进行增量的更新操作：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;定义好期望的API对象后，Kubernetes来尽力让对象的状态符合预期&lt;/li&gt;
+&lt;li&gt;允许多个YAML表达，以PATCH的方式对API对象进行修改，而不用关心原始YAML的内容&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;基于上面两种特性，Kubernetes可以实现基于API对象的更删改查，完成预期和定义的协调过程。&lt;/p&gt;
+
+&lt;p&gt;因此Kubernetes项目编排能力的核心是声明式API。&lt;/p&gt;
+
+&lt;p&gt;Kubernetes编程范式即：如何使用控制器模式，同Kubernetes里的API对象的“增、删、改、查”进行协作，进而完成用户业务逻辑的编写过程。&lt;/p&gt;
+
+&lt;h2 id=&#34;kubectl-apply&#34;&gt;kubectl apply&lt;/h2&gt;
+
+&lt;p&gt;kubectl apply是声明式的请求，下面一个Deployment的YAML的例子&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;然后用kubectl apply创建这个Deployment&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ kubectl apply -f nginx.yaml
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;修改一下nginx里定义的镜像&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: apps/v1
+kind: Deployment
+...
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.7.9
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;执行kubectl apply命令，触发滚动更新&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ kubectl apply -f nginx.yaml
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;后面一次的 &lt;code&gt;kubectl apply&lt;/code&gt;命令执行了一个对原有API对象的PATCH操作，这是声明式命令同时可以进行多个写操作，具有Merge的能力；而像 &lt;code&gt;kubectl replace&lt;/code&gt;命令是用新的YAML替换旧的，这种响应式命令每次只能处理一次写操作。&lt;/p&gt;
+
+&lt;h2 id=&#34;声明式api的应用&#34;&gt;声明式API的应用&lt;/h2&gt;
+
+&lt;p&gt;Istio通过声明式API实现对应用容器所在POD注入Sidecar，然后通过iptables劫持POD的进站和出站流量到Sidecar，Istio通过对Sidecar下发策略来实现对应用流量的管控，继而实现微服务治理。&lt;/p&gt;
+
+&lt;p&gt;在微服务治理中，对Envoy容器的部署和对Envoy代理的配置，应用容器都是不感知的。Istio是使用Kubernetes的&lt;a href=&#34;http://docs.kubernetes.org.cn/709.html&#34; target=&#34;_blank&#34;&gt;Dynamic Admission Control&lt;/a&gt;来实现的。&lt;/p&gt;
+
+&lt;p&gt;在APIServer收到API对象的提交请求后，在正常处理这些操作之前会做一些初始化的操作，比如为某些pod或容器加上一些label。这些初始化操作是通过Kubernetes的Admission Controller实现的，在APIServer对象创建之后调用，但这种方式的缺陷是需要将Admission Controller的代码编译到APIServer中，这不是很方便。Kubernetes 1.7引入了热插拔的Admission机制，它就是Dynamic Admission Control，也叫做Initializer。&lt;/p&gt;
+
+&lt;p&gt;如下定义的应用的Pod，包含一个myapp-container的容器。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: myapp-container
+    image: busybox
+    command: [&#39;sh&#39;, &#39;-c&#39;, &#39;echo Hello Kubernetes! &amp;amp;&amp;amp; sleep 3600&#39;]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Istio要做的就是在这个Pod YAML被提交给Kubernetes之后，在它对应的API对象里自动加上Envoy容器的配置，使对象变成如下的样子：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: myapp-container
+    image: busybox
+    command: [&#39;sh&#39;, &#39;-c&#39;, &#39;echo Hello Kubernetes! &amp;amp;&amp;amp; sleep 3600&#39;]
+  - name: envoy
+    image: lyft/envoy:845747b88f102c0fd262ab234308e9e22f693a1
+    command: [&amp;quot;/usr/local/bin/envoy&amp;quot;]
+    ...
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;这个pod多了一个envoy的容器，Istio具体的做法是&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;定义Envoy容器的Initializer，并以ConfigMap的方式保存到Kubernetes中&lt;/li&gt;
+&lt;li&gt;Istio将编写好的Initializer作为一个Pod部署在Kubernetes中&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Envoy容器的ConfigMap定义，&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: envoy-initializer
+data:
+  config: |
+    containers:
+      - name: envoy
+        image: lyft/envoy:845747db88f102c0fd262ab234308e9e22f693a1
+        command: [&amp;quot;/usr/local/bin/envoy&amp;quot;]
+        args:
+          - &amp;quot;--concurrency 4&amp;quot;
+          - &amp;quot;--config-path /etc/envoy/envoy.json&amp;quot;
+          - &amp;quot;--mode serve&amp;quot;
+        ports:
+          - containerPort: 80
+            protocol: TCP
+        resources:
+          limits:
+            cpu: &amp;quot;1000m&amp;quot;
+            memory: &amp;quot;512Mi&amp;quot;
+          requests:
+            cpu: &amp;quot;100m&amp;quot;
+            memory: &amp;quot;64Mi&amp;quot;
+        volumeMounts:
+          - name: envoy-conf
+            mountPath: /etc/envoy
+    volumes:
+      - name: envoy-conf
+        configMap:
+          name: envoy
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;这个ConfigMap的data部分，正是一个Pod对象的一部分定义，其中可以看到Envoy容器对应的Container字段，以及一个用来声明Envoy配置文件的volumes字段。Initializer要做的就是把这部分Envoy相关的字段，自动添加到用户提交的Pod的API对象里。但是用户提交的Pod里本来就有containers和volumes字段，所以Kubernetes在处理这样的更新请求时，就必须使用类似于git merge这样的操作，才能将这两部分内容合并在一起。即Initializer更新用户的Pod对象时，必须使用PATCH API来完成。&lt;/p&gt;
+
+&lt;p&gt;Envoy Initializer的pod定义&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: envoy-initializer
+  name: envoy-initializer
+spec:
+  containers:
+    - name: envoy-initializer
+      image: envoy-initializer:0.0.1
+      imagePullPolicy: Always
+```	  
+
+`envoy-initializer:0.0.1` 镜像是一个自定义控制器（Custom Controller）。Kubernetes的控制器实际上是一个死循环：它不断地获取实际状态，然后与期望状态作对比，并以此为依据决定下一步的操作。
+
+对Initializer控制器，不断获取的实际状态，就是用户新创建的Pod，它期望的状态就是这个Pod里被添加了Envoy容器的定义。它的控制逻辑如下：
+
+```go
+for {
+  // 获取新创建的 Pod
+  pod := client.GetLatestPod()
+  // Diff 一下，检查是否已经初始化过
+  if !isInitialized(pod) {
+    // 没有？那就来初始化一下
+   //istio要往这个Pod里合并的字段，就是ConfigMap里data字段的值
+    doSomething(pod)
+  }
+}
+
+func doSomething(pod) {
+  //调用APIServer拿到ConfigMap
+  cm := client.Get(ConfigMap, &amp;quot;envoy-initializer&amp;quot;)
+
+  //把ConfigMap里存在的containers和volumes字段，直接添加进一个空的Pod对象
+  newPod := Pod{}
+  newPod.Spec.Containers = cm.Containers
+  newPod.Spec.Volumes = cm.Volumes
+
+  // Kubernetes的API库，提供一个方法使我们可以直接使用新旧两个Pod对象，生成 patch 数据
+  patchBytes := strategicpatch.CreateTwoWayMergePatch(pod, newPod)
+
+  // 发起 PATCH 请求，修改这个 pod 对象
+  client.Patch(pod.Name, patchBytes)  
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Envoy机制正是利用了Kubernetes能够对API对象做增量更新，这是Kubernetes声明式API的独特之处。&lt;/p&gt;
+
+&lt;h2 id=&#34;参考&#34;&gt;参考&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://docs.kubernetes.org.cn/709.html&#34; target=&#34;_blank&#34;&gt;Dynamic Admission Control&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.cnblogs.com/yuxiaoba/p/9803284.html&#34; target=&#34;_blank&#34;&gt;【Kubernetes】深入解析声明式API&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>
