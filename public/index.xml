@@ -591,7 +591,6 @@ func NewPlugin(networkPluginDirs []string) network.NetworkPlugin {
 &lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/kubelet/dockershim/network/kubenet/kubenet_linux.go
 func (plugin *kubenetNetworkPlugin) Init(host network.Host, hairpinMode kubeletconfig.HairpinMode, nonMasqueradeCIDR string, mtu int) error {
 
-	// 配置 MTU todo 为什么这里要设置 MTU？
 	...
 	// 确认加载了 br-netfilter，设置 bridge-nf-call-iptables=1
 	plugin.execer.Command(&amp;quot;modprobe&amp;quot;, &amp;quot;br-netfilter&amp;quot;).CombinedOutput()
@@ -612,6 +611,10 @@ func (plugin *kubenetNetworkPlugin) Init(host network.Host, hairpinMode kubeletc
 	return nil
 }
 &lt;/code&gt;&lt;/pre&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;在 kubenet 中有个 MTU 的配置选项，&lt;code&gt;network-plugin-mtu&lt;/code&gt; 指定 MTU，设置合理的 MTU 能有一个更好的网络性能。仅在 kubenet plugin 中支持。&lt;/p&gt;
+&lt;/blockquote&gt;
 
 &lt;h2 id=&#34;kubenet-event&#34;&gt;kubenet Event&lt;/h2&gt;
 
@@ -925,6 +928,108 @@ func (plugin *cniNetworkPlugin) addToNetwork(network *cniNetwork, podName string
 
 &lt;p&gt;与前面的流程类似，最终调用底层的 cni plugin 删掉配置。代码略。&lt;/p&gt;
 
+&lt;h1 id=&#34;kubernets-network&#34;&gt;kubernets network&lt;/h1&gt;
+
+&lt;h2 id=&#34;plugin-安装&#34;&gt;plugin 安装&lt;/h2&gt;
+
+&lt;p&gt;kubelet 有一个默认的 plugin，然后为整个集群提供一个默认的网络。当启动时探测到插件后就可以在 pod 整个生命周期里调换用。有两个启动参数：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;cni-bin-dir&lt;/code&gt;：启动时加载这个参数指定的路径里的 plugin&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;network-plugin&lt;/code&gt;：插件的名字，要能匹配上面路径中的插件，比如 CNI 配置为 &amp;ldquo;cni&amp;rdquo;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;network-plugin-需求&#34;&gt;network plugin 需求&lt;/h2&gt;
+
+&lt;p&gt;plguin 除了要提供 NetworkPlugin interface 添加和删除 pod 的网络之外，还要实现对 &lt;code&gt;kube-proxy&lt;/code&gt; 的支持。proxy 依赖 iptables，plugin 需要确保容器流量可以使用 iptables。比如 plugin 将容器添加到 Linux bridge，就需要通过 sysctl 设置 &lt;code&gt;net/bridge/bridge-nf-call-iptables = 1&lt;/code&gt; 来确保 iptables proxy 功能正常。&lt;/p&gt;
+
+&lt;p&gt;如果没有指定 network plugin，就使用 &lt;code&gt;noop&lt;/code&gt; plugin 设置 &lt;code&gt;net/bridge/bridge-nf-call-iptables=1&lt;/code&gt;。&lt;/p&gt;
+
+&lt;h2 id=&#34;cni&#34;&gt;CNI&lt;/h2&gt;
+
+&lt;p&gt;在 kubelet 命令行中 &lt;code&gt;--network-plugin=cni&lt;/code&gt; 指定了采用 CNI 插件，kubelet 从 &lt;code&gt;--cni-conf-dir&lt;/code&gt;（默认 /etc/cni/net.d）读取配置文件来配置 pod 网络。CNI 配置文件要遵循 &lt;a href=&#34;https://github.com/containernetworking/cni/blob/master/SPEC.md#network-configuration&#34; target=&#34;_blank&#34;&gt;CNI specification&lt;/a&gt;，配置文件中指定的 CNI 插件的执行程序要放在 &amp;ndash;&lt;code&gt;cni-bin-dir&lt;/code&gt; (default /opt/cni/bin)。&lt;/p&gt;
+
+&lt;p&gt;如果目录下有多个 CNI 配置文件，按字典序采用第一个配置文件。&lt;/p&gt;
+
+&lt;p&gt;除了配置文件中指定的 CNI 插件外，K8S 还需要标准的 &lt;a href=&#34;https://github.com/containernetworking/plugins/blob/master/plugins/main/loopback/loopback.go&#34; target=&#34;_blank&#34;&gt;lo&lt;/a&gt; 插件。&lt;/p&gt;
+
+&lt;h3 id=&#34;hostport-支持&#34;&gt;hostPort 支持&lt;/h3&gt;
+
+&lt;p&gt;CNI plugin 支持 &lt;code&gt;hostPort&lt;/code&gt;，可以采用官方的 &lt;a href=&#34;https://github.com/containernetworking/plugins/tree/master/plugins/meta/portmap&#34; target=&#34;_blank&#34;&gt;portmap&lt;/a&gt;，也可以自己实现。&lt;/p&gt;
+
+&lt;p&gt;需要在 &lt;code&gt;cni-conf-dir&lt;/code&gt; 中开启 &lt;code&gt;portMappings capability&lt;/code&gt; 来支持 &lt;code&gt;hostPort&lt;/code&gt;。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;{
+  &amp;quot;name&amp;quot;: &amp;quot;k8s-pod-network&amp;quot;,
+  &amp;quot;cniVersion&amp;quot;: &amp;quot;0.3.0&amp;quot;,
+  &amp;quot;plugins&amp;quot;: [
+    {
+      &amp;quot;type&amp;quot;: &amp;quot;calico&amp;quot;,
+      &amp;quot;log_level&amp;quot;: &amp;quot;info&amp;quot;,
+      &amp;quot;datastore_type&amp;quot;: &amp;quot;kubernetes&amp;quot;,
+      &amp;quot;nodename&amp;quot;: &amp;quot;127.0.0.1&amp;quot;,
+      &amp;quot;ipam&amp;quot;: {
+        &amp;quot;type&amp;quot;: &amp;quot;host-local&amp;quot;,
+        &amp;quot;subnet&amp;quot;: &amp;quot;usePodCidr&amp;quot;
+      },
+      &amp;quot;policy&amp;quot;: {
+        &amp;quot;type&amp;quot;: &amp;quot;k8s&amp;quot;
+      },
+      &amp;quot;kubernetes&amp;quot;: {
+        &amp;quot;kubeconfig&amp;quot;: &amp;quot;/etc/cni/net.d/calico-kubeconfig&amp;quot;
+      }
+    },
+    {
+      &amp;quot;type&amp;quot;: &amp;quot;portmap&amp;quot;,
+      &amp;quot;capabilities&amp;quot;: {&amp;quot;portMappings&amp;quot;: true}
+    }
+  ]
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;traffic-shaping-支持&#34;&gt;traffic shaping 支持&lt;/h3&gt;
+
+&lt;p&gt;CNI plugin 支持 pod ingress 和 egress 整形，可以使用官方提供的 &lt;a href=&#34;https://github.com/containernetworking/plugins/tree/master/plugins/meta/bandwidth&#34; target=&#34;_blank&#34;&gt;bandwidth&lt;/a&gt; 或自定义的插件。同样需要在配置文件（默认在 &lt;code&gt;/etc/cni/net.d&lt;/code&gt;）中配置。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;{
+  &amp;quot;name&amp;quot;: &amp;quot;k8s-pod-network&amp;quot;,
+  &amp;quot;cniVersion&amp;quot;: &amp;quot;0.3.0&amp;quot;,
+  &amp;quot;plugins&amp;quot;: [
+    {
+      &amp;quot;type&amp;quot;: &amp;quot;calico&amp;quot;,
+      &amp;quot;log_level&amp;quot;: &amp;quot;info&amp;quot;,
+      &amp;quot;datastore_type&amp;quot;: &amp;quot;kubernetes&amp;quot;,
+      &amp;quot;nodename&amp;quot;: &amp;quot;127.0.0.1&amp;quot;,
+      &amp;quot;ipam&amp;quot;: {
+        &amp;quot;type&amp;quot;: &amp;quot;host-local&amp;quot;,
+        &amp;quot;subnet&amp;quot;: &amp;quot;usePodCidr&amp;quot;
+      },
+      &amp;quot;policy&amp;quot;: {
+        &amp;quot;type&amp;quot;: &amp;quot;k8s&amp;quot;
+      },
+      &amp;quot;kubernetes&amp;quot;: {
+        &amp;quot;kubeconfig&amp;quot;: &amp;quot;/etc/cni/net.d/calico-kubeconfig&amp;quot;
+      }
+    },
+    {
+      &amp;quot;type&amp;quot;: &amp;quot;bandwidth&amp;quot;,
+      &amp;quot;capabilities&amp;quot;: {&amp;quot;bandwidth&amp;quot;: true}
+    }
+  ]
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;现在你可以向 pod 中添加  &lt;code&gt;kubernetes.io/ingress-bandwidth&lt;/code&gt; 和 &lt;code&gt;kubernetes.io/egress-bandwidth&lt;/code&gt; 的 annotations，例如：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    kubernetes.io/ingress-bandwidth: 1M
+    kubernetes.io/egress-bandwidth: 1M
+...
+&lt;/code&gt;&lt;/pre&gt;
+
 &lt;h1 id=&#34;cni-演进&#34;&gt;CNI 演进&lt;/h1&gt;
 
 &lt;h2 id=&#34;多-interface-支持&#34;&gt;多 interface 支持&lt;/h2&gt;
@@ -950,12 +1055,15 @@ func (plugin *cniNetworkPlugin) addToNetwork(network *cniNetwork, podName string
 
 &lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://github.com/keontang/k8s-notes/blob/master/kubernetes-network.md&#34; target=&#34;_blank&#34;&gt;k8s network&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://github.com/keontang/k8s-notes/blob/master/kubernetes-network.md&#34; target=&#34;_blank&#34;&gt;k8s network&lt;/a&gt;
+&lt;a href=&#34;https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/#kubenet&#34; target=&#34;_blank&#34;&gt;Network Plugins&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;问题&#34;&gt;问题&lt;/h1&gt;
 
 &lt;ol&gt;
-&lt;li&gt;dockerService 用途是什么？&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;dockerService 用途是什么？&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;在一个集群里不同的 Node 上可以配置不同的 plugin 吗？&lt;/p&gt;&lt;/li&gt;
 &lt;/ol&gt;
 </description>
     </item>

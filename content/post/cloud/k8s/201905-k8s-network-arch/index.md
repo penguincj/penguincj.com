@@ -5,6 +5,7 @@ summary: "Kubernetes本身不提供容器网络，但具有可扩展的网络框
 date: "2019-05-28"
 draft: false
 tags: ["Kubernetes", "CNI"]
+highlight_languages: ["python"]
 ---
 
 
@@ -538,7 +539,6 @@ func NewPlugin(networkPluginDirs []string) network.NetworkPlugin {
 // pkg/kubelet/dockershim/network/kubenet/kubenet_linux.go
 func (plugin *kubenetNetworkPlugin) Init(host network.Host, hairpinMode kubeletconfig.HairpinMode, nonMasqueradeCIDR string, mtu int) error {
 
-	// 配置 MTU todo 为什么这里要设置 MTU？
 	...
 	// 确认加载了 br-netfilter，设置 bridge-nf-call-iptables=1
 	plugin.execer.Command("modprobe", "br-netfilter").CombinedOutput()
@@ -560,6 +560,7 @@ func (plugin *kubenetNetworkPlugin) Init(host network.Host, hairpinMode kubeletc
 }
 ```
 
+> 在 kubenet 中有个 MTU 的配置选项，`network-plugin-mtu` 指定 MTU，设置合理的 MTU 能有一个更好的网络性能。仅在 kubenet plugin 中支持。
 
 ## kubenet Event
 
@@ -890,6 +891,111 @@ func (plugin *cniNetworkPlugin) addToNetwork(network *cniNetwork, podName string
 与前面的流程类似，最终调用底层的 cni plugin 删掉配置。代码略。
 
 
+# kubernets network
+
+## plugin 安装
+
+kubelet 有一个默认的 plugin，然后为整个集群提供一个默认的网络。当启动时探测到插件后就可以在 pod 整个生命周期里调换用。有两个启动参数：
+
+- `cni-bin-dir`：启动时加载这个参数指定的路径里的 plugin
+- `network-plugin`：插件的名字，要能匹配上面路径中的插件，比如 CNI 配置为 "cni"
+
+## network plugin 需求
+
+plguin 除了要提供 NetworkPlugin interface 添加和删除 pod 的网络之外，还要实现对 `kube-proxy` 的支持。proxy 依赖 iptables，plugin 需要确保容器流量可以使用 iptables。比如 plugin 将容器添加到 Linux bridge，就需要通过 sysctl 设置 `net/bridge/bridge-nf-call-iptables = 1` 来确保 iptables proxy 功能正常。
+
+如果没有指定 network plugin，就使用 `noop` plugin 设置 `net/bridge/bridge-nf-call-iptables=1`。
+
+
+## CNI
+
+在 kubelet 命令行中 `--network-plugin=cni` 指定了采用 CNI 插件，kubelet 从 `--cni-conf-dir`（默认 /etc/cni/net.d）读取配置文件来配置 pod 网络。CNI 配置文件要遵循 [CNI specification](https://github.com/containernetworking/cni/blob/master/SPEC.md#network-configuration)，配置文件中指定的 CNI 插件的执行程序要放在 --`cni-bin-dir` (default /opt/cni/bin)。
+
+如果目录下有多个 CNI 配置文件，按字典序采用第一个配置文件。
+
+除了配置文件中指定的 CNI 插件外，K8S 还需要标准的 [lo](https://github.com/containernetworking/plugins/blob/master/plugins/main/loopback/loopback.go) 插件。
+
+### hostPort 支持
+
+CNI plugin 支持 `hostPort`，可以采用官方的 [portmap](https://github.com/containernetworking/plugins/tree/master/plugins/meta/portmap)，也可以自己实现。
+
+需要在 `cni-conf-dir` 中开启 `portMappings capability` 来支持 `hostPort`。
+
+```yaml
+{
+  "name": "k8s-pod-network",
+  "cniVersion": "0.3.0",
+  "plugins": [
+    {
+      "type": "calico",
+      "log_level": "info",
+      "datastore_type": "kubernetes",
+      "nodename": "127.0.0.1",
+      "ipam": {
+        "type": "host-local",
+        "subnet": "usePodCidr"
+      },
+      "policy": {
+        "type": "k8s"
+      },
+      "kubernetes": {
+        "kubeconfig": "/etc/cni/net.d/calico-kubeconfig"
+      }
+    },
+    {
+      "type": "portmap",
+      "capabilities": {"portMappings": true}
+    }
+  ]
+}
+```
+
+### traffic shaping 支持
+
+CNI plugin 支持 pod ingress 和 egress 整形，可以使用官方提供的 [bandwidth](https://github.com/containernetworking/plugins/tree/master/plugins/meta/bandwidth) 或自定义的插件。同样需要在配置文件（默认在 `/etc/cni/net.d`）中配置。
+
+```yaml
+{
+  "name": "k8s-pod-network",
+  "cniVersion": "0.3.0",
+  "plugins": [
+    {
+      "type": "calico",
+      "log_level": "info",
+      "datastore_type": "kubernetes",
+      "nodename": "127.0.0.1",
+      "ipam": {
+        "type": "host-local",
+        "subnet": "usePodCidr"
+      },
+      "policy": {
+        "type": "k8s"
+      },
+      "kubernetes": {
+        "kubeconfig": "/etc/cni/net.d/calico-kubeconfig"
+      }
+    },
+    {
+      "type": "bandwidth",
+      "capabilities": {"bandwidth": true}
+    }
+  ]
+}
+```
+
+现在你可以向 pod 中添加  `kubernetes.io/ingress-bandwidth` 和 `kubernetes.io/egress-bandwidth` 的 annotations，例如：
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    kubernetes.io/ingress-bandwidth: 1M
+    kubernetes.io/egress-bandwidth: 1M
+...
+```
+
+
 # CNI 演进
 
 ## 多 interface 支持
@@ -913,8 +1019,11 @@ func (plugin *cniNetworkPlugin) addToNetwork(network *cniNetwork, podName string
 # 参考
 
 [k8s network](https://github.com/keontang/k8s-notes/blob/master/kubernetes-network.md)
+[Network Plugins](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/#kubenet)
 
 
 # 问题
 
 1. dockerService 用途是什么？
+
+2. 在一个集群里不同的 Node 上可以配置不同的 plugin 吗？
