@@ -7,10 +7,958 @@
     <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator>
     <language>en-us</language>
     <copyright>penguincj &amp;copy; 2019</copyright>
-    <lastBuildDate>Tue, 07 May 2019 00:00:00 +0800</lastBuildDate>
+    <lastBuildDate>Tue, 28 May 2019 00:00:00 +0000</lastBuildDate>
     
 	    <atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Example Page 1</title>
+      <link>/courses/example/example1/</link>
+      <pubDate>Sun, 05 May 2019 00:00:00 +0100</pubDate>
+      
+      <guid>/courses/example/example1/</guid>
+      <description>
+
+&lt;p&gt;In this tutorial, I&amp;rsquo;ll share my top 10 tips for getting started with Academic:&lt;/p&gt;
+
+&lt;h2 id=&#34;tip-1&#34;&gt;Tip 1&lt;/h2&gt;
+
+&lt;p&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis posuere tellus ac convallis placerat. Proin tincidunt magna sed ex sollicitudin condimentum. Sed ac faucibus dolor, scelerisque sollicitudin nisi. Cras purus urna, suscipit quis sapien eu, pulvinar tempor diam. Quisque risus orci, mollis id ante sit amet, gravida egestas nisl. Sed ac tempus magna. Proin in dui enim. Donec condimentum, sem id dapibus fringilla, tellus enim condimentum arcu, nec volutpat est felis vel metus. Vestibulum sit amet erat at nulla eleifend gravida.&lt;/p&gt;
+
+&lt;p&gt;Nullam vel molestie justo. Curabitur vitae efficitur leo. In hac habitasse platea dictumst. Sed pulvinar mauris dui, eget varius purus congue ac. Nulla euismod, lorem vel elementum dapibus, nunc justo porta mi, sed tempus est est vel tellus. Nam et enim eleifend, laoreet sem sit amet, elementum sem. Morbi ut leo congue, maximus velit ut, finibus arcu. In et libero cursus, rutrum risus non, molestie leo. Nullam congue quam et volutpat malesuada. Sed risus tortor, pulvinar et dictum nec, sodales non mi. Phasellus lacinia commodo laoreet. Nam mollis, erat in feugiat consectetur, purus eros egestas tellus, in auctor urna odio at nibh. Mauris imperdiet nisi ac magna convallis, at rhoncus ligula cursus.&lt;/p&gt;
+
+&lt;p&gt;Cras aliquam rhoncus ipsum, in hendrerit nunc mattis vitae. Duis vitae efficitur metus, ac tempus leo. Cras nec fringilla lacus. Quisque sit amet risus at ipsum pharetra commodo. Sed aliquam mauris at consequat eleifend. Praesent porta, augue sed viverra bibendum, neque ante euismod ante, in vehicula justo lorem ac eros. Suspendisse augue libero, venenatis eget tincidunt ut, malesuada at lorem. Donec vitae bibendum arcu. Aenean maximus nulla non pretium iaculis. Quisque imperdiet, nulla in pulvinar aliquet, velit quam ultrices quam, sit amet fringilla leo sem vel nunc. Mauris in lacinia lacus.&lt;/p&gt;
+
+&lt;p&gt;Suspendisse a tincidunt lacus. Curabitur at urna sagittis, dictum ante sit amet, euismod magna. Sed rutrum massa id tortor commodo, vitae elementum turpis tempus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean purus turpis, venenatis a ullamcorper nec, tincidunt et massa. Integer posuere quam rutrum arcu vehicula imperdiet. Mauris ullamcorper quam vitae purus congue, quis euismod magna eleifend. Vestibulum semper vel augue eget tincidunt. Fusce eget justo sodales, dapibus odio eu, ultrices lorem. Duis condimentum lorem id eros commodo, in facilisis mauris scelerisque. Morbi sed auctor leo. Nullam volutpat a lacus quis pharetra. Nulla congue rutrum magna a ornare.&lt;/p&gt;
+
+&lt;p&gt;Aliquam in turpis accumsan, malesuada nibh ut, hendrerit justo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quisque sed erat nec justo posuere suscipit. Donec ut efficitur arcu, in malesuada neque. Nunc dignissim nisl massa, id vulputate nunc pretium nec. Quisque eget urna in risus suscipit ultricies. Pellentesque odio odio, tincidunt in eleifend sed, posuere a diam. Nam gravida nisl convallis semper elementum. Morbi vitae felis faucibus, vulputate orci placerat, aliquet nisi. Aliquam erat volutpat. Maecenas sagittis pulvinar purus, sed porta quam laoreet at.&lt;/p&gt;
+
+&lt;h2 id=&#34;tip-2&#34;&gt;Tip 2&lt;/h2&gt;
+
+&lt;p&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis posuere tellus ac convallis placerat. Proin tincidunt magna sed ex sollicitudin condimentum. Sed ac faucibus dolor, scelerisque sollicitudin nisi. Cras purus urna, suscipit quis sapien eu, pulvinar tempor diam. Quisque risus orci, mollis id ante sit amet, gravida egestas nisl. Sed ac tempus magna. Proin in dui enim. Donec condimentum, sem id dapibus fringilla, tellus enim condimentum arcu, nec volutpat est felis vel metus. Vestibulum sit amet erat at nulla eleifend gravida.&lt;/p&gt;
+
+&lt;p&gt;Nullam vel molestie justo. Curabitur vitae efficitur leo. In hac habitasse platea dictumst. Sed pulvinar mauris dui, eget varius purus congue ac. Nulla euismod, lorem vel elementum dapibus, nunc justo porta mi, sed tempus est est vel tellus. Nam et enim eleifend, laoreet sem sit amet, elementum sem. Morbi ut leo congue, maximus velit ut, finibus arcu. In et libero cursus, rutrum risus non, molestie leo. Nullam congue quam et volutpat malesuada. Sed risus tortor, pulvinar et dictum nec, sodales non mi. Phasellus lacinia commodo laoreet. Nam mollis, erat in feugiat consectetur, purus eros egestas tellus, in auctor urna odio at nibh. Mauris imperdiet nisi ac magna convallis, at rhoncus ligula cursus.&lt;/p&gt;
+
+&lt;p&gt;Cras aliquam rhoncus ipsum, in hendrerit nunc mattis vitae. Duis vitae efficitur metus, ac tempus leo. Cras nec fringilla lacus. Quisque sit amet risus at ipsum pharetra commodo. Sed aliquam mauris at consequat eleifend. Praesent porta, augue sed viverra bibendum, neque ante euismod ante, in vehicula justo lorem ac eros. Suspendisse augue libero, venenatis eget tincidunt ut, malesuada at lorem. Donec vitae bibendum arcu. Aenean maximus nulla non pretium iaculis. Quisque imperdiet, nulla in pulvinar aliquet, velit quam ultrices quam, sit amet fringilla leo sem vel nunc. Mauris in lacinia lacus.&lt;/p&gt;
+
+&lt;p&gt;Suspendisse a tincidunt lacus. Curabitur at urna sagittis, dictum ante sit amet, euismod magna. Sed rutrum massa id tortor commodo, vitae elementum turpis tempus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean purus turpis, venenatis a ullamcorper nec, tincidunt et massa. Integer posuere quam rutrum arcu vehicula imperdiet. Mauris ullamcorper quam vitae purus congue, quis euismod magna eleifend. Vestibulum semper vel augue eget tincidunt. Fusce eget justo sodales, dapibus odio eu, ultrices lorem. Duis condimentum lorem id eros commodo, in facilisis mauris scelerisque. Morbi sed auctor leo. Nullam volutpat a lacus quis pharetra. Nulla congue rutrum magna a ornare.&lt;/p&gt;
+
+&lt;p&gt;Aliquam in turpis accumsan, malesuada nibh ut, hendrerit justo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quisque sed erat nec justo posuere suscipit. Donec ut efficitur arcu, in malesuada neque. Nunc dignissim nisl massa, id vulputate nunc pretium nec. Quisque eget urna in risus suscipit ultricies. Pellentesque odio odio, tincidunt in eleifend sed, posuere a diam. Nam gravida nisl convallis semper elementum. Morbi vitae felis faucibus, vulputate orci placerat, aliquet nisi. Aliquam erat volutpat. Maecenas sagittis pulvinar purus, sed porta quam laoreet at.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Example Page 2</title>
+      <link>/courses/example/example2/</link>
+      <pubDate>Sun, 05 May 2019 00:00:00 +0100</pubDate>
+      
+      <guid>/courses/example/example2/</guid>
+      <description>
+
+&lt;p&gt;Here are some more tips for getting started with Academic:&lt;/p&gt;
+
+&lt;h2 id=&#34;tip-3&#34;&gt;Tip 3&lt;/h2&gt;
+
+&lt;p&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis posuere tellus ac convallis placerat. Proin tincidunt magna sed ex sollicitudin condimentum. Sed ac faucibus dolor, scelerisque sollicitudin nisi. Cras purus urna, suscipit quis sapien eu, pulvinar tempor diam. Quisque risus orci, mollis id ante sit amet, gravida egestas nisl. Sed ac tempus magna. Proin in dui enim. Donec condimentum, sem id dapibus fringilla, tellus enim condimentum arcu, nec volutpat est felis vel metus. Vestibulum sit amet erat at nulla eleifend gravida.&lt;/p&gt;
+
+&lt;p&gt;Nullam vel molestie justo. Curabitur vitae efficitur leo. In hac habitasse platea dictumst. Sed pulvinar mauris dui, eget varius purus congue ac. Nulla euismod, lorem vel elementum dapibus, nunc justo porta mi, sed tempus est est vel tellus. Nam et enim eleifend, laoreet sem sit amet, elementum sem. Morbi ut leo congue, maximus velit ut, finibus arcu. In et libero cursus, rutrum risus non, molestie leo. Nullam congue quam et volutpat malesuada. Sed risus tortor, pulvinar et dictum nec, sodales non mi. Phasellus lacinia commodo laoreet. Nam mollis, erat in feugiat consectetur, purus eros egestas tellus, in auctor urna odio at nibh. Mauris imperdiet nisi ac magna convallis, at rhoncus ligula cursus.&lt;/p&gt;
+
+&lt;p&gt;Cras aliquam rhoncus ipsum, in hendrerit nunc mattis vitae. Duis vitae efficitur metus, ac tempus leo. Cras nec fringilla lacus. Quisque sit amet risus at ipsum pharetra commodo. Sed aliquam mauris at consequat eleifend. Praesent porta, augue sed viverra bibendum, neque ante euismod ante, in vehicula justo lorem ac eros. Suspendisse augue libero, venenatis eget tincidunt ut, malesuada at lorem. Donec vitae bibendum arcu. Aenean maximus nulla non pretium iaculis. Quisque imperdiet, nulla in pulvinar aliquet, velit quam ultrices quam, sit amet fringilla leo sem vel nunc. Mauris in lacinia lacus.&lt;/p&gt;
+
+&lt;p&gt;Suspendisse a tincidunt lacus. Curabitur at urna sagittis, dictum ante sit amet, euismod magna. Sed rutrum massa id tortor commodo, vitae elementum turpis tempus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean purus turpis, venenatis a ullamcorper nec, tincidunt et massa. Integer posuere quam rutrum arcu vehicula imperdiet. Mauris ullamcorper quam vitae purus congue, quis euismod magna eleifend. Vestibulum semper vel augue eget tincidunt. Fusce eget justo sodales, dapibus odio eu, ultrices lorem. Duis condimentum lorem id eros commodo, in facilisis mauris scelerisque. Morbi sed auctor leo. Nullam volutpat a lacus quis pharetra. Nulla congue rutrum magna a ornare.&lt;/p&gt;
+
+&lt;p&gt;Aliquam in turpis accumsan, malesuada nibh ut, hendrerit justo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quisque sed erat nec justo posuere suscipit. Donec ut efficitur arcu, in malesuada neque. Nunc dignissim nisl massa, id vulputate nunc pretium nec. Quisque eget urna in risus suscipit ultricies. Pellentesque odio odio, tincidunt in eleifend sed, posuere a diam. Nam gravida nisl convallis semper elementum. Morbi vitae felis faucibus, vulputate orci placerat, aliquet nisi. Aliquam erat volutpat. Maecenas sagittis pulvinar purus, sed porta quam laoreet at.&lt;/p&gt;
+
+&lt;h2 id=&#34;tip-4&#34;&gt;Tip 4&lt;/h2&gt;
+
+&lt;p&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis posuere tellus ac convallis placerat. Proin tincidunt magna sed ex sollicitudin condimentum. Sed ac faucibus dolor, scelerisque sollicitudin nisi. Cras purus urna, suscipit quis sapien eu, pulvinar tempor diam. Quisque risus orci, mollis id ante sit amet, gravida egestas nisl. Sed ac tempus magna. Proin in dui enim. Donec condimentum, sem id dapibus fringilla, tellus enim condimentum arcu, nec volutpat est felis vel metus. Vestibulum sit amet erat at nulla eleifend gravida.&lt;/p&gt;
+
+&lt;p&gt;Nullam vel molestie justo. Curabitur vitae efficitur leo. In hac habitasse platea dictumst. Sed pulvinar mauris dui, eget varius purus congue ac. Nulla euismod, lorem vel elementum dapibus, nunc justo porta mi, sed tempus est est vel tellus. Nam et enim eleifend, laoreet sem sit amet, elementum sem. Morbi ut leo congue, maximus velit ut, finibus arcu. In et libero cursus, rutrum risus non, molestie leo. Nullam congue quam et volutpat malesuada. Sed risus tortor, pulvinar et dictum nec, sodales non mi. Phasellus lacinia commodo laoreet. Nam mollis, erat in feugiat consectetur, purus eros egestas tellus, in auctor urna odio at nibh. Mauris imperdiet nisi ac magna convallis, at rhoncus ligula cursus.&lt;/p&gt;
+
+&lt;p&gt;Cras aliquam rhoncus ipsum, in hendrerit nunc mattis vitae. Duis vitae efficitur metus, ac tempus leo. Cras nec fringilla lacus. Quisque sit amet risus at ipsum pharetra commodo. Sed aliquam mauris at consequat eleifend. Praesent porta, augue sed viverra bibendum, neque ante euismod ante, in vehicula justo lorem ac eros. Suspendisse augue libero, venenatis eget tincidunt ut, malesuada at lorem. Donec vitae bibendum arcu. Aenean maximus nulla non pretium iaculis. Quisque imperdiet, nulla in pulvinar aliquet, velit quam ultrices quam, sit amet fringilla leo sem vel nunc. Mauris in lacinia lacus.&lt;/p&gt;
+
+&lt;p&gt;Suspendisse a tincidunt lacus. Curabitur at urna sagittis, dictum ante sit amet, euismod magna. Sed rutrum massa id tortor commodo, vitae elementum turpis tempus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean purus turpis, venenatis a ullamcorper nec, tincidunt et massa. Integer posuere quam rutrum arcu vehicula imperdiet. Mauris ullamcorper quam vitae purus congue, quis euismod magna eleifend. Vestibulum semper vel augue eget tincidunt. Fusce eget justo sodales, dapibus odio eu, ultrices lorem. Duis condimentum lorem id eros commodo, in facilisis mauris scelerisque. Morbi sed auctor leo. Nullam volutpat a lacus quis pharetra. Nulla congue rutrum magna a ornare.&lt;/p&gt;
+
+&lt;p&gt;Aliquam in turpis accumsan, malesuada nibh ut, hendrerit justo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quisque sed erat nec justo posuere suscipit. Donec ut efficitur arcu, in malesuada neque. Nunc dignissim nisl massa, id vulputate nunc pretium nec. Quisque eget urna in risus suscipit ultricies. Pellentesque odio odio, tincidunt in eleifend sed, posuere a diam. Nam gravida nisl convallis semper elementum. Morbi vitae felis faucibus, vulputate orci placerat, aliquet nisi. Aliquam erat volutpat. Maecenas sagittis pulvinar purus, sed porta quam laoreet at.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Kubernetes网络框架</title>
+      <link>/post/cloud/k8s/201905-k8s-network-arch/</link>
+      <pubDate>Tue, 28 May 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/k8s/201905-k8s-network-arch/</guid>
+      <description>
+
+&lt;p&gt;Kubernetes 本身不提供容器网络, 但是实现了一套支持多种网络插件的框架代码, 通过调用网络插件来为容器设置网络环境。&lt;/p&gt;
+
+&lt;p&gt;而约束网络插件的是 CNI（Container Network Interface），一种标准的容器网络接口，定义了如何将容器加入网络和将容器从网络中删除。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;k8s-network-arch-11bbb5d5.png&#34; src=&#34;images/k8s-network-arch-11bbb5d5.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;CNI 接口由 runtime 在创建容器和删除容器时调用。具体的接口定义如下：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// vendor/github.com/containernetworking/cni/libcni/api.go
+
+type CNI interface {
+	AddNetworkList(net *NetworkConfigList, rt *RuntimeConf) (types.Result, error)
+	DelNetworkList(net *NetworkConfigList, rt *RuntimeConf) error
+
+	AddNetwork(net *NetworkConfig, rt *RuntimeConf) (types.Result, error)
+	DelNetwork(net *NetworkConfig, rt *RuntimeConf) error
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;kubernetes-plugin-接口&#34;&gt;Kubernetes plugin 接口&lt;/h1&gt;
+
+&lt;p&gt;kubelet 是通过 NetworkPlugin interface 来调用底层的网络插件为容器设置网络环境.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// kubelet/dockershim/network/plugins.go
+// Plugin is an interface to network plugins for the kubelet
+type NetworkPlugin interface {
+	// Init initializes the plugin.  This will be called exactly once
+	// before any other methods are called.
+	Init(host Host, hairpinMode kubeletconfig.HairpinMode, nonMasqueradeCIDR string, mtu int) error
+
+	// Called on various events like:
+	// NET_PLUGIN_EVENT_POD_CIDR_CHANGE
+	Event(name string, details map[string]interface{})
+
+	// Name returns the plugin&#39;s name. This will be used when searching
+	// for a plugin by name, e.g.
+	Name() string
+
+	// Returns a set of NET_PLUGIN_CAPABILITY_*
+	Capabilities() utilsets.Int
+
+	// SetUpPod is the method called after the infra container of
+	// the pod has been created but before the other containers of the
+	// pod are launched.
+	SetUpPod(namespace string, name string, podSandboxID kubecontainer.ContainerID, annotations, options map[string]string) error
+
+	// TearDownPod is the method called before a pod&#39;s infra container will be deleted
+	TearDownPod(namespace string, name string, podSandboxID kubecontainer.ContainerID) error
+
+	// GetPodNetworkStatus is the method called to obtain the ipv4 or ipv6 addresses of the container
+	GetPodNetworkStatus(namespace string, name string, podSandboxID kubecontainer.ContainerID) (*PodNetworkStatus, error)
+
+	// Status returns error if the network plugin is in error state
+	Status() error
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;实现了 NetworkPlugin interface 就可以新增一种 Kubernetes 的 Network plugin。这个 interface 也并没有具体容器网络的实现，而是做了一层封装，具体的容器网络由独立的二进制实现，比如官方提供的 bridge、host-local 或者第三方的 calico、flannel 等，也可以是自己定制的实现。&lt;/p&gt;
+
+&lt;p&gt;K8S 支持两种 plugin：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;cniNetworkPlugin&lt;/li&gt;
+&lt;li&gt;kubenetNetworkPlugin&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;下面讲述 plugin 是如何初始化和工作的&lt;/p&gt;
+
+&lt;h1 id=&#34;kubelet-启动&#34;&gt;kubelet 启动&lt;/h1&gt;
+
+&lt;p&gt;kubelet 启动后会调用 &lt;code&gt;run()&lt;/code&gt; 进入处理流程，在进入主处理流程之前的初始化阶段会根据用户配置的网络插件名选择对应的网络插件。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// cmd/kubelet/app/server.go
+
+func run(s *options.KubeletServer, kubeDeps *kubelet.KubeletDeps) (err error) {
+    ...
+    // 创建 kubelete
+    // 根据 kubelet 的运行参数运行 kubelet
+    // 这里会根据用户配置的网络插件名选择网络插件
+    if err := RunKubelet(&amp;amp;s.KubeletConfiguration, kubeDeps, s.RunOnce, standaloneMode); err != nil {
+        return err
+    }
+    ...
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// cmd/kubelet/app/server.go
+func RunKubelet(kubeServer *options.KubeletServer, kubeDeps *kubelet.Dependencies, runOnce bool) error {
+
+	...
+	k, err := CreateAndInitKubelet(&amp;amp;kubeServer.KubeletConfiguration,
+		kubeDeps,
+		...)
+
+	...
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func CreateAndInitKubelet(kubeCfg *kubeletconfiginternal.KubeletConfiguration,
+	...) {
+
+	k, err = kubelet.NewMainKubelet(kubeCfg,
+		kubeDeps,
+		crOptions
+		...
+	)
+
+	k.BirthCry()
+
+	k.StartGarbageCollection()
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// NewMainKubelet instantiates a new Kubelet object along with all the required internal modules.
+// No initialization of Kubelet and its modules should happen here.
+func NewMainKubelet(kubeCfg *kubeletconfiginternal.KubeletConfiguration,
+	kubeDeps *Dependencies
+	...) {
+
+	klet := &amp;amp;Kubelet{
+		hostname:                                hostname,
+		hostnameOverridden:                      len(hostnameOverride) &amp;gt; 0,
+		...
+	}
+
+	switch containerRuntime {
+   	case kubetypes.DockerContainerRuntime:
+   		// Create and start the CRI shim running as a grpc server.
+   		streamingConfig := getStreamingConfig(kubeCfg, kubeDeps, crOptions)
+   		ds, err := dockershim.NewDockerService(kubeDeps.DockerClientConfig, crOptions.PodSandboxImage, streamingConfig,
+   			&amp;amp;pluginSettings, runtimeCgroups, kubeCfg.CgroupDriver, crOptions.DockershimRootDirectory, !crOptions.RedirectContainerStreaming)
+		...
+   		server := dockerremote.NewDockerServer(remoteRuntimeEndpoint, ds)
+   		if err := server.Start(); err != nil {
+   			return nil, err
+   		}
+
+   	case kubetypes.RemoteContainerRuntime:
+   		// No-op.
+   		break
+   	default:
+   		return nil, fmt.Errorf(&amp;quot;unsupported CRI runtime: %q&amp;quot;, containerRuntime)
+   	}
+	// 向 k8s network plugin 通报 NET_PLUGIN_EVENT_POD_CIDR_CHANGE 事件
+    // 该事件将会被 NetworkPlugin interface 的 Event 方法捕获
+	if _, err := klet.updatePodCIDR(kubeCfg.PodCIDR); err != nil {
+		klog.Errorf(&amp;quot;Pod CIDR update failed %v&amp;quot;, err)
+	}
+
+	...
+	}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;目前只支持 CRI 为 docker。&lt;/p&gt;
+
+&lt;h2 id=&#34;根据用户配置选择-cni&#34;&gt;根据用户配置选择 CNI&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/kubelet/dockershim/docker_service.go
+// NOTE: Anything passed to DockerService should be eventually handled in another way when we switch to running the shim as a different process.
+func NewDockerService(config *ClientConfig, podSandboxImage string, ...) (DockerService, error) {
+
+	ds := &amp;amp;dockerService{
+		client:          c,
+		os:              kubecontainer.RealOS{},
+		podSandboxImage: podSandboxImage,
+		streamingRuntime: &amp;amp;streamingRuntime{
+			client:      client,
+			execHandler: &amp;amp;NativeExecHandler{},
+		},
+		containerManager:          cm.NewContainerManager(cgroupsName, client),
+		checkpointManager:         checkpointManager,
+		startLocalStreamingServer: startLocalStreamingServer,
+		networkReady:              make(map[string]bool),
+	}
+
+	// Determine the hairpin mode.
+	if err := effectiveHairpinMode(pluginSettings); err != nil {
+		// This is a non-recoverable error. Returning it up the callstack will just
+		// lead to retries of the same failure, so just fail hard.
+		return nil, err
+	}
+
+	// 根据配置配置 CNI
+	// dockershim currently only supports CNI plugins.
+	pluginSettings.PluginBinDirs = cni.SplitDirs(pluginSettings.PluginBinDirString)
+	cniPlugins := cni.ProbeNetworkPlugins(pluginSettings.PluginConfDir, pluginSettings.PluginBinDirs)
+	// 加了一个默认的 CNI 插件 kubenet
+	cniPlugins = append(cniPlugins, kubenet.NewPlugin(pluginSettings.PluginBinDirs))
+	netHost := &amp;amp;dockerNetworkHost{
+		&amp;amp;namespaceGetter{ds},
+		&amp;amp;portMappingGetter{ds},
+	}
+	// 根据用户配置选择对应的网络插件对象，做 init() 初始化
+	plug, err := network.InitNetworkPlugin(cniPlugins, pluginSettings.PluginName, netHost, pluginSettings.HairpinMode, pluginSettings.NonMasqueradeCIDR, pluginSettings.MTU)
+
+	ds.network = network.NewPluginManager(plug)
+	klog.Infof(&amp;quot;Docker cri networking managed by %v&amp;quot;, plug.Name())
+
+	return ds, nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;Hairpin 模式&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;发夹式转发模式 (Hairpin mode)又称反射式转发模式 (Reflective Relay) ，指交换机可以将报文的接受端口同时作为发送端口, 即报文可以从它的入端口转发出去, 如下图所示:&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-4d0f0303.png&#34; src=&#34;images/index-4d0f0303.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;NewDockerService() 函数首先通过 effectiveHairpinMode() 计算出有效的 Hairpin 模式, 然后根据 NetworkPluginName 从插件列表中选择对应的网络插件对象.&lt;/p&gt;
+
+&lt;p&gt;ProbeNetworkPlugins() 根据配置的 CNI 插件的路径生成 network.NetworkPlugin interface 的实现 cniNetworkPlugin。&lt;/p&gt;
+
+&lt;p&gt;InitNetworkPlugin() 负责从网络插件对象列表中根据用户配置的网络插件名选择对应的网络插件对象，调用插件的 init() 执行初始化。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/kubelet/dockershim/network/plugins.go
+// InitNetworkPlugin inits the plugin that matches networkPluginName. Plugins must have unique names.
+func InitNetworkPlugin(plugins []NetworkPlugin, networkPluginName string, host Host, hairpinMode kubeletconfig.HairpinMode, nonMasqueradeCIDR string, mtu int) (NetworkPlugin, error) {
+	// 如果用户没有配置网络插件名, 默认就是NoopNetworkPlugin, 不会提供任何容器网络
+	// NoopNetworkPlugin 是 NetworkPlugin interface 的实现
+	if networkPluginName == &amp;quot;&amp;quot; {
+		// default to the no_op plugin
+		plug := &amp;amp;NoopNetworkPlugin{}
+		plug.Sysctl = utilsysctl.New()
+		if err := plug.Init(host, hairpinMode, nonMasqueradeCIDR, mtu); err != nil {
+			return nil, err
+		}
+		return plug, nil
+	}
+	...
+	chosenPlugin := pluginMap[networkPluginName]
+	if chosenPlugin != nil {
+		// 执行插件的初始化操作
+		err := chosenPlugin.Init(host, hairpinMode, nonMasqueradeCIDR, mtu)
+	}
+	...
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;通告-pod-cidr-的更新&#34;&gt;通告 Pod CIDR 的更新&lt;/h2&gt;
+
+&lt;p&gt;k8s 对 Pod 的管理是通过 runtime 来操作的，因此对 CIDR 的更新也是通过 runtime 实现。当 Pod 的 CIDR 更新时调用 runtime 的 UpdatePodCIDR()。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/kubelet/kubelet_network.go
+// updatePodCIDR updates the pod CIDR in the runtime state if it is different
+// from the current CIDR. Return true if pod CIDR is actually changed.
+func (kl *Kubelet) updatePodCIDR(cidr string) (bool, error) {
+
+	// 配置与当前状态比较，没有变化直接返回
+	podCIDR := kl.runtimeState.podCIDR()
+	if podCIDR == cidr {
+		return false, nil
+	}
+
+	// kubelet -&amp;gt; generic runtime -&amp;gt; runtime shim -&amp;gt; network plugin
+	// docker/non-cri implementations have a passthrough UpdatePodCIDR
+	if err := kl.getRuntime().UpdatePodCIDR(cidr); err != nil {
+		// If updatePodCIDR would fail, theoretically pod CIDR could not change.
+		// But it is better to be on the safe side to still return true here.
+		return true, fmt.Errorf(&amp;quot;failed to update pod CIDR: %v&amp;quot;, err)
+	}
+
+	// 更新当前状态，以便以后比较
+	kl.runtimeState.setPodCIDR(cidr)
+	return true, nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;runtime&#34;&gt;runtime&lt;/h2&gt;
+
+&lt;p&gt;要先讲下 k8s runtime 的管理。&lt;/p&gt;
+
+&lt;p&gt;k8s 通过 kubeGenericRuntimeManager 来做统一的 RC 管理，该类会调用对应的 RC shim 来做下发操作。&lt;/p&gt;
+
+&lt;p&gt;kubelet 的 &lt;code&gt;containerRuntime&lt;/code&gt; 是在 NewMainKubelet() 函数中如下代码片段配置的。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;runtime, err := kuberuntime.NewKubeGenericRuntimeManager(
+	kubecontainer.FilterEventRecorder(kubeDeps.Recorder),
+	...)
+
+klet.containerRuntime = runtime
+klet.streamingRuntime = runtime
+klet.runner = runtime
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// kuberuntime/kuberuntime_manager.go
+// UpdatePodCIDR is just a passthrough method to update the runtimeConfig of the shim
+// with the podCIDR supplied by the kubelet.
+func (m *kubeGenericRuntimeManager) UpdatePodCIDR(podCIDR string) error {
+	// TODO(#35531): do we really want to write a method on this manager for each
+	// field of the config?
+	klog.Infof(&amp;quot;updating runtime config through cri with podcidr %v&amp;quot;, podCIDR)
+	return m.runtimeService.UpdateRuntimeConfig(
+		&amp;amp;runtimeapi.RuntimeConfig{
+			NetworkConfig: &amp;amp;runtimeapi.NetworkConfig{
+				PodCidr: podCIDR,
+			},
+		})
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;kubeGenericRuntimeManager 的 runtimeService 在初始化时设置的是 instrumentedRuntimeService，这个结构是对 RuntimeService interface 的一个封装和实现，用来记录操作和错误的 metrics。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// instrumentedRuntimeService wraps the RuntimeService and records the operations
+// and errors metrics.
+type instrumentedRuntimeService struct {
+	service internalapi.RuntimeService
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;而真正的 RuntimeService interface 的实现是在 NewMainKubelet() 的如下片段中赋值的。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;runtimeService, imageService, err := getRuntimeAndImageServices(remoteRuntimeEndpoint, remoteImageEndpoint, kubeCfg.RuntimeRequestTimeout)
+klet.runtimeService = runtimeService
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;remoteRuntimeEndpoint 是在 kubelet 启动命令中指定的值为 &lt;code&gt;unix:///var/run/dockershim.sock&lt;/code&gt;
+，kubelet 就是通过这个 socket 与 runtime 进行gRPC 通信的。保存在 KubeletFlags 中，该参数在&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;type KubeletFlags struct {
+	KubeConfig          string
+	...
+	RemoteRuntimeEndpoint string
+	RemoteImageEndpoint string
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;getRuntimeAndImageServices() 调用 NewRemoteRuntimeService() 根据 RC 的 endpoint 创建一个 gRPC 的 client 封装到 RemoteRuntimeService 中，这是一个 internalapi.RuntimeService interface 的具体实现。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;
+// NewRemoteRuntimeService creates a new internalapi.RuntimeService.
+func NewRemoteRuntimeService(endpoint string, connectionTimeout time.Duration) (internalapi.RuntimeService, error) {
+	addr, dailer, err := util.GetAddressAndDialer(endpoint)
+	ctx, cancel := context.WithTimeout(context.Background(), connectionTimeout)
+	defer cancel()
+
+	conn, err := grpc.DialContext(ctx, addr, grpc.WithInsecure(), grpc.WithDialer(dailer), grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)))
+
+	return &amp;amp;RemoteRuntimeService{
+		timeout:       connectionTimeout,
+		runtimeClient: runtimeapi.NewRuntimeServiceClient(conn),
+		lastError:     make(map[string]string),
+		errorPrinted:  make(map[string]time.Time),
+	}, nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;runtime 主要提供两种服务：RuntimeService 和 ImageService 用来管理容器的镜像。 k8s 与 runtime 通过 RPC 通信，在配置 podCIDR 时调用的是 RuntimeService 的 UpdateRuntimeConfig rpc：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/kubelet/apis/cri/runtime/v1alpha2/api.proto
+service RuntimeService {
+	...
+	// UpdateRuntimeConfig updates the runtime configuration based on the given request.
+	rpc UpdateRuntimeConfig(UpdateRuntimeConfigRequest) returns (UpdateRuntimeConfigResponse) {}
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;这样网络配置就下发给了 runtime，runtime 调用 CNI 插件来做网络配置变更。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/kubelet/dockershim/docker_service.go
+// UpdateRuntimeConfig updates the runtime config. Currently only handles podCIDR updates.
+func (ds *dockerService) UpdateRuntimeConfig(_ context.Context, r *runtimeapi.UpdateRuntimeConfigRequest) (*runtimeapi.UpdateRuntimeConfigResponse, error) {
+	runtimeConfig := r.GetRuntimeConfig()
+	if runtimeConfig == nil {
+		return &amp;amp;runtimeapi.UpdateRuntimeConfigResponse{}, nil
+	}
+
+	klog.Infof(&amp;quot;docker cri received runtime config %+v&amp;quot;, runtimeConfig)
+	if ds.network != nil &amp;amp;&amp;amp; runtimeConfig.NetworkConfig.PodCidr != &amp;quot;&amp;quot; {
+		event := make(map[string]interface{})
+		event[network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE_DETAIL_CIDR] = runtimeConfig.NetworkConfig.PodCidr
+		ds.network.Event(network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE, event)
+	}
+
+	return &amp;amp;runtimeapi.UpdateRuntimeConfigResponse{}, nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;下图是 kubelet runtime UML&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/kebelet-runtime.svg&#34; alt=&#34;kebelet-runtime-uml&#34; /&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;kubenet-plugin-实现&#34;&gt;kubenet plugin 实现&lt;/h1&gt;
+
+&lt;p&gt;前面知道网络插件的接口是 NetworkPlugin interface，k8s kubenet 网络框架用 embed network.NoopNetworkPlugin 的 kubenetNetworkPlugin 实现了接口。&lt;/p&gt;
+
+&lt;p&gt;kubenet 利用的是官方提供的三个 cni 类型插件: &lt;code&gt;bridge&lt;/code&gt;, &lt;code&gt;host-local&lt;/code&gt;, &lt;code&gt;loopback&lt;/code&gt; (参考 &lt;a href=&#34;https://github.com/containernetworking/plugins/tree/master/plugins/main&#34; target=&#34;_blank&#34;&gt;cni plugins&lt;/a&gt;, &lt;a href=&#34;https://github.com/containernetworking/plugins/tree/master/plugins/ipam&#34; target=&#34;_blank&#34;&gt;cni ipam&lt;/a&gt;), 这个插件一般位于每个 Node 的 &lt;code&gt;/opt/cni/bin&lt;/code&gt; 目录。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;type kubenetNetworkPlugin struct {
+	network.NoopNetworkPlugin
+
+	host            network.Host
+	netConfig       *libcni.NetworkConfig
+	loConfig        *libcni.NetworkConfig
+	cniConfig       libcni.CNI
+	bandwidthShaper bandwidth.BandwidthShaper
+	mu              sync.Mutex //Mutex for protecting podIPs map, netConfig, and shaper initialization
+	podIPs          map[kubecontainer.ContainerID]string
+	mtu             int
+	execer          utilexec.Interface
+	nsenterPath     string
+	hairpinMode     kubeletconfig.HairpinMode
+	// kubenet can use either hostportSyncer and hostportManager to implement hostports
+	// Currently, if network host supports legacy features, hostportSyncer will be used,
+	// otherwise, hostportManager will be used.
+	hostportSyncer  hostport.HostportSyncer
+	hostportManager hostport.HostPortManager
+	iptables        utiliptables.Interface
+	sysctl          utilsysctl.Interface
+	ebtables        utilebtables.Interface
+	// binDirs is passed by kubelet cni-bin-dir parameter.
+	// kubenet will search for CNI binaries in DefaultCNIDir first, then continue to binDirs.
+	binDirs           []string
+	nonMasqueradeCIDR string
+	podCidr           string
+	gateway           net.IP
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;kubenet 直接利用了官方提供的三个 cni plugin:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/kubelet/network/kubenet/kubenet_linux.go
+// CNI plugins required by kubenet in /opt/cni/bin or vendor directory
+var requiredCNIPlugins = [...]string{&amp;quot;bridge&amp;quot;, &amp;quot;host-local&amp;quot;, &amp;quot;loopback&amp;quot;}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;kubenet 网络框架原理非常的简单, 主要利用 &amp;ldquo;bridge&amp;rdquo;, &amp;ldquo;host-local&amp;rdquo;, &amp;ldquo;loopback&amp;rdquo; (位于 /opt/cni/bin 目录下) 这三个 cni plugin主要的功能：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;在每个 Node 上创建一个 cbr0 网桥&lt;/li&gt;
+&lt;li&gt;根据 PodCIDR 为每个 Pod 的 interface 分配一个 ip,&lt;/li&gt;
+&lt;li&gt;将该 interface 连接到 cbr0 网桥上.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;当然, 对于 kubernetes 集群来说, 还需要解决两个问题:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Node 的 PodCIDR 设置&lt;/p&gt;
+
+&lt;p&gt;k8s kubenet 网络框架中，必须给每个 node 配置一个 podCIDR.&lt;/p&gt;
+
+&lt;p&gt;那么, 每个 Node 的 PodCIDR 如何设置呢? 这个需要参考 kubenet 网络的配置文档了:&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;The node must be assigned an IP subnet through either the &amp;ndash;pod-cidr kubelet command-line option or the &amp;ndash;allocate-node-cidrs=true &amp;ndash;cluster-cidr=&lt;cidr&gt; controller-manager command-line options.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;其实就是两种方式:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;通过 &amp;ndash;pod-cidr 为每个 Node 上的 kubelet 配置好 PodCIDR&lt;/li&gt;
+&lt;li&gt;通过 &amp;ndash;allocate-node-cidrs=true &amp;ndash;cluster-cidr=&lt;cluster_cidr&gt; 让 controller-manager 来为每个 Node 分配 PodCIDR.&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Node 之间的路由设置&lt;/p&gt;
+
+&lt;p&gt;虽然现在每个 Node 都配置好了 PodCIDR, 比如:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Node1: 192.168.0.0/24 Node2: 192.168.1.0/24
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;但是 Node1 和 Node2 上的容器如何通信呢?&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;It is typically used together with a cloud provider that sets up routing rules for communication between nodes, or in single-node environments.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;通常情况下, kubenet 网络插件会跟 cloud provider 一起使用, 从而利用 cloud provider 来设置节点间的路由. kubenet 网络插件也可以用在单节点环境, 这样就不需要考虑 Node 间的路由了. 另外, 我们还可以通过实现一个 network controller 来保证 Node 间的路由.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&#34;kubenet-init&#34;&gt;kubenet Init&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/kubelet/dockershim/network/kubenet/kubenet_linux.go
+func NewPlugin(networkPluginDirs []string) network.NetworkPlugin {
+	protocol := utiliptables.ProtocolIpv4
+	execer := utilexec.New()
+	dbus := utildbus.New()
+	sysctl := utilsysctl.New()
+	iptInterface := utiliptables.New(execer, dbus, protocol)
+	return &amp;amp;kubenetNetworkPlugin{
+		podIPs:            make(map[kubecontainer.ContainerID]string),
+		execer:            utilexec.New(),
+		iptables:          iptInterface,
+		sysctl:            sysctl,
+		binDirs:           append([]string{DefaultCNIDir}, networkPluginDirs...),
+		hostportSyncer:    hostport.NewHostportSyncer(iptInterface),
+		hostportManager:   hostport.NewHostportManager(iptInterface),
+		nonMasqueradeCIDR: &amp;quot;10.0.0.0/8&amp;quot;,
+	}
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;在前面的 InitNetworkPlugin() 流程中会调用各个插件的 Init() 来初始化插件。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/kubelet/dockershim/network/kubenet/kubenet_linux.go
+func (plugin *kubenetNetworkPlugin) Init(host network.Host, hairpinMode kubeletconfig.HairpinMode, nonMasqueradeCIDR string, mtu int) error {
+
+	// 配置 MTU todo 为什么这里要设置 MTU？
+	...
+	// 确认加载了 br-netfilter，设置 bridge-nf-call-iptables=1
+	plugin.execer.Command(&amp;quot;modprobe&amp;quot;, &amp;quot;br-netfilter&amp;quot;).CombinedOutput()
+	err := plugin.sysctl.SetSysctl(sysctlBridgeCallIPTables, 1)
+
+	// 配置 loopback cni 插件
+	plugin.loConfig, err = libcni.ConfFromBytes([]byte(`{
+  &amp;quot;cniVersion&amp;quot;: &amp;quot;0.1.0&amp;quot;,
+  &amp;quot;name&amp;quot;: &amp;quot;kubenet-loopback&amp;quot;,
+  &amp;quot;type&amp;quot;: &amp;quot;loopback&amp;quot;
+}`))
+	plugin.nsenterPath, err = plugin.execer.LookPath(&amp;quot;nsenter&amp;quot;)
+	// 下发 SNAT 的 ipatable rule
+	// Need to SNAT outbound traffic from cluster
+	if err = plugin.ensureMasqRule(); err != nil {
+		return err
+	}
+	return nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;kubenet-event&#34;&gt;kubenet Event&lt;/h2&gt;
+
+&lt;p&gt;kubelet 启动到 NewMainKubelet 时, 根据用户配置通过 klet.updatePodCIDR(kubeCfg.PodCIDR) 向 k8s network plugin 通报 NET_PLUGIN_EVENT_POD_CIDR_CHANGE 事件, 该事件将会被 Event 方法捕获.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/kubelet/network/kubenet/kubenet_linux.go
+
+const NET_CONFIG_TEMPLATE = `{
+  &amp;quot;cniVersion&amp;quot;: &amp;quot;0.1.0&amp;quot;,
+  &amp;quot;name&amp;quot;: &amp;quot;kubenet&amp;quot;,
+  &amp;quot;type&amp;quot;: &amp;quot;bridge&amp;quot;,
+  &amp;quot;bridge&amp;quot;: &amp;quot;%s&amp;quot;,
+  &amp;quot;mtu&amp;quot;: %d,
+  &amp;quot;addIf&amp;quot;: &amp;quot;%s&amp;quot;,
+  &amp;quot;isGateway&amp;quot;: true,
+  &amp;quot;ipMasq&amp;quot;: false,
+  &amp;quot;hairpinMode&amp;quot;: %t,
+  &amp;quot;ipam&amp;quot;: {
+    &amp;quot;type&amp;quot;: &amp;quot;host-local&amp;quot;,
+    &amp;quot;subnet&amp;quot;: &amp;quot;%s&amp;quot;,
+    &amp;quot;gateway&amp;quot;: &amp;quot;%s&amp;quot;,
+    &amp;quot;routes&amp;quot;: [
+      { &amp;quot;dst&amp;quot;: &amp;quot;0.0.0.0/0&amp;quot; }
+    ]
+  }
+}`
+
+func (plugin *kubenetNetworkPlugin) Event(name string, details map[string]interface{}) {
+
+	podCIDR, ok := details[network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE_DETAIL_CIDR].(string)
+
+
+	_, cidr, err := net.ParseCIDR(podCIDR)
+	if err == nil {
+		setHairpin := plugin.hairpinMode == kubeletconfig.HairpinVeth
+		// Set bridge address to first address in IPNet
+		cidr.IP[len(cidr.IP)-1] += 1
+
+		// 更新 cni 网络配置
+        // 从 NET_CONFIG_TEMPLATE 中看出, host-local ipam 的 subnet 就是 podCIDR
+        // 这其实也就是为什么 k8s kubenet 网络插件需要为每个 node 分配 podCIDR 的原因
+		json := fmt.Sprintf(NET_CONFIG_TEMPLATE, BridgeName, plugin.mtu, network.DefaultInterfaceName, setHairpin, podCIDR, cidr.IP.String())
+		// 网络配置都保存在 netConfig 中
+		plugin.netConfig, err = libcni.ConfFromBytes([]byte(json))
+		if err == nil {
+			klog.V(5).Infof(&amp;quot;CNI network config:\n%s&amp;quot;, json)
+
+			// Ensure cbr0 has no conflicting addresses; CNI&#39;s &#39;bridge&#39;
+			// plugin will bail out if the bridge has an unexpected one
+			plugin.clearBridgeAddressesExcept(cidr)
+		}
+		plugin.podCidr = podCIDR
+		plugin.gateway = cidr.IP
+	}
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;todo: Event() 也只是更新了 &lt;code&gt;podCidr&lt;/code&gt; 和 &lt;code&gt;netConfig&lt;/code&gt;，哪里下发了更新？&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;根据配置的改变设置 kubenetNetworkPlugin 对应的变量。&lt;/p&gt;
+
+&lt;h2 id=&#34;kubenet-setuppod&#34;&gt;kubenet SetUpPod&lt;/h2&gt;
+
+&lt;p&gt;创建 Pod 的时候会调用该方法，该方法调用 &lt;code&gt;setup()&lt;/code&gt; 来完成配置，这个接口最重要的功能是将容器的 eth0 接口加入到了 namespace 中&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// setup sets up networking through CNI using the given ns/name and sandbox ID.
+func (plugin *kubenetNetworkPlugin) setup(namespace string, name string, id kubecontainer.ContainerID, annotations map[string]string) error {
+
+	// 添加 loopback interface 到 pod 的 network namespace
+	// Bring up container loopback interface
+	if _, err := plugin.addContainerToNetwork(plugin.loConfig, &amp;quot;lo&amp;quot;, namespace, name, id); err != nil {
+		return err
+	}
+
+	// 添加 DefaultInterfaceName eth0 到 pod 的 network namespace
+	// Hook container up with our bridge
+	resT, err := plugin.addContainerToNetwork(plugin.netConfig, network.DefaultInterfaceName, namespace, name, id)
+	if err != nil {
+		return err
+	}
+	// Coerce the CNI result version
+	res, err := cnitypes020.GetResult(resT)
+	ip4 := res.IP4.IP.IP.To4()
+
+	// 为了配置 hairpin 设置网卡混杂模式
+	...
+
+	plugin.podIPs[id] = ip4.String()
+
+
+	// TODO: replace with CNI port-forwarding plugin
+	// TODO: portMappings 的用途是什么？
+	portMappings, err := plugin.host.GetPodPortMappings(id.ID)
+	if err != nil {
+		return err
+	}
+	if portMappings != nil &amp;amp;&amp;amp; len(portMappings) &amp;gt; 0 {
+		if err := plugin.hostportManager.Add(id.ID, &amp;amp;hostport.PodPortMapping{
+			Namespace:    namespace,
+			Name:         name,
+			PortMappings: portMappings,
+			IP:           ip4,
+			HostNetwork:  false,
+		}, BridgeName); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;接着看看 addContainerToNetwork() 方法:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/kubelet/dockershim/network/kubenet/kubenet_linux.go
+
+func (plugin *kubenetNetworkPlugin) addContainerToNetwork(config *libcni.NetworkConfig, ifName, namespace, name string, id kubecontainer.ContainerID) (cnitypes.Result, error) {
+	rt, err := plugin.buildCNIRuntimeConf(ifName, id, true)
+	if err != nil {
+		return nil, fmt.Errorf(&amp;quot;Error building CNI config: %v&amp;quot;, err)
+	}
+
+	// The network plugin can take up to 3 seconds to execute,
+	// so yield the lock while it runs.
+	plugin.mu.Unlock()
+	res, err := plugin.cniConfig.AddNetwork(config, rt)
+	plugin.mu.Lock()
+	return res, nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;由前面 CNI 库接口可知, plugin.cniConfig.AddNetwork() 实际上调用的是 cni plugin 去实现容器网络配置. kubenet plugin 主要通过 loopback 和 bridge cni 插件将容器的 lo 和 eth0 添加到容器网络中. bridge 插件负责 Node 上 cbr0 的创建, 然后创建 veth 接口对, 通过 veth 接口对, 将容器添加到容器网络中. 另外, host-local IPAM plugin 负责为 eth0 分配 ip 地址.&lt;/p&gt;
+
+&lt;h2 id=&#34;kubenet-teardownpod&#34;&gt;kubenet TearDownPod&lt;/h2&gt;
+
+&lt;p&gt;删除 Pod 的时候会被调用。主要是通过函数 teardown() 实现。主要的流程是调用 CNI 删除网络配置。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;
+// Tears down as much of a pod&#39;s network as it can even if errors occur.  Returns
+// an aggregate error composed of all errors encountered during the teardown.
+func (plugin *kubenetNetworkPlugin) teardown(namespace string, name string, id kubecontainer.ContainerID, podIP string) error {
+	errList := []error{}
+
+	if err := plugin.delContainerFromNetwork(plugin.netConfig, network.DefaultInterfaceName, namespace, name, id); err != nil {
+		// This is to prevent returning error when TearDownPod is called twice on the same pod. This helps to reduce event pollution.
+		if podIP != &amp;quot;&amp;quot; {
+			klog.Warningf(&amp;quot;Failed to delete container from kubenet: %v&amp;quot;, err)
+		} else {
+			errList = append(errList, err)
+		}
+	}
+
+	portMappings, err := plugin.host.GetPodPortMappings(id.ID)
+	if err != nil {
+		errList = append(errList, err)
+	} else if portMappings != nil &amp;amp;&amp;amp; len(portMappings) &amp;gt; 0 {
+		if err = plugin.hostportManager.Remove(id.ID, &amp;amp;hostport.PodPortMapping{
+			Namespace:    namespace,
+			Name:         name,
+			PortMappings: portMappings,
+			HostNetwork:  false,
+		}); err != nil {
+			errList = append(errList, err)
+		}
+	}
+	return utilerrors.NewAggregate(errList)
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;由前面 CNI 库接口可知, plugin.cniConfig.DelNetwork() 实际上调用的是 cni plugin 去删除容器网络配置. bridge 插件负责调用 host-local IPAM plugin 释放该容器的 ip, 然后删除容器的网络接口等.&lt;/p&gt;
+
+&lt;h1 id=&#34;cni-plugin-实现&#34;&gt;CNI plugin 实现&lt;/h1&gt;
+
+&lt;p&gt;CNI plugin 是一种更通用的实现，允许用户自定义插件。cniNetworkPlugin 是 NetworkPlugin interface 的一个实现，具体的代码如下。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/kubelet/dockershim/network/cni/cni.go
+
+type cniNetworkPlugin struct {
+	network.NoopNetworkPlugin
+	loNetwork *cniNetwork
+	sync.RWMutex
+	defaultNetwork *cniNetwork
+	host        network.Host
+	execer      utilexec.Interface
+	nsenterPath string
+	confDir     string
+	binDirs     []string
+	podCidr     string
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;通过 cniNetwork 类型的 loNetwork 和 defaultNetwork 来调用 CNI 插件，cniNetwork 定义如下。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/kubelet/dockershim/network/cni/cni.go
+
+type cniNetwork struct {
+	name          string
+	NetworkConfig *libcni.NetworkConfigList
+	CNIConfig     libcni.CNI
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;cni-init&#34;&gt;CNI Init&lt;/h2&gt;
+
+&lt;p&gt;在 NewDockerService() 函数中调用 ProbeNetworkPlugins() 根据配置的 CNI 插件的路径生成 network.NetworkPlugin interface 的实现 cniNetworkPlugin。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/kubelet/dockershim/network/cni/cni.go
+func ProbeNetworkPlugins(confDir string, binDirs []string) []network.NetworkPlugin {
+	old := binDirs
+	binDirs = make([]string, 0, len(binDirs))
+	for _, dir := range old {
+		if dir != &amp;quot;&amp;quot; {
+			binDirs = append(binDirs, dir)
+		}
+	}
+
+	plugin := &amp;amp;cniNetworkPlugin{
+		defaultNetwork: nil,
+		loNetwork:      getLoNetwork(binDirs),
+		execer:         utilexec.New(),
+		confDir:        confDir,
+		binDirs:        binDirs,
+	}
+
+	// sync NetworkConfig in best effort during probing.
+	plugin.syncNetworkConfig()
+	return []network.NetworkPlugin{plugin}
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;主要是对 loNetwork 和 defaultNetwork 变量的配置。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/kubelet/dockershim/network/cni/cni_others.go
+func getLoNetwork(binDirs []string) *cniNetwork {
+	loConfig, err := libcni.ConfListFromBytes([]byte(`{
+  &amp;quot;cniVersion&amp;quot;: &amp;quot;0.2.0&amp;quot;,
+  &amp;quot;name&amp;quot;: &amp;quot;cni-loopback&amp;quot;,
+  &amp;quot;plugins&amp;quot;:[{
+    &amp;quot;type&amp;quot;: &amp;quot;loopback&amp;quot;
+  }]
+}`))
+	loNetwork := &amp;amp;cniNetwork{
+		name:          &amp;quot;lo&amp;quot;,
+		NetworkConfig: loConfig,
+		CNIConfig:     &amp;amp;libcni.CNIConfig{Path: binDirs},
+	}
+
+	return loNetwork
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Init() 做的就是配置 defaultNetwork&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;
+func getDefaultCNINetwork(confDir string, binDirs []string) (*cniNetwork, error) {
+		// 从配置文件获取 confList
+		network := &amp;amp;cniNetwork{
+			name:          confList.Name,
+			NetworkConfig: confList,
+			CNIConfig:     &amp;amp;libcni.CNIConfig{Path: binDirs},
+		}
+		return network, nil
+	}
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;cni-event&#34;&gt;CNI Event&lt;/h2&gt;
+
+&lt;p&gt;收到 &lt;code&gt;NET_PLUGIN_EVENT_POD_CIDR_CHANGE&lt;/code&gt; 事件时只是更新了 &lt;code&gt;podCidr&lt;/code&gt; 的值&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func (plugin *cniNetworkPlugin) Event(name string, details map[string]interface{}) {
+
+	podCIDR, ok := details[network.NET_PLUGIN_EVENT_POD_CIDR_CHANGE_DETAIL_CIDR].(string)
+
+	plugin.podCidr = podCIDR
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;可见 k8s cni 网络方式并没有规定使用 podCidr 来配置 node 上容器的网络 ip 段, 而把 pod 的 ip 分配完全交给 IPAM, 这样使得 IPAM 更加灵活, 多样化和定制化&lt;/p&gt;
+
+&lt;h2 id=&#34;cni-setuppod&#34;&gt;CNI SetUpPod&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/kubelet/dockershim/network/cni/cni.go
+func (plugin *cniNetworkPlugin) SetUpPod(namespace string, name string, id kubecontainer.ContainerID, annotations, options map[string]string) error {
+
+	...
+	// Windows doesn&#39;t have loNetwork. It comes only with Linux
+	if plugin.loNetwork != nil {
+		if _, err = plugin.addToNetwork(plugin.loNetwork, name, namespace, id, netnsPath, annotations, options); err != nil {
+			return err
+		}
+	}
+
+	_, err = plugin.addToNetwork(plugin.getDefaultNetwork(), name, namespace, id, netnsPath, annotations, options)
+	return err
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;
+func (plugin *cniNetworkPlugin) addToNetwork(network *cniNetwork, podName string, podNamespace string, podSandboxID kubecontainer.ContainerID, podNetnsPath string, annotations, options map[string]string) (cnitypes.Result, error) {
+	netConf, cniNet := network.NetworkConfig, network.CNIConfig
+	res, err := cniNet.AddNetworkList(netConf, rt)
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;由前面 CNI 库接口可知, cninet.AddNetwork() 实际上调用的是底层用户配置的 cni plugin 去实现容器网络配置.&lt;/p&gt;
+
+&lt;h2 id=&#34;cni-teardownpod&#34;&gt;CNI TearDownPod&lt;/h2&gt;
+
+&lt;p&gt;与前面的流程类似，最终调用底层的 cni plugin 删掉配置。代码略。&lt;/p&gt;
+
+&lt;h1 id=&#34;cni-演进&#34;&gt;CNI 演进&lt;/h1&gt;
+
+&lt;h2 id=&#34;多-interface-支持&#34;&gt;多 interface 支持&lt;/h2&gt;
+
+&lt;p&gt;目前 Kubernetes CNI 网络模型中还不支持多个 interface，社区关于这方面的讨论：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/containernetworking/cni/issues/114&#34; target=&#34;_blank&#34;&gt;Multiple interfaces in a POD&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/kubernetes/kubernetes/issues/27398&#34; target=&#34;_blank&#34;&gt;Support multiple pod IP addresses&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/containernetworking/cni/pull/379&#34; target=&#34;_blank&#34;&gt;README: List multus as 3rd party plugin&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/openvswitch/ovn-kubernetes/issues/56&#34; target=&#34;_blank&#34;&gt;Multiple network support&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;多-cni-plugin-支持&#34;&gt;多 CNI plugin 支持&lt;/h2&gt;
+
+&lt;p&gt;目前只支持单个 CNI plugin，关于 CNI plugin chain的讨论：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/Intel-Corp/multus-cni/issues/3&#34; target=&#34;_blank&#34;&gt;Is there any reference yaml file applying multus-cni for pod network?&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/Intel-Corp/multus-cni&#34; target=&#34;_blank&#34;&gt;MULTUS CNI plugin&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/kubernetes/kubernetes/pull/42202&#34; target=&#34;_blank&#34;&gt;Update CNI plugin to newest version; support ConfigLists&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/keontang/k8s-notes/blob/master/kubernetes-network.md&#34; target=&#34;_blank&#34;&gt;k8s network&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;问题&#34;&gt;问题&lt;/h1&gt;
+
+&lt;ol&gt;
+&lt;li&gt;dockerService 用途是什么？&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+    </item>
     
     <item>
       <title>Why 容器云</title>

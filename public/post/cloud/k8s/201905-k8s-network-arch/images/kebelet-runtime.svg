@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="1087px" preserveAspectRatio="none" style="width:642px;height:1087px;" version="1.1" viewBox="0 0 642 1087" width="642px" zoomAndPan="magnify">
+    <defs>
+        <filter height="300%" id="fr6x7srlvbsn8" width="300%" x="-1" y="-1">
+            <feGaussianBlur result="blurOut" stdDeviation="2.0" />
+            <feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0" />
+            <feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3" />
+            <feBlend in="SourceGraphic" in2="blurOut3" mode="normal" />
+        </filter>
+    </defs>
+    <g>
+        <!--cluster pkg/kubelet/container-->
+        <polygon fill="#FFFFFF" filter="url(#fr6x7srlvbsn8)" points="113,163,283,163,290,185.4883,293,185.4883,293,440,113,440,113,163" style="stroke: #000000; stroke-width: 1.5;" />
+        <line style="stroke: #000000; stroke-width: 1.5;" x1="113" x2="290" y1="185.4883" y2="185.4883" /><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="164" x="117" y="178.5352">pkg/kubelet/container</text>
+        <!--cluster pkg/kubelet/apis/cri(internalapi)-->
+        <polygon fill="#FFFFFF" filter="url(#fr6x7srlvbsn8)" points="363,529.5,610,529.5,617,551.9883,620,551.9883,620,690.5,363,690.5,363,529.5" style="stroke: #000000; stroke-width: 1.5;" />
+        <line style="stroke: #000000; stroke-width: 1.5;" x1="363" x2="617" y1="551.9883" y2="551.9883" /><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="241" x="367" y="545.0352">pkg/kubelet/apis/cri(internalapi)</text>
+        <!--cluster pkg/kubelet/kuberuntime-->
+        <polygon fill="#FFFFFF" filter="url(#fr6x7srlvbsn8)" points="56,465,251,465,258,487.4883,350,487.4883,350,876,56,876,56,465" style="stroke: #000000; stroke-width: 1.5;" />
+        <line style="stroke: #000000; stroke-width: 1.5;" x1="56" x2="258" y1="487.4883" y2="487.4883" /><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="189" x="60" y="480.5352">pkg/kubelet/kuberuntime</text>
+        <!--cluster pkg/kubelet-->
+        <polygon fill="#FFFFFF" filter="url(#fr6x7srlvbsn8)" points="14,16,109,16,116,38.4883,392,38.4883,392,138,14,138,14,16" style="stroke: #000000; stroke-width: 1.5;" />
+        <line style="stroke: #000000; stroke-width: 1.5;" x1="14" x2="116" y1="38.4883" y2="38.4883" /><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="89" x="18" y="31.5352">pkg/kubelet</text>
+        <!--cluster pkg/kubelet/remote-->
+        <polygon fill="#FFFFFF" filter="url(#fr6x7srlvbsn8)" points="180,901,334,901,341,923.4883,458,923.4883,458,1075,180,1075,180,901" style="stroke: #000000; stroke-width: 1.5;" />
+        <line style="stroke: #000000; stroke-width: 1.5;" x1="180" x2="341" y1="923.4883" y2="923.4883" /><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="148" x="184" y="916.5352">pkg/kubelet/remote</text>
+        <!--class Runtime-->
+        <rect fill="#FEFECE" filter="url(#fr6x7srlvbsn8)" height="242.3262" id="Runtime" style="stroke: #A80036; stroke-width: 1.5;" width="122" x="142" y="190" />
+        <ellipse cx="176.35" cy="206" fill="#B4A7E5" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;" />
+        <path d="M172.7777,202.2651 L172.7777,200.1069 L180.1571,200.1069 L180.1571,202.2651 L177.6918,202.2651 L177.6918,210.3418 L180.1571,210.3418 L180.1571,212.5 L172.7777,212.5 L172.7777,210.3418 L175.2431,210.3418 L175.2431,202.2651 Z " /><text fill="#000000" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="47" x="194.65" y="210.5352">Runtime</text>
+        <line style="stroke: #A80036; stroke-width: 1.5;" x1="143" x2="263" y1="222" y2="222" /><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="70" x="148" y="236.6348">ImageService</text>
+        <line style="stroke: #A80036; stroke-width: 1.5;" x1="143" x2="263" y1="242.9551" y2="242.9551" /><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="34" x="148" y="257.5898">Type()</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="49" x="148" y="270.5449">Version()</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="66" x="148" y="283.5">APIVersion()</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="41" x="148" y="296.4551">Status()</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="52" x="148" y="309.4102">GetPods()</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="90" x="148" y="322.3652">GarbageCollect()</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="53" x="148" y="335.3203">SyncPod()</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="44" x="148" y="348.2754">KillPod()</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="79" x="148" y="361.2305">GetPodStatus()</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="58" x="148" y="374.1855">GetNetNS()</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="110" x="148" y="387.1406">GetPodContainerID()</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="105" x="148" y="400.0957">GetContainerLogs()</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="94" x="148" y="413.0508">DeleteContainer()</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="92" x="148" y="426.0059">UpdatePodCIDR()</text>
+        <!--class RuntimeService-->
+        <rect fill="#FEFECE" filter="url(#fr6x7srlvbsn8)" height="125.7305" id="RuntimeService" style="stroke: #A80036; stroke-width: 1.5;" width="138" x="377" y="556.5" />
+        <ellipse cx="400.55" cy="572.5" fill="#B4A7E5" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;" />
+        <path d="M396.9777,568.7651 L396.9777,566.6069 L404.3571,566.6069 L404.3571,568.7651 L401.8918,568.7651 L401.8918,576.8418 L404.3571,576.8418 L404.3571,579 L396.9777,579 L396.9777,576.8418 L399.4431,576.8418 L399.4431,568.7651 Z " /><text fill="#000000" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="87" x="416.45" y="577.0352">RuntimeService</text>
+        <line style="stroke: #A80036; stroke-width: 1.5;" x1="378" x2="514" y1="588.5" y2="588.5" /><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="96" x="383" y="603.1348">RuntimeVersioner</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="99" x="383" y="616.0898">ContainerManager</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="113" x="383" y="629.0449">PodSandboxManager</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="125" x="383" y="642">ContainerStatsManager</text>
+        <line style="stroke: #A80036; stroke-width: 1.5;" x1="378" x2="514" y1="648.3203" y2="648.3203" /><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="126" x="383" y="662.9551">UpdateRuntimeConfig()</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="41" x="383" y="675.9102">Status()</text>
+        <!--class kubeGenericRuntimeManager-->
+        <rect fill="#FEFECE" filter="url(#fr6x7srlvbsn8)" height="255.2813" id="kubeGenericRuntimeManager" style="stroke: #A80036; stroke-width: 1.5;" width="277" x="64.5" y="492" />
+        <ellipse cx="113.75" cy="508" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;" />
+        <path d="M116.2231,514.1431 Q115.6421,514.4419 115.0029,514.5913 Q114.3638,514.7407 113.6582,514.7407 Q111.1514,514.7407 109.8315,513.0889 Q108.5117,511.437 108.5117,508.3159 Q108.5117,505.1865 109.8315,503.5347 Q111.1514,501.8828 113.6582,501.8828 Q114.3638,501.8828 115.0112,502.0322 Q115.6587,502.1816 116.2231,502.4805 L116.2231,505.2031 Q115.5923,504.6221 114.9988,504.3523 Q114.4053,504.0825 113.7744,504.0825 Q112.4297,504.0825 111.7449,505.1492 Q111.0601,506.2158 111.0601,508.3159 Q111.0601,510.4077 111.7449,511.4744 Q112.4297,512.541 113.7744,512.541 Q114.4053,512.541 114.9988,512.2712 Q115.5923,512.0015 116.2231,511.4204 Z " /><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="170" x="134.25" y="512.5352">kubeGenericRuntimeManager</text>
+        <line style="stroke: #A80036; stroke-width: 1.5;" x1="65.5" x2="340.5" y1="524" y2="524" /><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="131" x="70.5" y="538.6348">runtimeName string</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="200" x="70.5" y="551.5898">recorder record.EventRecorder</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="229" x="70.5" y="564.5449">osInterface kubecontainer.OSInterface</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="265" x="70.5" y="577.5">containerRefManager *kubecontainer.RefManager</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="204" x="70.5" y="590.4551">machineInfo *cadvisorapi.MachineInfo</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="142" x="70.5" y="603.4102">containerGC *containerGC</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="224" x="70.5" y="616.3652">keyring credentialprovider.DockerKeyring</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="201" x="70.5" y="629.3203">runner kubecontainer.HandlerRunner</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="239" x="70.5" y="642.2754">runtimeHelper kubecontainer.RuntimeHelper</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="210" x="70.5" y="655.2305">livenessManager proberesults.Manager</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="184" x="70.5" y="668.1855">imagePuller images.ImageManager</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="225" x="70.5" y="681.1406">runtimeService internalapi.RuntimeService</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="255" x="70.5" y="694.0957">imageService internalapi.ImageManagerService</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="183" x="70.5" y="707.0508">versionCache *cache.ObjectCache</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="249" x="70.5" y="720.0059">internalLifecycle cm.InternalContainerLifecycle</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="243" x="70.5" y="732.9609">runtimeClassManager *runtimeclass.Manager</text>
+        <line style="stroke: #A80036; stroke-width: 1.5;" x1="65.5" x2="340.5" y1="739.2813" y2="739.2813" />
+        <!--class instrumentedRuntimeService-->
+        <rect fill="#FEFECE" filter="url(#fr6x7srlvbsn8)" height="60.9551" id="instrumentedRuntimeService" style="stroke: #A80036; stroke-width: 1.5;" width="195" x="146.5" y="807" />
+        <ellipse cx="161.5" cy="823" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;" />
+        <path d="M163.9731,829.1431 Q163.3921,829.4419 162.7529,829.5913 Q162.1138,829.7407 161.4082,829.7407 Q158.9014,829.7407 157.5815,828.0889 Q156.2617,826.437 156.2617,823.3159 Q156.2617,820.1865 157.5815,818.5347 Q158.9014,816.8828 161.4082,816.8828 Q162.1138,816.8828 162.7612,817.0322 Q163.4087,817.1816 163.9731,817.4805 L163.9731,820.2031 Q163.3423,819.6221 162.7488,819.3523 Q162.1553,819.0825 161.5244,819.0825 Q160.1797,819.0825 159.4949,820.1492 Q158.8101,821.2158 158.8101,823.3159 Q158.8101,825.4077 159.4949,826.4744 Q160.1797,827.541 161.5244,827.541 Q162.1553,827.541 162.7488,827.2712 Q163.3423,827.0015 163.9731,826.4204 Z " /><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="163" x="175.5" y="827.5352">instrumentedRuntimeService</text>
+        <line style="stroke: #A80036; stroke-width: 1.5;" x1="147.5" x2="340.5" y1="839" y2="839" /><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="183" x="152.5" y="853.6348">service internalapi.RuntimeService</text>
+        <line style="stroke: #A80036; stroke-width: 1.5;" x1="147.5" x2="340.5" y1="859.9551" y2="859.9551" />
+        <!--class Kubelet-->
+        <rect fill="#FEFECE" filter="url(#fr6x7srlvbsn8)" height="86.8652" id="Kubelet" style="stroke: #A80036; stroke-width: 1.5;" width="361" x="22.5" y="43" />
+        <ellipse cx="176.75" cy="59" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;" />
+        <path d="M179.2231,65.1431 Q178.6421,65.4419 178.0029,65.5913 Q177.3638,65.7407 176.6582,65.7407 Q174.1514,65.7407 172.8315,64.0889 Q171.5117,62.437 171.5117,59.3159 Q171.5117,56.1865 172.8315,54.5347 Q174.1514,52.8828 176.6582,52.8828 Q177.3638,52.8828 178.0112,53.0322 Q178.6587,53.1816 179.2231,53.4805 L179.2231,56.2031 Q178.5923,55.6221 177.9988,55.3523 Q177.4053,55.0825 176.7744,55.0825 Q175.4297,55.0825 174.7449,56.1492 Q174.0601,57.2158 174.0601,59.3159 Q174.0601,61.4077 174.7449,62.4744 Q175.4297,63.541 176.7744,63.541 Q177.4053,63.541 177.9988,63.2712 Q178.5923,63.0015 179.2231,62.4204 Z " /><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="44" x="197.25" y="63.5352">Kubelet</text>
+        <line style="stroke: #A80036; stroke-width: 1.5;" x1="23.5" x2="382.5" y1="75" y2="75" /><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="349" x="28.5" y="89.6348">kubeletConfiguration kubeletconfiginternal.KubeletConfiguration</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="88" x="28.5" y="102.5898">hostname string</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="222" x="28.5" y="115.5449">containerRuntime kubecontainer.Runtime</text>
+        <line style="stroke: #A80036; stroke-width: 1.5;" x1="23.5" x2="382.5" y1="121.8652" y2="121.8652" />
+        <!--class RemoteRuntimeService-->
+        <rect fill="#FEFECE" filter="url(#fr6x7srlvbsn8)" height="138.6855" id="RemoteRuntimeService" style="stroke: #A80036; stroke-width: 1.5;" width="262" x="188" y="928" />
+        <ellipse cx="249.25" cy="944" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;" />
+        <path d="M251.7231,950.1431 Q251.1421,950.4419 250.5029,950.5913 Q249.8638,950.7407 249.1582,950.7407 Q246.6514,950.7407 245.3315,949.0889 Q244.0117,947.437 244.0117,944.3159 Q244.0117,941.1865 245.3315,939.5347 Q246.6514,937.8828 249.1582,937.8828 Q249.8638,937.8828 250.5112,938.0322 Q251.1587,938.1816 251.7231,938.4805 L251.7231,941.2031 Q251.0923,940.6221 250.4988,940.3523 Q249.9053,940.0825 249.2744,940.0825 Q247.9297,940.0825 247.2449,941.1492 Q246.5601,942.2158 246.5601,944.3159 Q246.5601,946.4077 247.2449,947.4744 Q247.9297,948.541 249.2744,948.541 Q249.9053,948.541 250.4988,948.2712 Q251.0923,948.0015 251.7231,947.4204 Z " /><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="131" x="269.75" y="948.5352">RemoteRuntimeService</text>
+        <line style="stroke: #A80036; stroke-width: 1.5;" x1="189" x2="449" y1="960" y2="960" /><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="135" x="194" y="974.6348">timeout time.Duration</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="250" x="194" y="987.5898">runtimeClient runtimeapi.RuntimeServiceClient</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="145" x="194" y="1000.5449">lastError map[string]string</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="184" x="194" y="1013.5">errorPrinted map[string]time.Time</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="139" x="194" y="1026.4551">errorMapLock sync.Mutex</text>
+        <line style="stroke: #A80036; stroke-width: 1.5;" x1="189" x2="449" y1="1032.7754" y2="1032.7754" /><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="162" x="194" y="1047.4102">// 通过 runtimeClient 调用 RPC</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="126" x="194" y="1060.3652">UpdateRuntimeConfig()</text>
+        <!--link Runtime to kubeGenericRuntimeManager-->
+        <path d="M203,452.0656 C203,465.3601 203,478.7862 203,491.945 " fill="none" id="Runtime-kubeGenericRuntimeManager" style="stroke: #A80036; stroke-width: 1.0; stroke-dasharray: 7.0,7.0;" />
+        <polygon fill="none" points="196.0001,452.042,203,432.0419,210.0001,452.0419,196.0001,452.042" style="stroke: #A80036; stroke-width: 1.0;" />
+        <!--link kubeGenericRuntimeManager to instrumentedRuntimeService-->
+        <path d="M229.4369,760.0668 C232.6994,777.4138 235.7423,793.5934 238.1942,806.6301 " fill="none" id="kubeGenericRuntimeManager-instrumentedRuntimeService" style="stroke: #A80036; stroke-width: 1.0;" />
+        <polygon fill="#A80036" points="227.0278,747.2574,224.2058,753.8934,229.246,759.0506,232.0679,752.4146,227.0278,747.2574" style="stroke: #A80036; stroke-width: 1.0;" />
+        <!--link RuntimeService to instrumentedRuntimeService-->
+        <path d="M396.3574,699.249 C384.6353,715.74 371.5701,732.4908 358,747 C337.2002,769.2394 310.7234,790.5938 288.5225,806.9689 " fill="none" id="RuntimeService-instrumentedRuntimeService" style="stroke: #A80036; stroke-width: 1.0; stroke-dasharray: 7.0,7.0;" />
+        <polygon fill="none" points="390.7147,695.1009,407.8252,682.6016,402.2439,703.043,390.7147,695.1009" style="stroke: #A80036; stroke-width: 1.0;" />
+        <!--link Kubelet to Runtime-->
+        <path d="M203,143.233 C203,157.541 203,173.4574 203,189.628 " fill="none" id="Kubelet-Runtime" style="stroke: #A80036; stroke-width: 1.0;" />
+        <polygon fill="#A80036" points="203,130.0521,199,136.0521,203,142.0521,207,136.0521,203,130.0521" style="stroke: #A80036; stroke-width: 1.0;" />
+        <!--link RuntimeService to RemoteRuntimeService-->
+        <path d="M418.3025,701.9381 C395.5955,769.5228 363.8157,864.1116 342.3749,927.9273 " fill="none" id="RuntimeService-RemoteRuntimeService" style="stroke: #A80036; stroke-width: 1.0; stroke-dasharray: 7.0,7.0;" />
+        <polygon fill="none" points="411.7378,699.4979,424.7431,682.7687,425.0088,703.9567,411.7378,699.4979" style="stroke: #A80036; stroke-width: 1.0;" />
+        <!--link instrumentedRuntimeService to RemoteRuntimeService-->
+        <path d="M263.9807,880.1255 C270.8708,894.8244 278.7788,911.6948 286.4107,927.9761 " fill="none" id="instrumentedRuntimeService-RemoteRuntimeService" style="stroke: #A80036; stroke-width: 1.0;" />
+        <polygon fill="#A80036" points="258.4608,868.3496,257.3856,875.4801,263.5541,879.2151,264.6293,872.0846,258.4608,868.3496" style="stroke: #A80036; stroke-width: 1.0;" />
+        <!--
+@startuml
+
+package pkg/kubelet/container {
+
+interface Runtime {
+	Type()
+	Version()
+	APIVersion()
+	Status()
+	GetPods()
+	GarbageCollect()
+	SyncPod()
+	KillPod()
+	GetPodStatus()
+	GetNetNS()
+	GetPodContainerID()
+	GetContainerLogs()
+	DeleteContainer()
+	ImageService
+	UpdatePodCIDR()
+}
+
+}
+
+package pkg/kubelet/apis/cri(internalapi) {
+
+
+interface RuntimeService {
+	RuntimeVersioner
+	ContainerManager
+	PodSandboxManager
+	ContainerStatsManager
+	UpdateRuntimeConfig()
+	Status()
+}
+
+}
+
+
+package pkg/kubelet/kuberuntime {
+
+class kubeGenericRuntimeManager {
+	runtimeName         string
+	recorder            record.EventRecorder
+	osInterface         kubecontainer.OSInterface
+	containerRefManager *kubecontainer.RefManager
+	machineInfo *cadvisorapi.MachineInfo
+	containerGC *containerGC
+	keyring credentialprovider.DockerKeyring
+	runner kubecontainer.HandlerRunner
+	runtimeHelper kubecontainer.RuntimeHelper
+	livenessManager proberesults.Manager
+	imagePuller images.ImageManager
+	runtimeService internalapi.RuntimeService
+	imageService   internalapi.ImageManagerService
+	versionCache *cache.ObjectCache
+	internalLifecycle cm.InternalContainerLifecycle
+	runtimeClassManager *runtimeclass.Manager
+}
+
+
+
+class instrumentedRuntimeService {
+	service internalapi.RuntimeService
+}
+
+
+  Runtime <|.. kubeGenericRuntimeManager
+  kubeGenericRuntimeManager *- - instrumentedRuntimeService
+  RuntimeService <|.. instrumentedRuntimeService
+
+
+}
+
+
+package pkg/kubelet {
+
+class Kubelet {
+	kubeletConfiguration kubeletconfiginternal.KubeletConfiguration
+	hostname string
+	containerRuntime kubecontainer.Runtime
+
+
+}
+}
+
+Kubelet *- - Runtime
+
+
+package pkg/kubelet/remote {
+
+class RemoteRuntimeService {
+	timeout       time.Duration
+	runtimeClient runtimeapi.RuntimeServiceClient
+	lastError map[string]string
+	errorPrinted map[string]time.Time
+	errorMapLock sync.Mutex
+	{method} // 通过 runtimeClient 调用 RPC
+	UpdateRuntimeConfig()
+}
+
+RuntimeService <|.. RemoteRuntimeService
+
+instrumentedRuntimeService *- - RemoteRuntimeService
+}
+
+
+
+@enduml
+
+PlantUML version 1.2019.05(Sun Apr 21 00:45:36 CST 2019)
+(GPL source distribution)
+Java Runtime: Java(TM) SE Runtime Environment
+JVM: Java HotSpot(TM) 64-Bit Server VM
+Java Version: 12+33
+Operating System: Mac OS X
+OS Version: 10.14.1
+Default Encoding: UTF-8
+Language: zh
+Country: CN
+-->
+    </g>
+</svg>

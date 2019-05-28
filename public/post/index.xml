@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>penguincj &amp;copy; 2019</copyright>
-    <lastBuildDate>Tue, 07 May 2019 00:00:00 +0800</lastBuildDate>
+    <lastBuildDate>Tue, 28 May 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Kubernetes网络框架</title>
+      <link>/post/cloud/k8s/201905-k8s-network-arch/</link>
+      <pubDate>Tue, 28 May 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/k8s/201905-k8s-network-arch/</guid>
+      <description>Kubernetes本身不提供容器网络，但具有可扩展的网络框架</description>
+    </item>
     
     <item>
       <title>Why 容器云</title>

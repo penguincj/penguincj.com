@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Kubernetes on L CJ的博客</title>
-    <link>/tags/kubernetes/</link>
-    <description>Recent content in Kubernetes on L CJ的博客</description>
+    <title>CNI on L CJ的博客</title>
+    <link>/tags/cni/</link>
+    <description>Recent content in CNI on L CJ的博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>penguincj &amp;copy; 2019</copyright>
     <lastBuildDate>Tue, 28 May 2019 00:00:00 +0000</lastBuildDate>
     
-	<atom:link href="/tags/kubernetes/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="/tags/cni/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
@@ -19,15 +19,6 @@
       
       <guid>/post/cloud/k8s/201905-k8s-network-arch/</guid>
       <description>Kubernetes本身不提供容器网络，但具有可扩展的网络框架</description>
-    </item>
-    
-    <item>
-      <title>Kubernetes声明式API</title>
-      <link>/post/cloud/k8s/201904-k8s-declarative-api/</link>
-      <pubDate>Wed, 26 Dec 2018 00:00:00 +0800</pubDate>
-      
-      <guid>/post/cloud/k8s/201904-k8s-declarative-api/</guid>
-      <description>声明式API是Kubernetes成为容器编排事实标准的利器</description>
     </item>
     
   </channel>
