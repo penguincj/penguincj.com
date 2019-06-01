@@ -998,27 +998,14 @@ metadata:
 
 # CNI 演进
 
-## 多 interface 支持
+[Multi CNI and Containers with Multi Network Interfaces on Kubernetes with CNI-Genie](https://www.linkedin.com/pulse/multi-cni-containers-network-interfaces-kubernetes-gokul-chandra)
 
-目前 Kubernetes CNI 网络模型中还不支持多个 interface，社区关于这方面的讨论：
-
-- [Multiple interfaces in a POD](https://github.com/containernetworking/cni/issues/114)
-- [Support multiple pod IP addresses](https://github.com/kubernetes/kubernetes/issues/27398)
-- [README: List multus as 3rd party plugin](https://github.com/containernetworking/cni/pull/379)
-- [Multiple network support](https://github.com/openvswitch/ovn-kubernetes/issues/56)
-
-## 多 CNI plugin 支持
-
-目前只支持单个 CNI plugin，关于 CNI plugin chain的讨论：
-
-- [Is there any reference yaml file applying multus-cni for pod network?](https://github.com/Intel-Corp/multus-cni/issues/3)
-- [MULTUS CNI plugin](https://github.com/Intel-Corp/multus-cni)
-- [Update CNI plugin to newest version; support ConfigLists](https://github.com/kubernetes/kubernetes/pull/42202)
-
+[multus-cni](https://github.com/intel/multus-cni)
 
 # 参考
 
 [k8s network](https://github.com/keontang/k8s-notes/blob/master/kubernetes-network.md)
+
 [Network Plugins](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/#kubenet)
 
 

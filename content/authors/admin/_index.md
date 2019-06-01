@@ -10,12 +10,12 @@ authors:
 superuser: true
 
 # Role/position
-role: 码农
+# role: 码农
 
 # Organizations/Affiliations
 organizations:
-- name: ""
-  url: ""
+- name: "airdropfans.com"
+  url: "http://airdropfans.com/"
 
 # Short bio (displayed in user profile at end of posts)
 bio: 我目前研究的方向主要在Microservice、Servicemesh、Serverless等和Cloud Native相关的领域，欢迎交流和指导
@@ -52,7 +52,7 @@ social:
 
 # Enter email to display Gravatar (if Gravatar enabled in Config)
 email: "penguincj@163.com"
-  
+
 # Organizational groups that you belong to (for People widget)
 #   Set this to `[]` or comment out if you are not using People widget.  
 user_groups:
@@ -61,4 +61,3 @@ user_groups:
 ---
 
 专注于基础架构，Cloud Native 拥护者，希望成为坚守开发一线打磨匠艺的架构师。
-
