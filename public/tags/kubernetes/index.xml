@@ -30,5 +30,14 @@
       <description>声明式API是Kubernetes成为容器编排事实标准的利器</description>
     </item>
     
+    <item>
+      <title>Kubernetes 框架</title>
+      <link>/post/cloud/k8s/201811-k8s-arch/</link>
+      <pubDate>Tue, 20 Nov 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/k8s/201811-k8s-arch/</guid>
+      <description>Kubernetes 云计算操作系统</description>
+    </item>
+    
   </channel>
 </rss>

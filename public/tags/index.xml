@@ -48,5 +48,23 @@
       <description></description>
     </item>
     
+    <item>
+      <title>MagicMirror</title>
+      <link>/tags/magicmirror/</link>
+      <pubDate>Mon, 27 Aug 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/magicmirror/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>BlockChain</title>
+      <link>/tags/blockchain/</link>
+      <pubDate>Fri, 27 Jul 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/blockchain/</guid>
+      <description></description>
+    </item>
+    
   </channel>
 </rss>

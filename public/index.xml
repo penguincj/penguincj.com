@@ -1032,31 +1032,15 @@ metadata:
 
 &lt;h1 id=&#34;cni-演进&#34;&gt;CNI 演进&lt;/h1&gt;
 
-&lt;h2 id=&#34;多-interface-支持&#34;&gt;多 interface 支持&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.linkedin.com/pulse/multi-cni-containers-network-interfaces-kubernetes-gokul-chandra&#34; target=&#34;_blank&#34;&gt;Multi CNI and Containers with Multi Network Interfaces on Kubernetes with CNI-Genie&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;目前 Kubernetes CNI 网络模型中还不支持多个 interface，社区关于这方面的讨论：&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/containernetworking/cni/issues/114&#34; target=&#34;_blank&#34;&gt;Multiple interfaces in a POD&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/kubernetes/kubernetes/issues/27398&#34; target=&#34;_blank&#34;&gt;Support multiple pod IP addresses&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/containernetworking/cni/pull/379&#34; target=&#34;_blank&#34;&gt;README: List multus as 3rd party plugin&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/openvswitch/ovn-kubernetes/issues/56&#34; target=&#34;_blank&#34;&gt;Multiple network support&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h2 id=&#34;多-cni-plugin-支持&#34;&gt;多 CNI plugin 支持&lt;/h2&gt;
-
-&lt;p&gt;目前只支持单个 CNI plugin，关于 CNI plugin chain的讨论：&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/Intel-Corp/multus-cni/issues/3&#34; target=&#34;_blank&#34;&gt;Is there any reference yaml file applying multus-cni for pod network?&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/Intel-Corp/multus-cni&#34; target=&#34;_blank&#34;&gt;MULTUS CNI plugin&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/kubernetes/kubernetes/pull/42202&#34; target=&#34;_blank&#34;&gt;Update CNI plugin to newest version; support ConfigLists&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
+&lt;p&gt;&lt;a href=&#34;https://github.com/intel/multus-cni&#34; target=&#34;_blank&#34;&gt;multus-cni&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://github.com/keontang/k8s-notes/blob/master/kubernetes-network.md&#34; target=&#34;_blank&#34;&gt;k8s network&lt;/a&gt;
-&lt;a href=&#34;https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/#kubenet&#34; target=&#34;_blank&#34;&gt;Network Plugins&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://github.com/keontang/k8s-notes/blob/master/kubernetes-network.md&#34; target=&#34;_blank&#34;&gt;k8s network&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/#kubenet&#34; target=&#34;_blank&#34;&gt;Network Plugins&lt;/a&gt;&lt;/p&gt;
 
 &lt;h1 id=&#34;问题&#34;&gt;问题&lt;/h1&gt;
 
@@ -1497,6 +1481,925 @@ func doSomething(pod) {
 &lt;p&gt;&lt;a href=&#34;http://docs.kubernetes.org.cn/709.html&#34; target=&#34;_blank&#34;&gt;Dynamic Admission Control&lt;/a&gt;&lt;/p&gt;
 
 &lt;p&gt;&lt;a href=&#34;https://www.cnblogs.com/yuxiaoba/p/9803284.html&#34; target=&#34;_blank&#34;&gt;【Kubernetes】深入解析声明式API&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Kubernetes 框架</title>
+      <link>/post/cloud/k8s/201811-k8s-arch/</link>
+      <pubDate>Tue, 20 Nov 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/k8s/201811-k8s-arch/</guid>
+      <description>
+
+&lt;h1 id=&#34;kubernetes&#34;&gt;Kubernetes&lt;/h1&gt;
+
+&lt;p&gt;Kubernetes 是 Google 开源的容器集群管理系统，其提供应用部署、维护、 扩展机制等功能，利用 Kubernetes 能方便地管理跨机器运行容器化的应用，其主要功能如下：&lt;/p&gt;
+
+&lt;p&gt;1) 使用 Docker 对应用程序包装 (package)、实例化 (instantiate)、运行 (run)。&lt;/p&gt;
+
+&lt;p&gt;2) 以集群的方式运行、管理跨机器的容器。&lt;/p&gt;
+
+&lt;p&gt;3) 解决 Docker 跨机器容器之间的通讯问题。&lt;/p&gt;
+
+&lt;p&gt;4) Kubernetes 的自我修复机制使得容器集群总是运行在用户期望的状态。&lt;/p&gt;
+
+&lt;p&gt;k8s 要做的不是dockerize，也不是containerize，而是作为一个集群操作系统，为此重新定义了可执行文件、进程、存储、网络的形态。&lt;/p&gt;
+
+&lt;h1 id=&#34;整体结构&#34;&gt;整体结构&lt;/h1&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-b0df5d91.png&#34; src=&#34;images/index-b0df5d91.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-40853241.png&#34; src=&#34;images/index-40853241.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;master&#34;&gt;Master&lt;/h2&gt;
+
+&lt;p&gt;集群控制节点，master节点上运行着一组关键的进程&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;etcd&lt;/code&gt;，各个组件通信都并不是互相调用 API 来完成的，而是把状态写入 ETCD（相当于写入一个消息），其他组件通过监听 ETCD 的状态的的变化（相当于订阅消息），然后做后续的处理，然后再一次把更新的数据写入 ETCD。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;api server&lt;/code&gt;，各个组件并不是直接访问 ETCD，而是访问一个代理，这个代理是通过标准的RESTFul API，重新封装了对 ETCD 接口调用，除此之外，这个代理还实现了一些附加功能，比如身份的认证、缓存等&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Controller Manager&lt;/code&gt; 是实现任务调度的&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Scheduler&lt;/code&gt; 是用来做资源调度的&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Master 定义了 Kubernetes 集群 Master/API Server 的主要声明，包括 Pod Registry、Controller Registry、Service Registry、Endpoint Registry、Minion Registry、Binding Registry、RESTStorage 以及 Client, 是 client(Kubecfg) 调用 Kubernetes API，管理 Kubernetes 主要构件 Pods、Services、Minions、容器的入口。Master 由 API Server、Scheduler 以及 Registry 等组成。从下图可知 Master 的工作流主要分以下步骤：&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-1bb27f36.png&#34; src=&#34;images/index-1bb27f36.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
+图片 - Master 主要构件及工作流&lt;/p&gt;
+
+&lt;p&gt;1) Kubecfg 将特定的请求，比如创建 Pod，发送给 Kubernetes Client。&lt;/p&gt;
+
+&lt;p&gt;2) Kubernetes Client 将请求发送给 API server。&lt;/p&gt;
+
+&lt;p&gt;3) API Server 根据请求的类型，比如创建 Pod 时 storage 类型是 pods，然后依此选择何种 REST Storage API 对请求作出处理。&lt;/p&gt;
+
+&lt;p&gt;4) REST Storage API 对的请求作相应的处理。&lt;/p&gt;
+
+&lt;p&gt;5) 将处理的结果存入高可用键值存储系统 Etcd 中。&lt;/p&gt;
+
+&lt;p&gt;6) 在 API Server 响应 Kubecfg 的请求后，Scheduler 会根据 Kubernetes Client 获取集群中运行 Pod 及 Minion 信息。&lt;/p&gt;
+
+&lt;p&gt;7) 依据从 Kubernetes Client 获取的信息，Scheduler 将未分发的 Pod 分发到可用的 Minion 节点上。&lt;/p&gt;
+
+&lt;h3 id=&#34;minion-registry&#34;&gt;Minion Registry&lt;/h3&gt;
+
+&lt;p&gt;Minion Registry 负责跟踪 Kubernetes 集群中有多少 Minion(Host)。Kubernetes 封装 Minion Registry 成实现 Kubernetes API Server 的 RESTful API 接口 REST，通过这些 API，我们可以对 Minion Registry 做Create、Get、List、Delete 操作，由于 Minon 只能被创建或删除，所以不支持 Update 操作，并把 Minion 的相关配置信息存储到 etcd。除此之外，Scheduler 算法根据 Minion 的资源容量来确定是否将新建 Pod 分发到该 Minion 节点。&lt;/p&gt;
+
+&lt;h3 id=&#34;pod-registry&#34;&gt;Pod Registry&lt;/h3&gt;
+
+&lt;p&gt;Pod Registry 负责跟踪 Kubernetes 集群中有多少 Pod 在运行，以及这些 Pod 跟 Minion 是如何的映射关系。将 Pod Registry 和 Cloud Provider 信息及其他相关信息封装成实现 Kubernetes API Server 的 RESTful API 接口 REST。通过这些 API，我们可以对 Pod 进行 Create、Get、List、Update、Delete 操作，并将 Pod 的信息存储到 etcd 中，而且可以通过 Watch 接口监视 Pod 的变化情况，比如一个 Pod 被新建、删除或者更新。&lt;/p&gt;
+
+&lt;h3 id=&#34;service-registry&#34;&gt;Service Registry&lt;/h3&gt;
+
+&lt;p&gt;Service Registry 负责跟踪 Kubernetes 集群中运行的所有服务。根据提供的 Cloud Provider 及 Minion Registry 信息把 Service Registry 封装成实现 Kubernetes API Server 需要的 RESTful API 接口 REST。利用这些接口，我们可以对 Service 进行 Create、Get、List、Update、Delete 操作，以及监视 Service 变化情况的 watch 操作，并把 Service 信息存储到 etcd。&lt;/p&gt;
+
+&lt;h3 id=&#34;controller-registry&#34;&gt;Controller Registry&lt;/h3&gt;
+
+&lt;p&gt;Controller Registry 负责跟踪 Kubernetes 集群中所有的 Replication Controller，Replication Controller 维护着指定数量的 pod 副本 (replicas) 拷贝，如果其中的一个容器死掉，Replication Controller 会自动启动一个新的容器，如果死掉的容器恢复，其会杀死多出的容器以保证指定的拷贝不变。通过封装 Controller Registry 为实现 Kubernetes API Server 的 RESTful API 接口 REST， 利用这些接口，我们可以对 Replication Controller 进行 Create、Get、List、Update、Delete 操作，以及监视 Replication Controller 变化情况的 watch 操作，并把 Replication Controller 信息存储到 etcd。&lt;/p&gt;
+
+&lt;h3 id=&#34;endpoints-registry&#34;&gt;Endpoints Registry&lt;/h3&gt;
+
+&lt;p&gt;Endpoints Registry 负责收集 Service 的 endpoint，比如 Name：&amp;rdquo;mysql&amp;rdquo;，Endpoints: [&amp;ldquo;10.10.1.1:1909&amp;rdquo;，&amp;rdquo;10.10.2.2:8834&amp;rdquo;]，同 Pod Registry，Controller Registry 也实现了 Kubernetes API Server 的 RESTful API 接口，可以做 Create、Get、List、Update、Delete 以及 watch 操作。&lt;/p&gt;
+
+&lt;h3 id=&#34;binding-registry&#34;&gt;Binding Registry&lt;/h3&gt;
+
+&lt;p&gt;Binding 包括一个需要绑定 Pod 的 ID 和 Pod 被绑定的 Host，Scheduler 写 Binding Registry 后，需绑定的 Pod 被绑定到一个 host。Binding Registry 也实现了 Kubernetes API Server 的 RESTful API 接口，但 Binding Registry 是一个 write-only 对象，所有只有 Create 操作可以使用， 否则会引起错误。&lt;/p&gt;
+
+&lt;h3 id=&#34;scheduler&#34;&gt;Scheduler&lt;/h3&gt;
+
+&lt;p&gt;Scheduler 收集和分析当前 Kubernetes 集群中所有 Minion 节点的资源 (内存、CPU) 负载情况，然后依此分发新建的 Pod 到 Kubernetes 集群中可用的节点。由于一旦 Minion 节点的资源被分配给 Pod，那这些资源就不能再分配给其他 Pod， 除非这些 Pod 被删除或者退出， 因此，Kubernetes 需要分析集群中所有 Minion 的资源使用情况，保证分发的工作负载不会超出当前该 Minion 节点的可用资源范围。具体来说，Scheduler 做以下工作：&lt;/p&gt;
+
+&lt;p&gt;1) 实时监测 Kubernetes 集群中未分发的 Pod。&lt;/p&gt;
+
+&lt;p&gt;2) 实时监测 Kubernetes 集群中所有运行的 Pod，Scheduler 需要根据这些 Pod 的资源状况安全地将未分发的 Pod 分发到指定的 Minion 节点上。&lt;/p&gt;
+
+&lt;p&gt;3) Scheduler 也监测 Minion 节点信息，由于会频繁查找 Minion 节点，Scheduler 会缓存一份最新的信息在本地。&lt;/p&gt;
+
+&lt;p&gt;4) 最后，Scheduler 在分发 Pod 到指定的 Minion 节点后，会把 Pod 相关的信息 Binding 写回 API Server。&lt;/p&gt;
+
+&lt;h2 id=&#34;node&#34;&gt;Node&lt;/h2&gt;
+
+&lt;p&gt;Node是工作主机，可以使物理主机、VM等。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-b6229df4.png&#34; src=&#34;images/index-b6229df4.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;kubelet&lt;/code&gt;：负责管控docker容器，如启动/停止、监控运行状态等。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;kube-proxy&lt;/code&gt;： 负责为pod提供代理。它会定期从etcd获取所有的service，并根据service信息创建代理。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;kubelet&#34;&gt;kubelet&lt;/h3&gt;
+
+&lt;p&gt;根据上图可知 Kubelet 是 Kubernetes 集群中每个 Minion 和 Master API Server 的连接点，Kubelet 运行在每个 Minion 上，是 Master API Server 和 Minion 之间的桥梁，接收 Master API Server 分配给它的 commands 和 work，与持久性键值存储 etcd、file、server 和 http 进行交互，读取配置信息。Kubelet 的主要工作是管理 Pod 和容器的生命周期，其包括 Docker Client、Root Directory、Pod Workers、Etcd Client、Cadvisor Client 以及 Health Checker 组件，具体工作如下：&lt;/p&gt;
+
+&lt;p&gt;1) 通过 Worker 给 Pod 异步运行特定的 Action。&lt;/p&gt;
+
+&lt;p&gt;2) 设置容器的环境变量。&lt;/p&gt;
+
+&lt;p&gt;3) 给容器绑定 Volume。&lt;/p&gt;
+
+&lt;p&gt;4) 给容器绑定 Port。&lt;/p&gt;
+
+&lt;p&gt;5) 根据指定的 Pod 运行一个单一容器。&lt;/p&gt;
+
+&lt;p&gt;6) 杀死容器。&lt;/p&gt;
+
+&lt;p&gt;7) 给指定的 Pod 创建 network 容器。&lt;/p&gt;
+
+&lt;p&gt;8) 删除 Pod 的所有容器。&lt;/p&gt;
+
+&lt;p&gt;9) 同步 Pod 的状态。&lt;/p&gt;
+
+&lt;p&gt;10) 从 Cadvisor 获取 container info、 pod info、root info、machine info。&lt;/p&gt;
+
+&lt;p&gt;11) 检测 Pod 的容器健康状态信息。&lt;/p&gt;
+
+&lt;p&gt;12) 在容器中运行命令。&lt;/p&gt;
+
+&lt;h3 id=&#34;container-runtime-容器运行时&#34;&gt;Container Runtime（容器运行时）&lt;/h3&gt;
+
+&lt;p&gt;每一个Node都会运行一个Container Runtime，其负责下载镜像和运行容器。Kubernetes本身并不停容器运行时环境，但提供了接口，可以插入所选择的容器运行时环境。kubelet使用Unix socket之上的gRPC框架与容器运行时进行通信，kubelet作为客户端，而CRI shim作为服务器。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-8c8600df.png&#34; src=&#34;images/index-8c8600df.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;protocol buffers API提供两个gRPC服务，ImageService和RuntimeService。ImageService提供拉取、查看、和移除镜像的RPC。RuntimeSerivce则提供管理Pods和容器生命周期管理的RPC，以及与容器进行交互(exec/attach/port-forward)。容器运行时能够同时管理镜像和容器（例如：Docker和Rkt），并且可以通过同一个套接字提供这两种服务。在Kubelet中，这个套接字通过–container-runtime-endpoint和–image-service-endpoint字段进行设置。Kubernetes CRI支持的容器运行时包括docker、rkt、cri-o、frankti、kata-containers和clear-containers等。&lt;/p&gt;
+
+&lt;h3 id=&#34;proxy&#34;&gt;Proxy&lt;/h3&gt;
+
+&lt;p&gt;Proxy 是为了解决外部网络能够访问跨机器集群中容器提供的应用服务而设计的，从上图可知 Proxy 服务也运行在每个 Minion 上。Proxy 提供 TCP/UDP sockets 的 proxy，每创建一种 Service，Proxy 主要从 etcd 获取 Services 和 Endpoints 的配置信息，或者也可以从 file 获取，然后根据配置信息在 Minion 上启动一个 Proxy 的进程并监听相应的服务端口，当外部请求发生时，Proxy 会根据 Load Balancer 将请求分发到后端正确的容器处理。&lt;/p&gt;
+
+&lt;p&gt;服务发现主要通过DNS实现。&lt;/p&gt;
+
+&lt;p&gt;在Kubernetes中，kube proxy负责为Pod创建代理服务；引到访问至服务；并实现服务到Pod的路由和转发，以及通过应用的负载均衡。&lt;/p&gt;
+
+&lt;p&gt;Proxy不但解决了同一主宿机相同服务端口冲突的问题，还提供了Service转发服务端口对外提供服务的能力，Proxy后端使用了随机、轮循负载均衡算法。&lt;/p&gt;
+
+&lt;h1 id=&#34;分层架构&#34;&gt;分层架构&lt;/h1&gt;
+
+&lt;p&gt;Kubernetes设计理念和功能其实就是一个类似Linux的分层架构，如下图所示&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-08fd429d.png&#34; src=&#34;images/index-08fd429d.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;核心层：Kubernetes最核心的功能，对外提供API构建高层的应用，对内提供插件式应用执行环境&lt;/li&gt;
+&lt;li&gt;应用层：部署（无状态应用、有状态应用、批处理任务、集群应用等）和路由（服务发现、DNS解析等）&lt;/li&gt;
+&lt;li&gt;管理层：系统度量（如基础设施、容器和网络的度量），自动化（如自动扩展、动态Provision等）以及策略管理（RBAC、Quota、PSP、NetworkPolicy等）&lt;/li&gt;
+&lt;li&gt;接口层：kubectl命令行工具、客户端SDK以及集群联邦&lt;/li&gt;
+&lt;li&gt;生态系统：在接口层之上的庞大容器集群管理调度的生态系统，可以划分为两个范畴&lt;/li&gt;
+&lt;li&gt;Kubernetes外部：日志、监控、配置管理、CI、CD、Workflow、FaaS、OTS应用、ChatOps等&lt;/li&gt;
+&lt;li&gt;Kubernetes内部：CRI、CNI、CVI、镜像仓库、Cloud Provider、集群自身的配置和管理等&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;系统流程&#34;&gt;系统流程&lt;/h1&gt;
+
+&lt;p&gt;&lt;strong&gt;一位大牛整理的 K8S 调用流程&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/kubernetes_impl.jpg&#34; alt=&#34;k8s-imp&#34; /&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;设计理念&#34;&gt;设计理念&lt;/h1&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;声明式 VS 命令式, 声明式优点很多，一个很重要的点是：在分布式系统中，任何组件都可能随时出现故障。当组件恢复时，需要弄清楚要做什么，使用命令式 API 时，处理起来就很棘手。但是使用声明式 API ，组件只需查看 API 服务器的当前状态，即可确定它需要执行的操作。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;显式的 API, Kubernetes 是透明的，它没有隐藏的内部 API。换句话说 Kubernetes 系统内部用来交互的 API 和我们用来与 Kubernetes 交互的 API 相同。这样做的好处是，当 Kubernetes 默认的组件无法满足我们的需求时，我们可以利用已有的 API 实现我们自定义的特性。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;无侵入性, 感谢 Docker 容器技术的流行，使得 Kubernetes 为大家提供了无缝的使用方式。我们的应用达到镜像后, 不需要改动就可以遨游在 Kubernetes 集群中。Kubernetes 还提供存储 Secret、Configuration 等包含但不局限于密码、证书、容器镜像信息、应用启动参数能力。如此，Kubernetes 以一种友好的方式将这些东西注入 Pod，减少了大家的工作量，而无需重写或者很大幅度改变原有的应用代码。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;为了实现这一目标，Kubernetes 引入了 PersistentVolumeClaim（PVC）和 PersistentVolume（PV）API 对象。这些对象将存储实现与存储使用分离。 PersistentVolumeClaim 对象用作用户以与实现无关的方式请求存储的方法，通过它来抹除对底层 PersistentVolume 的差异性。这样就使 Kubernetes 拥有了跨集群的移植能力。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-7e962253.png&#34; src=&#34;images/index-7e962253.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;容器编排系统的比较&#34;&gt;容器编排系统的比较&lt;/h1&gt;
+
+&lt;p&gt;在 Google 的一篇关于内部 Omega 调度系统的论文中，将调度系统分成三类：单体、二层调度和共享状态三种，按照它的分类方法，通常Google的 Borg被分到单体这一类，Mesos被当做二层调度，而Google自己的Omega被当做第三类“共享状态”。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-0400f433.png&#34; src=&#34;images/index-0400f433.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;因为Kubernetes的大部分设计是延续 Borg的，而且Kubernetes的核心组件（Controller Manager和Scheduler）缺省也都是绑定部署在一起，状态也都是存储在ETCD里面的，所以通常大家会把Kubernetes也当做“单体”调度系统，我觉得 Kubernetes 的调度模型也完全是二层调度的，和 Mesos 一样，任务调度和资源的调度是完全分离的，Controller Manager承担任务调度的职责，而Scheduler则承担资源调度的职责。&lt;/p&gt;
+
+&lt;h2 id=&#34;mesos&#34;&gt;Mesos&lt;/h2&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-0ea420af.png&#34; src=&#34;images/index-0ea420af.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;实际上Kubernetes和Mesos调度的最大区别在于资源调度请求的方式：&lt;/p&gt;
+
+&lt;p&gt;主动 Push 方式。是 Mesos 采用的方式，就是 Mesos 的资源调度组件（Mesos Master）主动推送资源 Offer 给 Framework，Framework 不能主动请求资源，只能根据 Offer 的信息来决定接受或者拒绝。&lt;/p&gt;
+
+&lt;p&gt;被动 Pull 方式。是 Kubernetes 的方式，资源调度组件 Scheduler 被动的响应 Controller Manager的资源请求。&lt;/p&gt;
+
+&lt;p&gt;这两种方式带来的不同，我主要从一下 5 个方面来分析。另外注意，我所比较两者的优劣，都是从理论上做的分析，工程实现上会有差异，一些指标我也并没有实际测试过。&lt;/p&gt;
+
+&lt;p&gt;1.资源利用率：Kubernetes 胜出&lt;/p&gt;
+
+&lt;p&gt;理论上，Kubernetes 应该能实现更加高效的集群资源利用率，原因资源调度的职责完全是由Scheduler一个组件来完成的，它有充足的信息能够从全局来调配资源，然后而Mesos 却做不到，因为资源调度的职责被切分到Framework和Mesos Master两个组件上，Framework 在挑选 Offer 的时候，完全没有其他 Framework 工作负载的信息，所以也不可能做出最优的决策。&lt;/p&gt;
+
+&lt;p&gt;举个例子，比如我们希望把对耗费 CPU的工作负载和耗费内存的工作负载尽可能调度到同一台主机上，在Mesos里面不太容易做到，因为他们分属不同的 Framework。&lt;/p&gt;
+
+&lt;p&gt;2.扩展性：Mesos胜出&lt;/p&gt;
+
+&lt;p&gt;从理论上讲，Mesos 的扩展性要更好一点。原因是Mesos的资源调度方式更容易让已经存在的任务调度迁移上来。举个例子，假设已经有了一个任务调度系统，比如 Spark，现在要迁移到集群调度平台上，理论上它迁移到 Mesos 比 Kubernetes 上更加容易。&lt;/p&gt;
+
+&lt;p&gt;如果迁移到 Mesos ，没有改变原来的工作流程和逻辑，原来的逻辑是：来了一个作业请求，调度系统把任务拆分成小的任务，然后从资源池里面挑选一个节点来运行任务，并且记录挑选的节点 IP 和端口号，用来跟踪任务的状态。迁移到 Mesos 之后，还是一样的逻辑，唯一需要变化的是那个资源池，原来是自己管理的资源池，现在变成 Mesos 提供的Offer 列表。&lt;/p&gt;
+
+&lt;p&gt;如果迁移到 Kubernetes，则需要修改原来的基本逻辑来适配 Kubernetes，资源的调度完全需要调用外部的组件来完成，并且这个变成异步的。&lt;/p&gt;
+
+&lt;p&gt;3.灵活的任务调度策略：Mesos 胜出&lt;/p&gt;
+
+&lt;p&gt;Mesos 对各种任务的调度策略也支持的更好。举个例子，如果某一个作业，需要 All or Nothing 的策略，Mesos 是能够实现的，但是 Kubernetes 完全无法支持。所以All or Nothing 的意思是，价格整个作业如果需要运行 10 个任务，这 10个任务需要能够全部有资源开始执行，否则就一个都不执行。&lt;/p&gt;
+
+&lt;p&gt;4.性能：Mesos 胜出&lt;/p&gt;
+
+&lt;p&gt;Mesos 的性能应该更好，因为资源调度组件，也就是 Mesos Master 把一部分资源调度的工作甩给 Framework了，承担的调度工作更加简单，从数据来看也是这样，在多年之前 Twitter 自己的 Mesos 集群就能够管理超过 8万个节点，而 Kubernetes 1.3 只能支持 5千个节点。&lt;/p&gt;
+
+&lt;p&gt;5.调度延迟：Kubernetes 胜出&lt;/p&gt;
+
+&lt;p&gt;Kubernetes调度延迟会更好。因为Mesos的轮流给Framework提供Offer机制，导致会浪费很多时间在给不需要资源的 Framework 提供Offer。&lt;/p&gt;
+
+&lt;h2 id=&#34;swarm&#34;&gt;Swarm&lt;/h2&gt;
+
+&lt;h2 id=&#34;kubernetes的优势&#34;&gt;Kubernetes的优势&lt;/h2&gt;
+
+&lt;p&gt;Kubernetes 作为容器编排的事实标准，主要强在以下方面：&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;理念的先进性
+Kubernetes 并未将 Docker 作为架构的核心，而仅仅将它作为一个container runtime 实现，k8s的核心是cni、csi、cri、oci等。相对的，mesos是docker的使用者，也必然是docker特性的迁就者。K8S 架构有很强的扩展性，而Mesos则需要考虑 Docker 的支持程度。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;声明式 API
+k8s系统的梳理了任务的形态以及任务之间的关系，并为未来留有余地，提供了声明式的 API。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;云计算平台上的开发者们所关心的，并不是调度，也不是资源管管理，更不是网络或者存储，他们关心的只有一件事，那就是 Kubernetes 的 API，也就是声明式 API 和控制器模式。这个 API 独有的编程范式，即 Controller 和 Operator。作为一个云计算平台的用户，能够用一个 YAML 文件表达我开发的应用的最终运行状态，并且自动地对我的应用进行运维和管理。&lt;strong&gt;这种信赖关系，就是连接Kubernetes 项目和开发者们最重要的纽带&lt;/strong&gt;。&lt;/p&gt;
+
+&lt;p&gt;不同于一个只能生产资源的集群管理工具，Kubernetes 项目最大的价值，乃在于它从一开始就提倡的声明式 API 和以此为基础“控制器”模式。Kubernetes 项目为使用者提供了宝贵的 API 可扩展能力和良好的 API 编程范式，催生出了一个完全基于 Kubernetes API 构建出来的上层应用服务生态。可以说，正是这个生态的逐步完善与日趋成熟，才确立了 Kubernetes 项目如今在云平台领域牢不可破的领导地位，也间接宣告了竞品方案的边缘化。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://mp.weixin.qq.com/s/x7lTp9fJXav6nIJH_bgVMA&#34; target=&#34;_blank&#34;&gt;未来：应用交付的革命不会停止&lt;/a&gt;，Kubernetes 项目一直在做的，其实是在进一步清晰和明确“应用交付”这个亘古不变的话题。只不过，相比于交付一个容器和容器镜像， Kubernetes 项目正在尝试明确的定义云时代“应用”的概念。在这里，应用是一组容器的有机组合，同时也包括了应用运行所需的网络、存储的需求的描述。而像这样一个“描述”应用的 YAML 文件，放在 etcd 里存起来，然后通过控制器模型驱动整个基础设施的状态不断地向用户声明的状态逼近，就是 Kubernetes 的核心工作原理了。PS: 以后你给公有云一个yaml 文件就可以发布自己的应用了。&lt;/p&gt;
+
+&lt;h1 id=&#34;横向扩展&#34;&gt;横向扩展&lt;/h1&gt;
+
+&lt;p&gt;几乎所有的集群调度系统都无法横向扩展（Scale Out），Mesos通过优化，一个集群能够管理 8 万个节点，Kubernetes 最新的1.15版本，集群管理节点的上限是 5000 个节点。&lt;/p&gt;
+
+&lt;p&gt;所有的集群调度系统的架构都是无法横向扩展的，如果需要管理更多的服务器，唯一的办法就是创建多个集群。集群调度系统的架构看起来都是这个样子的：&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-27b339d2.png&#34; src=&#34;images/index-27b339d2.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;中间的 Scheduler（资源调度器）是最核心的组件，虽然通常是由多个（通常是3个）实例组成，但是都是单活的，也就是说只有一个节点工作，其他节点都处于 Standby 的状态。&lt;/p&gt;
+
+&lt;p&gt;这是因为集群调度系统的“独立资源池”数量是 1，每一台服务器节点都是一个资源，每当资源消费者请求资源的时候，调度系统用来做调度算法的“独立资源池”是多大呢？答案应该是整个集群的资源组成的资源池，没有办法在切分了，因为:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;调度系统的职责就是要在全局内找到最优的资源匹配。&lt;/li&gt;
+&lt;li&gt;另外，哪怕不需要找到最优的资源匹配，资源调度器对每一次资源请求，也没办法判断应该从哪一部分资源池中挑选资源。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;正是因为这个原因，“独立资源池”数量是 1，所以集群调度系统无法做到横向扩展。&lt;/p&gt;
+
+&lt;h2 id=&#34;优化&#34;&gt;优化&lt;/h2&gt;
+
+&lt;p&gt;主要是 Scheduler 调度器的优化，主要体现在两个地方：&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;预选失败中断机制&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;一次调度过程在判断一个Node是否可作为目标机器主要分为三个阶段：&lt;/p&gt;
+
+&lt;p&gt;预选阶段：硬性条件，过滤掉不满足条件的节点，这个过程称为Predicates。这是固定先后顺序的一系列过滤条件，任何一个predicate不符合则放弃该Node。&lt;/p&gt;
+
+&lt;p&gt;优选阶段：软性条件，对通过的节点按照优先级排序，称之为Priorities。每一个priority都是一个影响因素，都有一定的权重。&lt;/p&gt;
+
+&lt;p&gt;选定阶段：从优选列表中选择优先级最高的节点，称为Select。选择的Node即为最终部署Pod的机器。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-dd1c82b8.png&#34; src=&#34;images/index-dd1c82b8.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;通过深入分析调度过程我们发现，调度器在预选阶段即使已经知道当前Node不符合某个过滤条件仍然会继续判断后续的过滤条件是否符合。试想如果有上万台Node节点，这些判断逻辑会浪费很多计算时间，也是调度器性能低下的一个重要因素。&lt;/p&gt;
+
+&lt;p&gt;改进为“预选失败中断机制”，即一旦某个预选条件不满足，那么该Node即被立即放弃，后面的预选条件不再做判断计算，从而大大减少了计算量，调度性能也大大提升。如下图：&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-acb7d2c9.png&#34; src=&#34;images/index-acb7d2c9.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;局部最优解&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;对于优化问题，尤其是最优化问题，总是希望找到全局最优的解或策略，但是当问题的复杂度过于高，要考虑的因素和处理的信息量过多的时候，我们往往会倾向于接受局部最优解，因为局部最优解的质量不一定都是差的。尤其是当我们有确定的评判标准标明得出的解是可以接受的话，通常会接收局部最优的结果。这样，从成本、效率等多方面考虑，才是实际工程中会采取的策略。&lt;/p&gt;
+
+&lt;p&gt;当前调度策略中，每次调度调度器都会遍历集群中所有的Node，以便找出最优的节点，这在调度领域我们称之为BestFit算法，但是在生产环境中，我们是选取最优Node还是次优的Node其实并没有特别大的区别和影响，有时候我们还是避免每次选取最优的Node(例如我们集群为了解决新上线机器后狂在该机器上创建应用的问题就将最优解随机化)。换句话说，我们找出局部最优解就能满足我们的需求。&lt;/p&gt;
+
+&lt;p&gt;假设集群一共1000个Node，一次调度过程PodA，这其中有700个Node都能通过Predicates(预选阶段)，那么就会把所有的Node遍历并找出这700个node，然后经过得分排序找出最优的Node节点NodeX；但是采用局部最优算法，即我们认为只要能找出N个Node，并在这N个Node中选择得分最高的Node即能满足我们的需求，比如我们默认找出100个可以通过Predicates(预选阶段)的Node即可，我们的最优解就在这100个Node中选择，当然全局最优解NodeX可能在也可能不在这100个Node中，但是我们在这100个Node中选择最优的NodeY也能满足我们的要求。最好的情况下我们在遍历100个Node就找出了这100个Node，也可能遍历了200个或者300个Node等等，这样我们可以大大减少计算时间，同时也不会对我们的调度结果产生太大的影响。&lt;/p&gt;
+
+&lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://jimmysong.io/kubernetes-handbook/concepts/concepts.html&#34; target=&#34;_blank&#34;&gt;K8S 设计理念&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://qiankunli.github.io/2018/12/31/kubernetes_intro.html&#34; target=&#34;_blank&#34;&gt;Kubernetes整体结构&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>魔镜</title>
+      <link>/project/mirror-project/</link>
+      <pubDate>Mon, 27 Aug 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/project/mirror-project/</guid>
+      <description>&lt;p&gt;支持一下功能：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;照镜子&lt;/li&gt;
+&lt;li&gt;语音交互&lt;/li&gt;
+&lt;li&gt;天气预报&lt;/li&gt;
+&lt;li&gt;室内温湿度&lt;/li&gt;
+&lt;li&gt;新闻资讯&lt;/li&gt;
+&lt;li&gt;股票信息&lt;/li&gt;
+&lt;li&gt;支持定制更多功能&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>数字币交易所行情</title>
+      <link>/project/blockchain-project/</link>
+      <pubDate>Fri, 27 Jul 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/project/blockchain-project/</guid>
+      <description>&lt;p&gt;周期性获取火币网的多种交易对行情，可以方便的新增交易对、自定义行情周期，获取的结果存储到 MySQL 中。&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>/post/cloud/k8s/201812-k8s-resource-management/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/k8s/201812-k8s-resource-management/</guid>
+      <description>
+
+&lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://cizixs.com/2018/06/25/kubernetes-resource-management/&#34; target=&#34;_blank&#34;&gt;https://cizixs.com/2018/06/25/kubernetes-resource-management/&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>/post/cloud/k8s/201901-how-read-kubeproxy/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/k8s/201901-how-read-kubeproxy/</guid>
+      <description>
+
+&lt;p&gt;以阅读 K8S 一个模块 kube-proxy 来讲讲我是如何阅读源码的&lt;/p&gt;
+
+&lt;h1 id=&#34;架构&#34;&gt;架构&lt;/h1&gt;
+
+&lt;h1 id=&#34;问题&#34;&gt;问题&lt;/h1&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Proxy 如何解决了同一主宿机相同服务端口冲突的问题？&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://dockone.io/article/895&#34; target=&#34;_blank&#34;&gt;我是怎么阅读kubernetes源代码的？&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>/post/cloud/k8s/201903-k8s-service-register.md/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/k8s/201903-k8s-service-register.md/</guid>
+      <description>
+
+&lt;h1 id=&#34;服务发现&#34;&gt;服务发现&lt;/h1&gt;
+
+&lt;p&gt;Kubernetes 支持2种基本的服务发现模式 —— 环境变量和 DNS。&lt;/p&gt;
+
+&lt;p&gt;环境变量
+当 Pod 运行在 Node 上，kubelet 会为每个活跃的 Service 添加一组环境变量。 它同时支持 Docker links 兼容 变量（查看 makeLinkVariables）、简单的 {SVCNAME}_SERVICE_HOST 和 {SVCNAME}_SERVICE_PORT 变量，这里 Service 的名称需大写，横线被转换成下划线。&lt;/p&gt;
+
+&lt;p&gt;举个例子，一个名称为 &amp;ldquo;redis-master&amp;rdquo; 的 Service 暴露了 TCP 端口 6379，同时给它分配了 Cluster IP 地址 10.0.0.11，这个 Service 生成了如下环境变量：&lt;/p&gt;
+
+&lt;h2 id=&#34;服务发布&#34;&gt;服务发布&lt;/h2&gt;
+
+&lt;p&gt;对一些应用（如 Frontend）的某些部分，可能希望通过外部（Kubernetes 集群外部）IP 地址暴露 Service。&lt;/p&gt;
+
+&lt;p&gt;Kubernetes ServiceTypes 允许指定一个需要的类型的 Service，默认是 ClusterIP 类型。&lt;/p&gt;
+
+&lt;p&gt;Type 的取值以及行为如下：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;ClusterIP：通过集群的内部 IP 暴露服务，选择该值，服务只能够在集群内部可以访问，这也是默认的 ServiceType。&lt;/li&gt;
+&lt;li&gt;NodePort：通过每个 Node 上的 IP 和静态端口（NodePort）暴露服务。NodePort 服务会路由到 ClusterIP 服务，这个 ClusterIP 服务会自动创建。通过请求 &lt;NodeIP&gt;:&lt;NodePort&gt;，可以从集群的外部访问一个 NodePort 服务。&lt;/li&gt;
+&lt;li&gt;LoadBalancer：使用云提供商的负载均衡器，可以向外部暴露服务。外部的负载均衡器可以路由到 NodePort 服务和 ClusterIP 服务。&lt;/li&gt;
+&lt;li&gt;ExternalName：通过返回 CNAME 和它的值，可以将服务映射到 externalName 字段的内容（例如， foo.bar.example.com）。 没有任何类型代理被创建，这只有 Kubernetes 1.7 或更高版本的 kube-dns 才支持。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;nodeport-类型&#34;&gt;NodePort 类型&lt;/h3&gt;
+
+&lt;p&gt;如果设置 type 的值为 &amp;ldquo;NodePort&amp;rdquo;，Kubernetes master 将从给定的配置范围内（默认：30000-32767）分配端口，每个 Node 将从该端口（每个 Node 上的同一端口）代理到 Service。该端口将通过 Service 的 &lt;code&gt;spec.ports[*].nodePort&lt;/code&gt; 字段被指定。&lt;/p&gt;
+
+&lt;p&gt;如果需要指定的端口号，可以配置 nodePort 的值，系统将分配这个端口，否则调用 API 将会失败（比如，需要关心端口冲突的可能性）。&lt;/p&gt;
+
+&lt;p&gt;这可以让开发人员自由地安装他们自己的负载均衡器，并配置 Kubernetes 不能完全支持的环境参数，或者直接暴露一个或多个 Node 的 IP 地址。&lt;/p&gt;
+
+&lt;p&gt;需要注意的是，Service 将能够通过 &lt;code&gt;&amp;lt;NodeIP&amp;gt;:spec.ports[*].nodePort&lt;/code&gt; 和 &lt;code&gt;spec.clusterIp:spec.ports[*].port&lt;/code&gt; 而对外可见。&lt;/p&gt;
+
+&lt;h3 id=&#34;loadbalancer-类型&#34;&gt;LoadBalancer 类型&lt;/h3&gt;
+
+&lt;p&gt;使用支持外部负载均衡器的云提供商的服务，设置 type 的值为 &amp;ldquo;LoadBalancer&amp;rdquo;，将为 Service 提供负载均衡器。 负载均衡器是异步创建的，关于被提供的负载均衡器的信息将会通过 Service 的 status.loadBalancer 字段被发布出去。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;kind: Service
+apiVersion: v1
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: MyApp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9376
+      nodePort: 30061
+  clusterIP: 10.0.171.239
+  loadBalancerIP: 78.11.24.19
+  type: LoadBalancer
+status:
+  loadBalancer:
+    ingress:
+      - ip: 146.148.47.155
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;来自外部负载均衡器的流量将直接打到 backend Pod 上，不过实际它们是如何工作的，这要依赖于云提供商。 在这些情况下，将根据用户设置的 loadBalancerIP 来创建负载均衡器。 某些云提供商允许设置 loadBalancerIP。如果没有设置 loadBalancerIP，将会给负载均衡器指派一个临时 IP。 如果设置了 loadBalancerIP，但云提供商并不支持这种特性，那么设置的 loadBalancerIP 值将会被忽略掉。&lt;/p&gt;
+
+&lt;h3 id=&#34;外部-ip&#34;&gt;外部 IP&lt;/h3&gt;
+
+&lt;p&gt;如果外部的 IP 路由到集群中一个或多个 Node 上，Kubernetes Service 会被暴露给这些 externalIPs。 通过外部 IP（作为目的 IP 地址）进入到集群，打到 Service 的端口上的流量，将会被路由到 Service 的 Endpoint 上。 externalIPs 不会被 Kubernetes 管理，它属于集群管理员的职责范畴。&lt;/p&gt;
+
+&lt;p&gt;根据 Service 的规定，externalIPs 可以同任意的 ServiceType 来一起指定。 在下面的例子中，my-service 可以在 80.11.12.10:80（外部 IP:端口）上被客户端访问。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;kind: Service
+apiVersion: v1
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: MyApp
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 9376
+  externalIPs:
+    - 80.11.12.10
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://jimmysong.io/kubernetes-handbook/concepts/service.html&#34; target=&#34;_blank&#34;&gt;https://jimmysong.io/kubernetes-handbook/concepts/service.html&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>/post/cloud/k8s/201904-k8s-loadbalancer.md/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/k8s/201904-k8s-loadbalancer.md/</guid>
+      <description>
+
+&lt;h1 id=&#34;负载均衡的概念&#34;&gt;负载均衡的概念&lt;/h1&gt;
+
+&lt;p&gt;负载均衡是将工作负载分布到多个服务器来提高网站、应用、数据库，来提高服务的性能和可靠性，是高可用网络基础架构的关键组件。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-208b3c01.png&#34; src=&#34;images/index-208b3c01.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
+图1，负载均衡示意图&lt;/p&gt;
+
+&lt;p&gt;上图看到用户访问App时会先经过负载均衡（Load Balancer），再由负载均衡器将请求转发给后端服务器上的应用程序。&lt;/p&gt;
+
+&lt;p&gt;负载均衡主要分为两种：四层和七层负载均衡。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;四层负载均衡&lt;/p&gt;
+
+&lt;p&gt;基于IP+端口的负载均衡，即在OSI第4层工作，就是通过发布三层的IP地址（VIP），然后加四层的端口号，来决定哪些流量需要做负载均衡，对需要处理的流量进行NAT处理，转发至后台服务器，并记录下这个TCP或者UDP的流量是由哪台服务器处理的，后续这个连接的所有流量都同样转发到同一台服务器处理。这种Load Balance不理解应用协议（如HTTP/FTP/MySQL等等）。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;七层负载均衡&lt;/p&gt;
+
+&lt;p&gt;工作在OSI的最高层，第7层应用层，就是在四层的基础上，再考虑应用层的特征，比如同一个Web服务器的负载均衡，除了根据VIP加80端口辨别是否需要处理的流量，还可根据七层的URL、浏览器类别、语言来决定是否要进行负载均衡。举个例子，如果你的Web服务器分成两组，一组是中文语言的，一组是英文语言的，那么七层负载均衡就可以当用户来访问你的域名时，自动辨别用户语言，然后选择对应的语言服务器组进行负载均衡处理。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-6c22358d.png&#34; src=&#34;images/index-6c22358d.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
+图2，四层和七层负载均衡的区别&lt;/p&gt;
+
+&lt;p&gt;四层负载均衡更像是路由器的工作方式，修改IP后转发即可；七层负载均衡需要获取到应用层信息，就需要与客户端建立连接并且解析应用层的内容，同时与服务端建立连接，将请求发送到对应的后端服务上。&lt;/p&gt;
+
+&lt;h1 id=&#34;k8s-负载均衡&#34;&gt;K8S 负载均衡&lt;/h1&gt;
+
+&lt;p&gt;现在的后端服务从物理机向容器的运行环境转移，之前物理机的负载均衡已经不适用基于Kubernetes的容器网络了，Kubernetes也需要支持更加灵活和特性广泛的负载均衡。&lt;/p&gt;
+
+&lt;p&gt;云环境下后端服务是运行在容器里的，容器是用Kubernetes通过Pod来编排和管理的，Pod是一组功能密切相关的容器的合集，提供一种服务。&lt;/p&gt;
+
+&lt;p&gt;K8S 的负载均衡主要分为两个层面：
+- 集群内部层面，包括资源分配、内部流量的访问
+- 外部访问集群&lt;/p&gt;
+
+&lt;h3 id=&#34;调度层面&#34;&gt;调度层面&lt;/h3&gt;
+
+&lt;p&gt;分配Pod到Node时就会考虑将一个Service的Pod打散分布，根据资源的容量和性能来部署Pod。作为调度过程的一部分，它需要充分考虑管理可用性，避免遇到资源瓶颈。达到整体运行良好的运行状况。&lt;/p&gt;
+
+&lt;h3 id=&#34;service&#34;&gt;Service&lt;/h3&gt;
+
+&lt;p&gt;我们知道 Pod 的生命周期是短暂的，会因为一些原因而被销毁而在别的 Node 重新创建，因此 Pod 的 IP 地址会变化，而其他服务无法知道新的 IP 地址，这就需要定义一个 Service 暴露给其他服务使用，一个 Service 可以有一个或多个 Pod 逻辑分组的抽象，这样前端应用程序向 Service IP 发起请求就可以了，而不需要关心具体的 Pod 的状态和 IP。Service IP 是固定不变的。&lt;/p&gt;
+
+&lt;p&gt;Service通过标签来选取服务后端，一般配合Replication Controller或者Deployment来保证后端容器的正常运行。&lt;/p&gt;
+
+&lt;p&gt;Service有三种类型：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;ClusterIP：默认类型，自动分配一个仅cluster内部可以访问的虚拟IP&lt;/li&gt;
+&lt;li&gt;NodePort：在ClusterIP基础上为Service在每台机器上绑定一个端口，这样就可以通过&lt;NodeIP&gt;:NodePort来访问该服务&lt;/li&gt;
+&lt;li&gt;LoadBalancer：在NodePort的基础上，借助cloud provider创建一个外部的负载均衡器，并将请求转发到&lt;NodeIP&gt;:NodePort&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;另外，也可以将已有的服务以Service的形式加入到Kubernetes集群中来，只需要在创建Service的时候不指定Label selector，而是在Service创建好后手动为其添加endpoint。&lt;/p&gt;
+
+&lt;p&gt;Service 通过 VIP 实现的是一个4层负载均衡的功能。&lt;/p&gt;
+
+&lt;h4 id=&#34;service-定义&#34;&gt;Service 定义&lt;/h4&gt;
+
+&lt;p&gt;一个 Service 在 Kubernetes 中是一个 REST 对象，和 Pod 类似。 像所有的 REST 对象一样， Service 定义可以基于 POST 方式，请求 apiserver 创建新的实例。 例如，假定有一组 Pod，它们对外暴露了 9376 端口，同时还被打上 &amp;ldquo;app=MyApp&amp;rdquo; 标签。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;kind: Service
+apiVersion: v1
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: MyApp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9376
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;上述配置将创建一个名称为 “my-service” 的 Service 对象，它会将请求代理到使用 TCP 端口 9376，并且具有标签 &amp;ldquo;app=MyApp&amp;rdquo; 的 Pod 上。 这个 Service 将被指派一个 IP 地址（通常称为 “Cluster IP”），它会被服务的代理使用（见下面）。 该 Service 的 selector 将会持续评估，处理结果将被 POST 到一个名称为 “my-service” 的 Endpoints 对象上。&lt;/p&gt;
+
+&lt;p&gt;需要注意的是， Service 能够将一个接收端口映射到任意的 targetPort。 默认情况下，targetPort 将被设置为与 port 字段相同的值。 可能更有趣的是，targetPort 可以是一个字符串，引用了 backend Pod 的一个端口的名称。 但是，实际指派给该端口名称的端口号，在每个 backend Pod 中可能并不相同。 对于部署和设计 Service ，这种方式会提供更大的灵活性。 例如，可以在 backend 软件下一个版本中，修改 Pod 暴露的端口，并不会中断客户端的调用。&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;Kubernetes Service 能够支持 TCP 和 UDP 协议，默认 TCP 协议。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h4 id=&#34;kube-proxy&#34;&gt;kube-proxy&lt;/h4&gt;
+
+&lt;p&gt;Kubernetes中通过Node上的kube-proxy实现负载分配，只能提供本地 Node 上 Pod 的分担，kube-proxy 负责为 Service 实现了一种 VIP（虚拟 IP）的形式。主要有三种实现方式：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;userspace，最开始的实现方式&lt;/li&gt;
+&lt;li&gt;iptables，目前的默认方式&lt;/li&gt;
+&lt;li&gt;ipvs，&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;userspace 代理模式&lt;/p&gt;
+
+&lt;p&gt;该模式下kube-proxy会为每一个Service创建一个监听端口。发向Cluster IP的请求被Iptables规则重定向到Kube-proxy监听的端口上，Kube-proxy根据LB算法选择一个提供服务的Pod并和其建立链接，以将请求转发到Pod上。&lt;/p&gt;
+
+&lt;p&gt;该模式下，Kube-proxy充当了一个四层Load balancer的角色。由于kube-proxy运行在userspace中，在进行转发处理时会增加两次内核和用户空间之间的数据拷贝，效率较另外两种模式低一些；好处是当后端的Pod不可用时，kube-proxy可以重试其他Pod。&lt;/p&gt;
+
+&lt;p&gt;默认的策略是，通过 round-robin 算法来选择 backend Pod。 实现基于客户端 IP 的会话亲和性，可以通过设置 service.spec.sessionAffinity 的值为 &amp;ldquo;ClientIP&amp;rdquo; （默认值为 &amp;ldquo;None&amp;rdquo;）。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-cac4d870.png&#34; src=&#34;images/index-cac4d870.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
+图片 - userspace代理模式下Service概览图&lt;/p&gt;
+
+&lt;p&gt;作为一个例子，考虑前面提到的图片处理应用程序。 当创建 backend Service 时，Kubernetes master 会给它指派一个虚拟 IP 地址，比如 10.0.0.1。 假设 Service 的端口是 1234，该 Service 会被集群中所有的 kube-proxy 实例观察到。 当代理看到一个新的 Service， 它会打开一个新的端口，建立一个从该 VIP 重定向到新端口的 iptables，并开始接收请求连接。&lt;/p&gt;
+
+&lt;p&gt;当一个客户端连接到一个 VIP，iptables 规则开始起作用，它会重定向该数据包到 Service代理 的端口。 Service代理 选择一个 backend，并将客户端的流量代理到 backend 上。&lt;/p&gt;
+
+&lt;p&gt;这意味着 Service 的所有者能够选择任何他们想使用的端口，而不存在冲突的风险。 客户端可以简单地连接到一个 IP 和端口，而不需要知道实际访问了哪些 Pod。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;iptables 代理模式&lt;/p&gt;
+
+&lt;p&gt;为了避免增加内核和用户空间的数据拷贝操作，提高转发效率，Kube-proxy提供了iptables模式。在该模式下，Kube-proxy为service后端的每个Pod创建对应的iptables规则，直接将发向Cluster IP的请求重定向到一个Pod IP。&lt;/p&gt;
+
+&lt;p&gt;该模式下Kube-proxy不承担四层代理的角色，只负责创建iptables规则。该模式的优点是较userspace模式效率更高，但不能提供灵活的LB策略，当后端Pod不可用时也无法进行重试。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-d7150e2c.png&#34; src=&#34;images/index-d7150e2c.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
+图片 - iptables代理模式下Service概览图&lt;/p&gt;
+
+&lt;p&gt;再次考虑前面提到的图片处理应用程序。 当创建 backend Service 时，Kubernetes master 会给它指派一个虚拟 IP 地址，比如 10.0.0.1。 假设 Service 的端口是 1234，该 Service 会被集群中所有的 kube-proxy 实例观察到。 当代理看到一个新的 Service， 它会安装一系列的 iptables 规则，从 VIP 重定向到 per-Service 规则。 该 per-Service 规则连接到 per-Endpoint 规则，该 per-Endpoint 规则会重定向（目标 NAT）到 backend。&lt;/p&gt;
+
+&lt;p&gt;当一个客户端连接到一个 VIP，iptables 规则开始起作用。一个 backend 会被选择（或者根据会话亲和性，或者随机），数据包被重定向到这个 backend。 不像 userspace 代理，数据包从来不拷贝到用户空间，kube-proxy 不是必须为该 VIP 工作而运行，并且客户端 IP 是不可更改的。 当流量打到 Node 的端口上，或通过负载均衡器，会执行相同的基本流程，但是在那些案例中客户端 IP 是可以更改的。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;ipvs 代理模式&lt;/p&gt;
+
+&lt;p&gt;该模式和iptables类似，但是需要内核支持 ipvs，kube-proxy监控Pod的变化并创建相应的ipvs rules。ipvs也是在kernel模式下通过netfilter实现的，但采用了hash table来存储规则，因此在规则较多的情况下，Ipvs相对iptables转发效率更高。除此以外，ipvs支持更多的LB算法，例如：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;rr：轮询调度&lt;/li&gt;
+&lt;li&gt;lc：最小连接数&lt;/li&gt;
+&lt;li&gt;dh：目标哈希&lt;/li&gt;
+&lt;li&gt;sh：源哈希&lt;/li&gt;
+&lt;li&gt;sed：最短期望延迟&lt;/li&gt;
+&lt;li&gt;nq： 不排队调度&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;注意： ipvs模式假定在运行kube-proxy之前在节点上都已经安装了IPVS内核模块。当kube-proxy以ipvs代理模式启动时，kube-proxy将验证节点上是否安装了IPVS模块，如果未安装，则kube-proxy将回退到iptables代理模式。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-02fe28c6.png&#34; src=&#34;images/index-02fe28c6.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
+图片 - ipvs代理模式下Service概览图&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&#34;缺点&#34;&gt;缺点&lt;/h4&gt;
+
+&lt;p&gt;为 VIP 使用 userspace 代理，将只适合小型到中型规模的集群，不能够扩展到上千 Service 的大型集群。 查看 &lt;a href=&#34;http://issue.k8s.io/1107&#34; target=&#34;_blank&#34;&gt;最初设计方案&lt;/a&gt; 获取更多细节。&lt;/p&gt;
+
+&lt;p&gt;使用 userspace 代理，隐藏了访问 Service 的数据包的源 IP 地址。 这使得一些类型的防火墙无法起作用。 iptables 代理不会隐藏 Kubernetes 集群内部的 IP 地址，但却要求客户端请求必须通过一个负载均衡器或 Node 端口。&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;todo: userspace会引起源 IP 的修改？为啥 iptables 代理需要配置 loadbalancer 或者 NodePort？&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Type 字段支持嵌套功能 —— 每一层需要添加到上一层里面。 不会严格要求所有云提供商（例如，GCE 就没必要为了使一个 LoadBalancer 能工作而分配一个 NodePort，但是 AWS 需要 ），但当前 API 是强制要求的。&lt;/p&gt;
+
+&lt;h2 id=&#34;ingress&#34;&gt;Ingress&lt;/h2&gt;
+
+&lt;p&gt;Ingress 是从Kubernetes集群外部访问集群内部服务的入口，service 和 pod 仅可在集群内部网络中通过 IP 地址访问。所有到达边界路由器的流量或被丢弃或被转发到其他地方。从概念上讲，可能像下面这样：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    internet
+        |
+  ------------
+  [ Services ]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Ingress是授权入站连接到达集群服务的规则集合。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    internet
+        |
+   [ Ingress ]
+   --|-----|--
+   [ Services ]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;你可以给Ingress配置提供外部可访问的URL、负载均衡、SSL、基于名称的虚拟主机等。用户通过POST Ingress资源到API server的方式来请求ingress。 Ingress controller负责实现Ingress，通常使用负载平衡器，它还可以配置边界路由和其他前端，这有助于以HA方式处理流量。&lt;/p&gt;
+
+&lt;h3 id=&#34;ingress-resource&#34;&gt;Ingress Resource&lt;/h3&gt;
+
+&lt;p&gt;最简化的Ingress配置：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;1: apiVersion: extensions/v1beta1
+2: kind: Ingress
+3: metadata:
+4:   name: test-ingress
+5: spec:
+6:   rules:
+7:   - http:
+8:       paths:
+9:       - path: /testpath
+10:        backend:
+11:           serviceName: test
+12:           servicePort: 80
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;如果你没有配置Ingress controller就将其POST到API server不会有任何用处&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;strong&gt;配置说明&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;1-4行：跟Kubernetes的其他配置一样，ingress的配置也需要apiVersion，kind和metadata字段。配置文件的详细说明请查看部署应用, 配置容器和 使用resources.&lt;/p&gt;
+
+&lt;p&gt;5-7行: Ingress spec 中包含配置一个loadbalancer或proxy server的所有信息。最重要的是，它包含了一个匹配所有入站请求的规则列表。目前ingress只支持http规则。&lt;/p&gt;
+
+&lt;p&gt;8-9行：每条http规则包含以下信息：一个host配置项（比如for.bar.com，在这个例子中默认是*），path列表（比如：/testpath），每个path都关联一个backend(比如test:80)。在loadbalancer将流量转发到backend之前，所有的入站请求都要先匹配host和path。&lt;/p&gt;
+
+&lt;p&gt;10-12行：正如 services doc中描述的那样，backend是一个service:port的组合。Ingress的流量被转发到它所匹配的backend。&lt;/p&gt;
+
+&lt;p&gt;全局参数：为了简单起见，Ingress示例中没有全局参数，请参阅资源完整定义的api参考。 在所有请求都不能跟spec中的path匹配的情况下，请求被发送到Ingress controller的默认后端，可以指定全局缺省backend。&lt;/p&gt;
+
+&lt;h3 id=&#34;ingress-controllers&#34;&gt;Ingress controllers&lt;/h3&gt;
+
+&lt;p&gt;为了使Ingress正常工作，集群中必须运行Ingress controller。 这与其他类型的控制器不同，其他类型的控制器通常作为kube-controller-manager二进制文件的一部分运行，在集群启动时自动启动。 你需要选择最适合自己集群的Ingress controller或者自己实现一个。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;kubernetes当前支持并维护GCE和nginx两种controller.&lt;/li&gt;
+&lt;li&gt;F5（公司）支持并维护 F5 BIG-IP Controller for Kubernetes.&lt;/li&gt;
+&lt;li&gt;Kong 同时支持并维护社区版与企业版的 Kong Ingress Controller for Kubernetes.&lt;/li&gt;
+&lt;li&gt;Traefik 是功能齐全的 ingress controller(Let’s Encrypt, secrets, http2, websocket…), Containous 也对其提供商业支持。&lt;/li&gt;
+&lt;li&gt;Istio 使用CRD Gateway来控制Ingress流量。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;ingress类型&#34;&gt;Ingress类型&lt;/h3&gt;
+
+&lt;p&gt;单Service Ingress
+Kubernetes中已经存在一些概念可以暴露单个service（查看替代方案），但是你仍然可以通过Ingress来实现，通过指定一个没有rule的默认backend的方式。&lt;/p&gt;
+
+&lt;p&gt;ingress.yaml定义文件：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: test-ingress
+spec:
+  backend:
+    serviceName: testsvc
+    servicePort: 80
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;使用kubectl create -f命令创建，然后查看ingress：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ kubectl get ing
+NAME                RULE          BACKEND        ADDRESS
+test-ingress        -             testsvc:80     107.178.254.228
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;107.178.254.228就是Ingress controller为了实现Ingress而分配的IP地址。RULE列表示所有发送给该IP的流量都被转发到了BACKEND所列的Kubernetes service上。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;loadbalancer&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;如前面描述的那样，kubernetes pod中的IP只在集群网络内部可见，我们需要在边界设置一个东西，让它能够接收ingress的流量并将它们转发到正确的端点上。这个东西一般是高可用的loadbalancer。使用Ingress能够允许你将loadbalancer的个数降低到最少，例如，假如你想要创建这样的一个设置：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;foo.bar.com -&amp;gt; 178.91.123.132 -&amp;gt; / foo    s1:80
+                                 / bar    s2:80
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;你需要一个这样的ingress：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: test
+spec:
+  rules:
+  - host: foo.bar.com
+    http:
+      paths:
+      - path: /foo
+        backend:
+          serviceName: s1
+          servicePort: 80
+      - path: /bar
+        backend:
+          serviceName: s2
+          servicePort: 80
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;使用kubectl create -f创建完ingress后：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ kubectl get ing
+NAME      RULE          BACKEND   ADDRESS
+test      -
+          foo.bar.com
+          /foo          s1:80
+          /bar          s2:80
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;只要服务（s1，s2）存在，Ingress controller就会将提供一个满足该Ingress的特定loadbalancer实现。 这一步完成后，您将在Ingress的最后一列看到loadbalancer的地址。&lt;/p&gt;
+
+&lt;h4 id=&#34;基于名称的虚拟主机&#34;&gt;基于名称的虚拟主机&lt;/h4&gt;
+
+&lt;p&gt;Name-based的虚拟主机在同一个IP地址下拥有多个主机名。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;foo.bar.com --|                 |-&amp;gt; foo.bar.com s1:80
+              | 178.91.123.132  |
+bar.foo.com --|                 |-&amp;gt; bar.foo.com s2:80
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;下面这个ingress说明基于Host header的后端loadbalancer的路由请求：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: test
+spec:
+  rules:
+  - host: foo.bar.com
+    http:
+      paths:
+      - backend:
+          serviceName: s1
+          servicePort: 80
+  - host: bar.foo.com
+    http:
+      paths:
+      - backend:
+          serviceName: s2
+          servicePort: 80
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;默认backend&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;一个没有rule的ingress，如前面章节中所示，所有流量都将发送到一个默认backend。你可以用该技巧通知loadbalancer如何找到你网站的404页面，通过制定一些列rule和一个默认backend的方式。如果请求header中的host不能跟ingress中的host匹配，并且/或请求的URL不能与任何一个path匹配，则流量将路由到你的默认backend。&lt;/p&gt;
+
+&lt;h1 id=&#34;istio&#34;&gt;Istio&lt;/h1&gt;
+
+&lt;h2 id=&#34;istio-sidecar-proxy&#34;&gt;Istio Sidecar Proxy&lt;/h2&gt;
+
+&lt;p&gt;Cluster IP解决了服务之间相互访问的问题，但从上面Kube-proxy的三种模式可以看到，Cluster IP的方式只提供了服务发现和基本的LB功能。如果要为服务间的通信应用灵活的路由规则以及提供Metrics collection，distributed tracing等服务管控功能,就必须得依靠Istio提供的服务网格能力了。&lt;/p&gt;
+
+&lt;p&gt;在Kubernetes中部署Istio后，Istio通过iptables和Sidecar Proxy接管服务之间的通信，服务间的相互通信不再通过Kube-proxy，而是通过Istio的Sidecar Proxy进行。请求流程是这样的：Client发起的请求被iptables重定向到Sidecar Proxy，Sidecar Proxy根据从控制面获取的服务发现信息和路由规则，选择一个后端的Server Pod创建链接，代理并转发Client的请求。&lt;/p&gt;
+
+&lt;p&gt;Istio Sidecar Proxy和Kube-proxy的userspace模式的工作机制类似，都是通过在用户空间的一个代理来实现客户端请求的转发和后端多个Pod之间的负载均衡。两者的不同点是：Kube-Proxy工作在四层，而Sidecar Proxy则是一个七层代理，可以针对HTTP，GRPS等应用层的语义进行处理和转发，因此功能更为强大，可以配合控制面实现更为灵活的路由规则和服务管控功能。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-734e0540.png&#34; src=&#34;images/index-734e0540.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
+图片 - Istio Sidecar Proxy 流量转发模型&lt;/p&gt;
+
+&lt;h1 id=&#34;grpc负载均衡&#34;&gt;gRPC负载均衡&lt;/h1&gt;
+
+&lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/blog/2018/11/07/grpc-load-balancing-on-kubernetes-without-tears/&#34; target=&#34;_blank&#34;&gt;grpc-load-balancing-on-kubernetes-without-tears&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://jimmysong.io/kubernetes-handbook/concepts/service.html&#34; target=&#34;_blank&#34;&gt;Service&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://istio.io/zh/docs/tasks/traffic-management/ingress/&#34; target=&#34;_blank&#34;&gt;istio 控制 Ingress 流量&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;问题&#34;&gt;问题&lt;/h1&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Service 的 IP 地址如何配置？&lt;/p&gt;
+
+&lt;p&gt;通过 Service 的 spec.clusterIP 来指定集群的 IP&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;为何不使用 round-robin DNS 而使用 VIP？&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;长久以来，DNS 库都没能认真对待 DNS TTL、缓存域名查询结果&lt;/li&gt;
+&lt;li&gt;很多应用只查询一次 DNS 并缓存了结果，就算应用和库能够正确查询解析，每个客户端反复重解析造成的负载也是非常难以管理的&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;到 Service 的流量如何路由过来的？Service 分布在不同的 Node 上，在不同的 Node 上有相同的 cluster IP？&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>/post/note/math/programmer-math-note/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/post/note/math/programmer-math-note/</guid>
+      <description>
+
+&lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://qiankunli.github.io/2019/03/01/math_for_programmer_note.html&#34; target=&#34;_blank&#34;&gt;《程序员的数学基础课》笔记&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>/post/tech/how-to-read-code/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/post/tech/how-to-read-code/</guid>
+      <description>
+
+&lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://qiankunli.github.io/2019/01/24/source_parse.html&#34; target=&#34;_blank&#34;&gt;http://qiankunli.github.io/2019/01/24/source_parse.html&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>/post/tech/proto-note/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/post/tech/proto-note/</guid>
+      <description>
+
+&lt;h1 id=&#34;编码规则&#34;&gt;编码规则&lt;/h1&gt;
+
+&lt;p&gt;Protobuf消息由字段（field）构成，每个字段有其规则（rule）、数据类型（type）、字段名（name）、tag，以及选项（option）。比如下面这段代码描述了由多个字段构成的 Person 消息：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;message Person {
+  string name = 1;
+  int32 id = 2;  // Unique ID number for this person.
+  string email = 3;
+
+  enum PhoneType {
+    MOBILE = 0;
+    HOME = 1;
+    WORK = 2;
+  }
+
+  message PhoneNumber {
+    string number = 1;
+    PhoneType type = 2;
+  }
+
+  repeated PhoneNumber phones = 4;
+
+  google.protobuf.Timestamp last_updated = 5;
+}
+&lt;/code&gt;&lt;/pre&gt;
 </description>
     </item>
     

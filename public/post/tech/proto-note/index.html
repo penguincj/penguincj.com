@@ -27,10 +27,11 @@
   
     
   
-  <meta name="description" content="">
+  <meta name="description" content=" 编码规则 Protobuf消息由字段（field）构成，每个字段有其规则（rule）、数据类型（type）、字段名（name）、tag，以及选项（option）。比如下面这段代码描述了由多个字段构成的 Person 消息：
+message Person { string name = 1; int32 id = 2; // Unique ID number for this person. string email = 3; enum PhoneType { MOBILE = 0; HOME = 1; WORK = 2; } message PhoneNumber { string number = 1; PhoneType type = 2; } repeated PhoneNumber phones = 4; google.protobuf.Timestamp last_updated = 5; }  ">
 
   
-  <link rel="alternate" hreflang="en-us" href="/tags/cni/">
+  <link rel="alternate" hreflang="en-us" href="/post/tech/proto-note/">
 
   
 
@@ -88,15 +89,12 @@
   
 
   
-  <link rel="alternate" href="/tags/cni/index.xml" type="application/rss+xml" title="L CJ的博客">
-  <link rel="feed" href="/tags/cni/index.xml" type="application/rss+xml" title="L CJ的博客">
-  
 
   <link rel="manifest" href="/site.webmanifest">
   <link rel="icon" type="image/png" href="/img/icon.png">
   <link rel="apple-touch-icon" type="image/png" href="/img/icon-192.png">
 
-  <link rel="canonical" href="/tags/cni/">
+  <link rel="canonical" href="/post/tech/proto-note/">
 
   
   
@@ -108,19 +106,21 @@
   <meta property="twitter:card" content="summary">
   
   <meta property="og:site_name" content="L CJ的博客">
-  <meta property="og:url" content="/tags/cni/">
-  <meta property="og:title" content="CNI | L CJ的博客">
-  <meta property="og:description" content=""><meta property="og:image" content="/img/icon-192.png">
+  <meta property="og:url" content="/post/tech/proto-note/">
+  <meta property="og:title" content=" | L CJ的博客">
+  <meta property="og:description" content=" 编码规则 Protobuf消息由字段（field）构成，每个字段有其规则（rule）、数据类型（type）、字段名（name）、tag，以及选项（option）。比如下面这段代码描述了由多个字段构成的 Person 消息：
+message Person { string name = 1; int32 id = 2; // Unique ID number for this person. string email = 3; enum PhoneType { MOBILE = 0; HOME = 1; WORK = 2; } message PhoneNumber { string number = 1; PhoneType type = 2; } repeated PhoneNumber phones = 4; google.protobuf.Timestamp last_updated = 5; }  "><meta property="og:image" content="/img/icon-192.png">
   <meta property="og:locale" content="en-us">
   
-  <meta property="og:updated_time" content="2019-05-28T00:00:00&#43;00:00">
+  
+  
   
 
   
 
   
 
-  <title>CNI | L CJ的博客</title>
+  <title> | L CJ的博客</title>
 
 </head>
 <body id="top" data-spy="scroll" data-target="#TableOfContents" data-offset="71" >
@@ -226,7 +226,7 @@
         
 
         <li class="nav-item">
-          <a class="nav-link " href="/post/">
+          <a class="nav-link  active" href="/post/">
             
             <span>技术博客</span>
             
@@ -363,7 +363,9 @@
 </nav>
 
 
+<article class="article" itemscope itemtype="http://schema.org/Article">
 
+  
 
 
 
@@ -380,37 +382,216 @@
 
   
   
+  
+<div class="article-container pt-3">
+  <h1 itemprop="name"></h1>
+
+  
+
   
     
-  
-<div class="universal-wrapper pt-3">
-  <h1 itemprop="name">CNI</h1>
+
+
+
+<meta content="" itemprop="datePublished">
+<meta content="" itemprop="dateModified">
+
+<div class="article-metadata">
 
   
+  
+
+  
+  <span class="article-date">
+    
+    
+      
+    
+    <time>Jan 1, 0001</time>
+  </span>
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+    
+
+  
+
+</div>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   
 </div>
 
 
+  <div class="row">
 
-<div class="universal-wrapper">
-  
+       <div class="col-md-2">
+       </div>
+
+
+       
+  <div class="article-container col-md-8">
+
+    <div class="article-style" itemprop="articleBody">
+      
+
+<h1 id="编码规则">编码规则</h1>
+
+<p>Protobuf消息由字段（field）构成，每个字段有其规则（rule）、数据类型（type）、字段名（name）、tag，以及选项（option）。比如下面这段代码描述了由多个字段构成的 Person 消息：</p>
+
+<pre><code class="language-go">message Person {
+  string name = 1;
+  int32 id = 2;  // Unique ID number for this person.
+  string email = 3;
+
+  enum PhoneType {
+    MOBILE = 0;
+    HOME = 1;
+    WORK = 2;
+  }
+
+  message PhoneNumber {
+    string number = 1;
+    PhoneType type = 2;
+  }
+
+  repeated PhoneNumber phones = 4;
+
+  google.protobuf.Timestamp last_updated = 5;
+}
+</code></pre>
+
+    </div>
+
+
+
+
+    
+
+
+
+    
+      
+
+
+
+
+
+
+
 
   
+
+
+
+
+
   
-  <div>
-    <h2><a href="/post/cloud/k8s/201905-k8s-network-arch/">Kubernetes网络框架</a></h2>
-    <div class="article-style">
+  <div class="media author-card" itemscope itemtype="http://schema.org/Person">
+    
       
-      Kubernetes本身不提供容器网络，但具有可扩展的网络框架
+      <img class="portrait mr-3" src="/authors/admin/avatar_hudbe7539925304d5143000a5cbf353a95_182511_250x250_fill_q90_lanczos_center.jpg" itemprop="image" alt="Avatar">
+    
+
+    <div class="media-body">
+      <h5 class="card-title" itemprop="name"><a href="/authors/admin/">L CJ</a></h5>
       
+      <p class="card-text" itemprop="description">我目前研究的方向主要在Microservice、Servicemesh、Serverless等和Cloud Native相关的领域，欢迎交流和指导</p>
+      <ul class="network-icon" aria-hidden="true">
+        
+          
+          
+          
+            
+          
+          
+          
+          
+          
+          <li>
+            <a itemprop="sameAs" href="mailto:penguincj@163.com" >
+              <i class="fas fa-envelope"></i>
+            </a>
+          </li>
+        
+          
+          
+          
+            
+          
+          
+          
+          
+          
+            
+          
+          <li>
+            <a itemprop="sameAs" href="https://github.com/penguincj" target="_blank" rel="noopener">
+              <i class="fab fa-github"></i>
+            </a>
+          </li>
+        
+      </ul>
     </div>
   </div>
-  
 
-  
 
-</div>
+
+      
+      
+    
+
+    
+
+    
+
+
+  </div>
+         <div class="d-none d-xl-block col-xl-2 docs-toc col-md-2">
+      
+      <p class="docs-toc-title">On this page</p>
+      
+
+      <nav id="TableOfContents">
+<ul>
+<li><a href="#编码规则">编码规则</a></li>
+</ul>
+</nav>
+
+      <ul class="nav toc-top">
+        <li><a href="#">Back to top</a></li>
+      </ul>
+
+      
+    </div>
+    </div>
+
+</article>
+
 <div class="container">
   <footer class="site-footer">
   

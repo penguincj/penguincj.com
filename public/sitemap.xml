@@ -74,11 +74,79 @@
   </url>
   
   <url>
+    <loc>/post/cloud/k8s/201811-k8s-arch/</loc>
+    <lastmod>2018-11-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tags/magicmirror/</loc>
+    <lastmod>2018-08-27T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/project/</loc>
+    <lastmod>2018-08-27T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/project/mirror-project/</loc>
+    <lastmod>2018-08-27T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tags/blockchain/</loc>
+    <lastmod>2018-07-27T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/project/blockchain-project/</loc>
+    <lastmod>2018-07-27T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/about/</loc>
   </url>
   
   <url>
     <loc>/authors/admin/</loc>
+  </url>
+  
+  <url>
+    <loc>/post/cloud/k8s/201812-k8s-resource-management/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/post/cloud/k8s/201901-how-read-kubeproxy/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/post/cloud/k8s/201903-k8s-service-register.md/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/post/cloud/k8s/201904-k8s-loadbalancer.md/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/post/note/math/programmer-math-note/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/post/tech/how-to-read-code/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/post/tech/proto-note/</loc>
+    <priority>0</priority>
   </url>
   
   <url>

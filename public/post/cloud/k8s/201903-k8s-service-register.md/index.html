@@ -27,10 +27,16 @@
   
     
   
-  <meta name="description" content="容器云解决大量项目构建运营环境的效率问题">
+  <meta name="description" content="服务发现 Kubernetes 支持2种基本的服务发现模式 —— 环境变量和 DNS。
+环境变量 当 Pod 运行在 Node 上，kubelet 会为每个活跃的 Service 添加一组环境变量。 它同时支持 Docker links 兼容 变量（查看 makeLinkVariables）、简单的 {SVCNAME}_SERVICE_HOST 和 {SVCNAME}_SERVICE_PORT 变量，这里 Service 的名称需大写，横线被转换成下划线。
+举个例子，一个名称为 &ldquo;redis-master&rdquo; 的 Service 暴露了 TCP 端口 6379，同时给它分配了 Cluster IP 地址 10.0.0.11，这个 Service 生成了如下环境变量：
+服务发布 对一些应用（如 Frontend）的某些部分，可能希望通过外部（Kubernetes 集群外部）IP 地址暴露 Service。
+Kubernetes ServiceTypes 允许指定一个需要的类型的 Service，默认是 ClusterIP 类型。
+Type 的取值以及行为如下：
+ ClusterIP：通过集群的内部 IP 暴露服务，选择该值，服务只能够在集群内部可以访问，这也是默认的 ServiceType。 NodePort：通过每个 Node 上的 IP 和静态端口（NodePort）暴露服务。NodePort 服务会路由到 ClusterIP 服务，这个 ClusterIP 服务会自动创建。通过请求 :，可以从集群的外部访问一个 NodePort 服务。 LoadBalancer：使用云提供商的负载均衡器，可以向外部暴露服务。外部的负载均衡器可以路由到 NodePort 服务和 ClusterIP 服务。 ExternalName：通过返回 CNAME 和它的值，可以将服务映射到 externalName 字段的内容（例如， foo.">
 
   
-  <link rel="alternate" hreflang="en-us" href="/post/cloud/container/201905-why-container-cloud/why-container/">
+  <link rel="alternate" hreflang="en-us" href="/post/cloud/k8s/201903-k8s-service-register.md/">
 
   
 
@@ -93,7 +99,7 @@
   <link rel="icon" type="image/png" href="/img/icon.png">
   <link rel="apple-touch-icon" type="image/png" href="/img/icon-192.png">
 
-  <link rel="canonical" href="/post/cloud/container/201905-why-container-cloud/why-container/">
+  <link rel="canonical" href="/post/cloud/k8s/201903-k8s-service-register.md/">
 
   
   
@@ -105,21 +111,26 @@
   <meta property="twitter:card" content="summary">
   
   <meta property="og:site_name" content="L CJ的博客">
-  <meta property="og:url" content="/post/cloud/container/201905-why-container-cloud/why-container/">
-  <meta property="og:title" content="Why 容器云 | L CJ的博客">
-  <meta property="og:description" content="容器云解决大量项目构建运营环境的效率问题"><meta property="og:image" content="/img/icon-192.png">
+  <meta property="og:url" content="/post/cloud/k8s/201903-k8s-service-register.md/">
+  <meta property="og:title" content=" | L CJ的博客">
+  <meta property="og:description" content="服务发现 Kubernetes 支持2种基本的服务发现模式 —— 环境变量和 DNS。
+环境变量 当 Pod 运行在 Node 上，kubelet 会为每个活跃的 Service 添加一组环境变量。 它同时支持 Docker links 兼容 变量（查看 makeLinkVariables）、简单的 {SVCNAME}_SERVICE_HOST 和 {SVCNAME}_SERVICE_PORT 变量，这里 Service 的名称需大写，横线被转换成下划线。
+举个例子，一个名称为 &ldquo;redis-master&rdquo; 的 Service 暴露了 TCP 端口 6379，同时给它分配了 Cluster IP 地址 10.0.0.11，这个 Service 生成了如下环境变量：
+服务发布 对一些应用（如 Frontend）的某些部分，可能希望通过外部（Kubernetes 集群外部）IP 地址暴露 Service。
+Kubernetes ServiceTypes 允许指定一个需要的类型的 Service，默认是 ClusterIP 类型。
+Type 的取值以及行为如下：
+ ClusterIP：通过集群的内部 IP 暴露服务，选择该值，服务只能够在集群内部可以访问，这也是默认的 ServiceType。 NodePort：通过每个 Node 上的 IP 和静态端口（NodePort）暴露服务。NodePort 服务会路由到 ClusterIP 服务，这个 ClusterIP 服务会自动创建。通过请求 :，可以从集群的外部访问一个 NodePort 服务。 LoadBalancer：使用云提供商的负载均衡器，可以向外部暴露服务。外部的负载均衡器可以路由到 NodePort 服务和 ClusterIP 服务。 ExternalName：通过返回 CNAME 和它的值，可以将服务映射到 externalName 字段的内容（例如， foo."><meta property="og:image" content="/img/icon-192.png">
   <meta property="og:locale" content="en-us">
   
-  <meta property="article:published_time" content="2019-05-07T00:00:00&#43;08:00">
   
-  <meta property="article:modified_time" content="2019-05-07T00:00:00&#43;08:00">
   
-
   
 
   
 
-  <title>Why 容器云 | L CJ的博客</title>
+  
+
+  <title> | L CJ的博客</title>
 
 </head>
 <body id="top" data-spy="scroll" data-target="#TableOfContents" data-offset="71" >
@@ -383,10 +394,8 @@
   
   
 <div class="article-container pt-3">
-  <h1 itemprop="name">Why 容器云</h1>
+  <h1 itemprop="name"></h1>
 
-  
-  <p class="page-subtitle">容器云解决大量项目构建运营环境的效率问题</p>
   
 
   
@@ -394,8 +403,8 @@
 
 
 
-<meta content="2019-05-07 00:00:00 &#43;0800 CST" itemprop="datePublished">
-<meta content="2019-05-07 00:00:00 &#43;0800 CST" itemprop="dateModified">
+<meta content="" itemprop="datePublished">
+<meta content="" itemprop="dateModified">
 
 <div class="article-metadata">
 
@@ -408,7 +417,7 @@
     
       
     
-    <time>May 7, 2019</time>
+    <time>Jan 1, 0001</time>
   </span>
   
 
@@ -460,129 +469,92 @@
     <div class="article-style" itemprop="articleBody">
       
 
-<p>人们对云计算提出了更高的要求，为大量项目构建运营环境的效率问题，缩短新业务的上线部署时间，大规模的计算机房快速迁移需求；提高服务器资源的利用率，同时确保相同的性能和可用性，又有降低成本的需求。相较于传统的虚拟化解决方案，容器云可以较好的实现上述目标。</p>
+<h1 id="服务发现">服务发现</h1>
 
-<p>容器云的核心功能：</p>
+<p>Kubernetes 支持2种基本的服务发现模式 —— 环境变量和 DNS。</p>
+
+<p>环境变量
+当 Pod 运行在 Node 上，kubelet 会为每个活跃的 Service 添加一组环境变量。 它同时支持 Docker links 兼容 变量（查看 makeLinkVariables）、简单的 {SVCNAME}_SERVICE_HOST 和 {SVCNAME}_SERVICE_PORT 变量，这里 Service 的名称需大写，横线被转换成下划线。</p>
+
+<p>举个例子，一个名称为 &ldquo;redis-master&rdquo; 的 Service 暴露了 TCP 端口 6379，同时给它分配了 Cluster IP 地址 10.0.0.11，这个 Service 生成了如下环境变量：</p>
+
+<h2 id="服务发布">服务发布</h2>
+
+<p>对一些应用（如 Frontend）的某些部分，可能希望通过外部（Kubernetes 集群外部）IP 地址暴露 Service。</p>
+
+<p>Kubernetes ServiceTypes 允许指定一个需要的类型的 Service，默认是 ClusterIP 类型。</p>
+
+<p>Type 的取值以及行为如下：</p>
 
 <ul>
-<li>快速扩容</li>
-<li>智能调度和编排</li>
-<li>弹性伸缩</li>
+<li>ClusterIP：通过集群的内部 IP 暴露服务，选择该值，服务只能够在集群内部可以访问，这也是默认的 ServiceType。</li>
+<li>NodePort：通过每个 Node 上的 IP 和静态端口（NodePort）暴露服务。NodePort 服务会路由到 ClusterIP 服务，这个 ClusterIP 服务会自动创建。通过请求 <NodeIP>:<NodePort>，可以从集群的外部访问一个 NodePort 服务。</li>
+<li>LoadBalancer：使用云提供商的负载均衡器，可以向外部暴露服务。外部的负载均衡器可以路由到 NodePort 服务和 ClusterIP 服务。</li>
+<li>ExternalName：通过返回 CNAME 和它的值，可以将服务映射到 externalName 字段的内容（例如， foo.bar.example.com）。 没有任何类型代理被创建，这只有 Kubernetes 1.7 或更高版本的 kube-dns 才支持。</li>
 </ul>
 
-<h2 id="快速扩容">快速扩容</h2>
+<h3 id="nodeport-类型">NodePort 类型</h3>
 
-<ul>
-<li>扩容速度：
+<p>如果设置 type 的值为 &ldquo;NodePort&rdquo;，Kubernetes master 将从给定的配置范围内（默认：30000-32767）分配端口，每个 Node 将从该端口（每个 Node 上的同一端口）代理到 Service。该端口将通过 Service 的 <code>spec.ports[*].nodePort</code> 字段被指定。</p>
 
-<ul>
-<li>VM - 扩容20个实例需要4分钟（扩容完成后需要再执行服务发布）</li>
-<li>docker - 扩容20个实例仅需30s，秒级别扩容（扩容完成即服务启动）</li>
-</ul></li>
-<li>扩容速度提高 8~12倍</li>
-<li>节约了用户手动操作申请/发布的成本</li>
-</ul>
+<p>如果需要指定的端口号，可以配置 nodePort 的值，系统将分配这个端口，否则调用 API 将会失败（比如，需要关心端口冲突的可能性）。</p>
 
-<h2 id="智能调度">智能调度</h2>
+<p>这可以让开发人员自由地安装他们自己的负载均衡器，并配置 Kubernetes 不能完全支持的环境参数，或者直接暴露一个或多个 Node 的 IP 地址。</p>
 
-<p>调度系统是云集群的中央处理器，要解决的核心问题是为容器选择合适的宿主机。有如下的指标：</p>
+<p>需要注意的是，Service 将能够通过 <code>&lt;NodeIP&gt;:spec.ports[*].nodePort</code> 和 <code>spec.clusterIp:spec.ports[*].port</code> 而对外可见。</p>
 
-<ul>
-<li>资源利用率，提高整体物理集群的资源利用率</li>
-<li>业务可用性保障：业务容器容灾能力、保障运行业务的稳定高可用</li>
-<li>并发调度能力：调度系统请求处理能力的体现</li>
-</ul>
+<h3 id="loadbalancer-类型">LoadBalancer 类型</h3>
 
-<h3 id="资源最大化利用">资源最大化利用</h3>
+<p>使用支持外部负载均衡器的云提供商的服务，设置 type 的值为 &ldquo;LoadBalancer&rdquo;，将为 Service 提供负载均衡器。 负载均衡器是异步创建的，关于被提供的负载均衡器的信息将会通过 Service 的 status.loadBalancer 字段被发布出去。</p>
 
-<ul>
-<li>按CPU/Mem/IO等类型对服务进行调度，最大化资源利用</li>
-<li>业务按需使用资源，提升资源利用率</li>
-</ul>
+<pre><code class="language-yaml">kind: Service
+apiVersion: v1
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: MyApp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9376
+      nodePort: 30061
+  clusterIP: 10.0.171.239
+  loadBalancerIP: 78.11.24.19
+  type: LoadBalancer
+status:
+  loadBalancer:
+    ingress:
+      - ip: 146.148.47.155
+</code></pre>
 
-<h3 id="混布与独占">混布与独占</h3>
+<p>来自外部负载均衡器的流量将直接打到 backend Pod 上，不过实际它们是如何工作的，这要依赖于云提供商。 在这些情况下，将根据用户设置的 loadBalancerIP 来创建负载均衡器。 某些云提供商允许设置 loadBalancerIP。如果没有设置 loadBalancerIP，将会给负载均衡器指派一个临时 IP。 如果设置了 loadBalancerIP，但云提供商并不支持这种特性，那么设置的 loadBalancerIP 值将会被忽略掉。</p>
 
-<ul>
-<li>在线服务与离线任务混布</li>
-<li>重要业务资源池独占</li>
-</ul>
+<h3 id="外部-ip">外部 IP</h3>
 
-<h3 id="容器编排">容器编排</h3>
+<p>如果外部的 IP 路由到集群中一个或多个 Node 上，Kubernetes Service 会被暴露给这些 externalIPs。 通过外部 IP（作为目的 IP 地址）进入到集群，打到 Service 的端口上的流量，将会被路由到 Service 的 Endpoint 上。 externalIPs 不会被 Kubernetes 管理，它属于集群管理员的职责范畴。</p>
 
-<ul>
-<li>有调用关系的多个服务实例，优先部署到相同/相近的宿主机上</li>
-<li>同服务实例打散，分布到不同宿主机上，提高服务可用性</li>
-<li>高负载容器，自动迁移到低负载宿主机</li>
-<li>自动化容器实例健康检查，异常实例自动迁移</li>
-</ul>
+<p>根据 Service 的规定，externalIPs 可以同任意的 ServiceType 来一起指定。 在下面的例子中，my-service 可以在 80.11.12.10:80（外部 IP:端口）上被客户端访问。</p>
 
-<h3 id="调度计算">调度计算</h3>
+<pre><code class="language-yaml">kind: Service
+apiVersion: v1
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: MyApp
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 9376
+  externalIPs:
+    - 80.11.12.10
+</code></pre>
 
-<p>通过先过滤filter之后排序打分rank的方式找到最优的部署位置。</p>
+<h1 id="参考">参考</h1>
 
-<p>在一批宿主机中先过滤掉超售的，然后考虑到打散、混部、减少碎片和负载均衡之后找到合适的宿主机</p>
-
-<h3 id="调度sla-service-level-agreement">调度SLA（Service Level Agreement）</h3>
-
-<ul>
-<li>高可用：99.999</li>
-<li>调度成功率：99.99</li>
-<li>并发调度：单机并发处理200+，并发调度机器1000+</li>
-<li>低延迟：TCP90 63ms</li>
-<li>HA：分布式调度，横向扩展，多IDC部署容灾</li>
-<li>监控报警：Falcon</li>
-</ul>
-
-<h2 id="弹性收缩">弹性收缩</h2>
-
-<p><strong>周期收缩</strong></p>
-
-<p>根据设定时间段伸缩（适合秒杀/直播等业务）</p>
-
-<p><strong>监控伸缩</strong></p>
-
-<ul>
-<li>根据QPS/CPU等触发条件伸缩</li>
-<li>线性可扩展的无状态服务</li>
-</ul>
-
-<p><strong>服务画像</strong></p>
-
-<p>针对数据建模，描绘服务特征：</p>
-
-<ul>
-<li>服务画像：仿照用户画像，根据服务数据，抽取服务Tag
-
-<ul>
-<li>QPS特征（高峰时段、QPS max/min等）</li>
-<li>资源利用率</li>
-<li>CPU密集型 or IO密集型</li>
-</ul></li>
-</ul>
-
-<p>基于历史数据建模的服务画像可以做服务特征值的预测，比如QPS的预测：</p>
-
-<ul>
-<li>QPS预测：RNN LSTM</li>
-<li>即使监控数据源完全不可用，无数据，也能较准确的扩缩容</li>
-</ul>
-
-<h2 id="异常处理">异常处理</h2>
-
-<ul>
-<li>监控数据异常，怎么办？会不会因监控值偏低而一直缩容？</li>
-<li>监控数据有延迟，怎么办？</li>
-<li>监控数据没了，怎么办？</li>
-</ul>
-
-<p>通过数据无关的缩容退避+熔断机制来保证异常情况下的正常运行：</p>
-
-<ul>
-<li>针对监控数据偏低（异常）而触发持续缩容</li>
-<li>数据无关，不关心数据是否异常</li>
-<li>如果连续缩容，那么缩容速度会越来越慢 —&gt; 退避</li>
-<li>如果连续缩容次数超过阈值，一段时间内禁止缩容 —&gt; 熔断</li>
-</ul>
+<p><a href="https://jimmysong.io/kubernetes-handbook/concepts/service.html" target="_blank">https://jimmysong.io/kubernetes-handbook/concepts/service.html</a></p>
 
     </div>
 
@@ -590,14 +562,6 @@
 
 
     
-
-<div class="article-tags">
-  
-  <a class="badge badge-light" href="/tags/docker/">Docker</a>
-  
-  <a class="badge badge-light" href="/tags/cloud/">Cloud</a>
-  
-</div>
 
 
 
@@ -685,20 +649,16 @@
 
       <nav id="TableOfContents">
 <ul>
-<li>
+<li><a href="#服务发现">服务发现</a>
 <ul>
-<li><a href="#快速扩容">快速扩容</a></li>
-<li><a href="#智能调度">智能调度</a>
+<li><a href="#服务发布">服务发布</a>
 <ul>
-<li><a href="#资源最大化利用">资源最大化利用</a></li>
-<li><a href="#混布与独占">混布与独占</a></li>
-<li><a href="#容器编排">容器编排</a></li>
-<li><a href="#调度计算">调度计算</a></li>
-<li><a href="#调度sla-service-level-agreement">调度SLA（Service Level Agreement）</a></li>
+<li><a href="#nodeport-类型">NodePort 类型</a></li>
+<li><a href="#loadbalancer-类型">LoadBalancer 类型</a></li>
+<li><a href="#外部-ip">外部 IP</a></li>
 </ul></li>
-<li><a href="#弹性收缩">弹性收缩</a></li>
-<li><a href="#异常处理">异常处理</a></li>
 </ul></li>
+<li><a href="#参考">参考</a></li>
 </ul>
 </nav>
 

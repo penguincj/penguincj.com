@@ -30,7 +30,7 @@
   <meta name="description" content="">
 
   
-  <link rel="alternate" hreflang="en-us" href="/tags/cni/">
+  <link rel="alternate" hreflang="en-us" href="/post/">
 
   
 
@@ -88,15 +88,15 @@
   
 
   
-  <link rel="alternate" href="/tags/cni/index.xml" type="application/rss+xml" title="L CJ的博客">
-  <link rel="feed" href="/tags/cni/index.xml" type="application/rss+xml" title="L CJ的博客">
+  <link rel="alternate" href="/post/index.xml" type="application/rss+xml" title="L CJ的博客">
+  <link rel="feed" href="/post/index.xml" type="application/rss+xml" title="L CJ的博客">
   
 
   <link rel="manifest" href="/site.webmanifest">
   <link rel="icon" type="image/png" href="/img/icon.png">
   <link rel="apple-touch-icon" type="image/png" href="/img/icon-192.png">
 
-  <link rel="canonical" href="/tags/cni/">
+  <link rel="canonical" href="/post/">
 
   
   
@@ -108,8 +108,8 @@
   <meta property="twitter:card" content="summary">
   
   <meta property="og:site_name" content="L CJ的博客">
-  <meta property="og:url" content="/tags/cni/">
-  <meta property="og:title" content="CNI | L CJ的博客">
+  <meta property="og:url" content="/post/">
+  <meta property="og:title" content="技术博客 | L CJ的博客">
   <meta property="og:description" content=""><meta property="og:image" content="/img/icon-192.png">
   <meta property="og:locale" content="en-us">
   
@@ -120,7 +120,7 @@
 
   
 
-  <title>CNI | L CJ的博客</title>
+  <title>技术博客 | L CJ的博客</title>
 
 </head>
 <body id="top" data-spy="scroll" data-target="#TableOfContents" data-offset="71" >
@@ -226,7 +226,7 @@
         
 
         <li class="nav-item">
-          <a class="nav-link " href="/post/">
+          <a class="nav-link  active" href="/post/">
             
             <span>技术博客</span>
             
@@ -384,7 +384,7 @@
     
   
 <div class="universal-wrapper pt-3">
-  <h1 itemprop="name">CNI</h1>
+  <h1 itemprop="name">技术博客</h1>
 
   
 
@@ -394,21 +394,128 @@
 
 
 <div class="universal-wrapper">
+
   
 
   
   
-  <div>
-    <h2><a href="/post/cloud/k8s/201905-k8s-network-arch/">Kubernetes网络框架</a></h2>
-    <div class="article-style">
+    
       
-      Kubernetes本身不提供容器网络，但具有可扩展的网络框架
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+<div class="card-simple" itemscope itemtype="http://schema.org/BlogPosting">
+
+  
+    
+
+
+
+<meta content="" itemprop="datePublished">
+<meta content="" itemprop="dateModified">
+
+<div class="article-metadata">
+
+  
+  
+
+  
+  <span class="article-date">
+    
+    
       
-    </div>
+    
+    <time>Jan 1, 0001</time>
+  </span>
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+
+</div>
+
+  
+
+  
+  
+  
+
+  <h3 class="article-title mb-1 mt-3" itemprop="name">
+    <a href="/post/tech/proto-note/" itemprop="url"></a>
+  </h3>
+
+  
+  <div class="article-style" itemprop="articleBody">
+    
+
+<h1 id="编码规则">编码规则</h1>
+
+<p>Protobuf消息由字段（field）构成，每个字段有其规则（rule）、数据类型（type）、字段名（name）、tag，以及选项（option）。比如下面这段代码描述了由多个字段构成的 Person 消息：</p>
+
+<pre><code class="language-go">message Person {
+  string name = 1;
+  int32 id = 2;  // Unique ID number for this person.
+  string email = 3;
+
+  enum PhoneType {
+    MOBILE = 0;
+    HOME = 1;
+    WORK = 2;
+  }
+
+  message PhoneNumber {
+    string number = 1;
+    PhoneType type = 2;
+  }
+
+  repeated PhoneNumber phones = 4;
+
+  google.protobuf.Timestamp last_updated = 5;
+}
+</code></pre>
+
   </div>
   
 
   
+
+</div>
+
+    
+  
+
+  
+<nav>
+  <ul class="pagination justify-content-center">
+    
+    <li class="page-item"><a class="page-link" href="/post/">&laquo;</a></li>
+    
+    
+  </ul>
+</nav>
+
+
 
 </div>
 <div class="container">
