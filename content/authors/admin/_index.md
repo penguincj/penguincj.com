@@ -22,8 +22,6 @@ bio: 我目前研究的方向主要在Microservice、Servicemesh、Serverless等
 
 interests:
 - 微服务/Micro Service
-- 服务网格/Service Mesh
-- 无服务器架构/Serverless
 - 云原生/Cloud Native
 - 区块链/BlockChain
 

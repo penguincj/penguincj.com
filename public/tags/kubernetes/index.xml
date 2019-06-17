@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>penguincj &amp;copy; 2019</copyright>
-    <lastBuildDate>Tue, 28 May 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 05 Jun 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/kubernetes/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Kube proxy 源码解读</title>
+      <link>/post/cloud/k8s/201901-how-read-kubeproxy/</link>
+      <pubDate>Wed, 05 Jun 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/k8s/201901-how-read-kubeproxy/</guid>
+      <description>Kube-proxy 把访问 Service VIP 的请求转发到运行的 Pods 上，并实现负载均衡</description>
+    </item>
     
     <item>
       <title>Kubernetes网络框架</title>

@@ -18,36 +18,41 @@
   </url>
   
   <url>
+    <loc>/post/cloud/k8s/201901-how-read-kubeproxy/</loc>
+    <lastmod>2019-06-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tags/kubernetes/</loc>
+    <lastmod>2019-06-05T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/</loc>
+    <lastmod>2019-06-05T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/</loc>
+    <lastmod>2019-06-05T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/post/</loc>
+    <lastmod>2019-06-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/tags/cni/</loc>
     <lastmod>2019-05-28T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/kubernetes/</loc>
-    <lastmod>2019-05-28T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
     <loc>/post/cloud/k8s/201905-k8s-network-arch/</loc>
-    <lastmod>2019-05-28T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/</loc>
-    <lastmod>2019-05-28T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/tags/</loc>
-    <lastmod>2019-05-28T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/post/</loc>
     <lastmod>2019-05-28T00:00:00+00:00</lastmod>
   </url>
   
@@ -71,6 +76,17 @@
   <url>
     <loc>/post/cloud/k8s/201904-k8s-declarative-api/</loc>
     <lastmod>2018-12-26T00:00:00+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/cloud/network/201812-calico/</loc>
+    <lastmod>2018-12-07T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tags/network/</loc>
+    <lastmod>2018-12-07T00:00:00+00:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
@@ -107,46 +123,38 @@
   </url>
   
   <url>
+    <loc>/tags/%E5%8C%BA%E5%9D%97%E9%93%BE/</loc>
+    <lastmod>2018-07-03T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/post/blockchain/201807-contract-love/</loc>
+    <lastmod>2018-07-03T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tags/%E6%99%BA%E8%83%BD%E5%90%88%E7%BA%A6/</loc>
+    <lastmod>2018-07-03T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/post/blockchain/201806-contract-casino/</loc>
+    <lastmod>2018-06-12T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/blockchain/201805-contract-coupon/</loc>
+    <lastmod>2018-05-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/about/</loc>
   </url>
   
   <url>
     <loc>/authors/admin/</loc>
-  </url>
-  
-  <url>
-    <loc>/post/cloud/k8s/201812-k8s-resource-management/</loc>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/post/cloud/k8s/201901-how-read-kubeproxy/</loc>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/post/cloud/k8s/201903-k8s-service-register.md/</loc>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/post/cloud/k8s/201904-k8s-loadbalancer.md/</loc>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/post/note/math/programmer-math-note/</loc>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/post/tech/how-to-read-code/</loc>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/post/tech/proto-note/</loc>
-    <priority>0</priority>
   </url>
   
   <url>

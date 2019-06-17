@@ -7,7 +7,7 @@
     <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator>
     <language>en-us</language>
     <copyright>penguincj &amp;copy; 2019</copyright>
-    <lastBuildDate>Tue, 28 May 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 05 Jun 2019 00:00:00 +0000</lastBuildDate>
     
 	    <atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
@@ -81,6 +81,1056 @@
 &lt;p&gt;Suspendisse a tincidunt lacus. Curabitur at urna sagittis, dictum ante sit amet, euismod magna. Sed rutrum massa id tortor commodo, vitae elementum turpis tempus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean purus turpis, venenatis a ullamcorper nec, tincidunt et massa. Integer posuere quam rutrum arcu vehicula imperdiet. Mauris ullamcorper quam vitae purus congue, quis euismod magna eleifend. Vestibulum semper vel augue eget tincidunt. Fusce eget justo sodales, dapibus odio eu, ultrices lorem. Duis condimentum lorem id eros commodo, in facilisis mauris scelerisque. Morbi sed auctor leo. Nullam volutpat a lacus quis pharetra. Nulla congue rutrum magna a ornare.&lt;/p&gt;
 
 &lt;p&gt;Aliquam in turpis accumsan, malesuada nibh ut, hendrerit justo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quisque sed erat nec justo posuere suscipit. Donec ut efficitur arcu, in malesuada neque. Nunc dignissim nisl massa, id vulputate nunc pretium nec. Quisque eget urna in risus suscipit ultricies. Pellentesque odio odio, tincidunt in eleifend sed, posuere a diam. Nam gravida nisl convallis semper elementum. Morbi vitae felis faucibus, vulputate orci placerat, aliquet nisi. Aliquam erat volutpat. Maecenas sagittis pulvinar purus, sed porta quam laoreet at.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Kube proxy 源码解读</title>
+      <link>/post/cloud/k8s/201901-how-read-kubeproxy/</link>
+      <pubDate>Wed, 05 Jun 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/k8s/201901-how-read-kubeproxy/</guid>
+      <description>
+
+&lt;h1 id=&#34;功能简介&#34;&gt;功能简介&lt;/h1&gt;
+
+&lt;p&gt;kube-proxy 运行在 kubernetes 集群中每个 worker 节点上，负责实现 service 这个概念提供的功能。kube-proxy 会把访问 service VIP 的请求转发到运行的 pods 上，实现负载均衡。&lt;/p&gt;
+
+&lt;p&gt;当用户创建 service 的时候，endpointController 会根据 service 的 selector 找到对应的 pod，然后生成 endpoints 对象保存到 etcd 中。kube-proxy 的主要工作就是监听 etcd（通过 apiserver 的接口，而不是直接读取 etcd），来实时更新节点上的 iptables。&lt;/p&gt;
+
+&lt;p&gt;service 有关的信息保存在 etcd 的 /registry/services 目录，比如在我的集群中，这个目录的内容是这样的：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;~]$ etcdctl ls --recursive  /registry/services
+/registry/services/endpoints
+/registry/services/endpoints/default
+/registry/services/endpoints/default/whoami
+/registry/services/endpoints/default/kubernetes
+/registry/services/endpoints/kube-system
+/registry/services/endpoints/kube-system/kube-controller-manager
+/registry/services/endpoints/kube-system/container-log
+/registry/services/endpoints/kube-system/container-terminal
+/registry/services/endpoints/kube-system/kube-scheduler
+/registry/services/endpoints/kube-system/kube-dns
+/registry/services/specs
+/registry/services/specs/default
+/registry/services/specs/default/kubernetes
+/registry/services/specs/default/whoami
+/registry/services/specs/kube-system
+/registry/services/specs/kube-system/kube-dns
+/registry/services/specs/kube-system/container-log
+/registry/services/specs/kube-system/container-terminal
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;架构&#34;&gt;架构&lt;/h1&gt;
+
+&lt;p&gt;kube proxy是部署在 node 上的为应用容器提供代理转发的功能，&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-b0df5d91.png&#34; src=&#34;images/index-b0df5d91.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;在Kubernetes中，kube proxy负责为Pod创建代理服务；引到访问至服务；并实现服务到Pod的路由和转发，以及通过应用的负载均衡。&lt;/p&gt;
+
+&lt;h1 id=&#34;service-和-kube-proxy-原理&#34;&gt;service 和 kube-proxy 原理&lt;/h1&gt;
+
+&lt;p&gt;在 kubernetes 集群中，网络是非常基础也非常重要的一部分。对于大规模的节点和容器来说，要保证网络的连通性、网络转发的高效，同时能做的 ip 和 port 自动化分配和管理，并让用户用直观简单的方式来访问需要的应用，这是需要复杂且细致设计的。&lt;/p&gt;
+
+&lt;p&gt;kubernetes 在这方面下了很大的功夫，它通过 service、dns、ingress 等概念，解决了服务发现、负载均衡的问题，也大大简化了用户的使用和配置。&lt;/p&gt;
+
+&lt;h2 id=&#34;跨主机网络配置-flannel&#34;&gt;跨主机网络配置：flannel&lt;/h2&gt;
+
+&lt;p&gt;一直以来，kubernetes 并没有专门的网络模块负责网络配置，它需要用户在主机上已经配置好网络。kubernetes 对网络的要求是：容器之间（包括同一台主机上的容器，和不同主机的容器）可以互相通信，容器和集群中所有的节点也能直接通信。&lt;/p&gt;
+
+&lt;p&gt;至于具体的网络方案，用户可以自己选择，目前使用比较多的是 flannel，因为它比较简单，而且刚好满足 kubernetes 对网络的要求。我们会使用 flannel vxlan 模式，具体的配置我在博客之前有文章介绍过，这里不再赘述。&lt;/p&gt;
+
+&lt;p&gt;以后 kubernetes 网络的发展方向是希望通过插件的方式来集成不同的网络方案， CNI 就是这一努力的结果，flannel 也能够通过 CNI 插件的形式使用。&lt;/p&gt;
+
+&lt;h2 id=&#34;kube-proxy-和-service&#34;&gt;kube-proxy 和 service&lt;/h2&gt;
+
+&lt;p&gt;配置好网络之后，集群是什么情况呢？我们可以创建 pod，也能通过 ReplicationController 来创建特定副本的 pod（这是更推荐也是生产上要使用的方法，即使某个 rc 中只有一个 pod 实例）。可以从集群中获取每个 pod ip 地址，然后也能在集群内部直接通过 podIP:Port 来获取对应的服务。&lt;/p&gt;
+
+&lt;p&gt;但是还有一个问题：pod 是经常变化的，每次更新 ip 地址都可能会发生变化，如果直接访问容器 ip 的话，会有很大的问题。而且进行扩展的时候，rc 中会有新的 pod 创建出来，出现新的 ip 地址，我们需要一种更灵活的方式来访问 pod 的服务。&lt;/p&gt;
+
+&lt;h3 id=&#34;service-和-cluster-ip&#34;&gt;Service 和 cluster IP&lt;/h3&gt;
+
+&lt;p&gt;针对这个问题，kubernetes 的解决方案是“服务”（service），每个服务都一个固定的虚拟 ip（这个 ip 也被称为 cluster IP），自动并且动态地绑定后面的 pod，所有的网络请求直接访问服务 ip，服务会自动向后端做转发。Service 除了提供稳定的对外访问方式之外，还能起到负载均衡（Load Balance）的功能，自动把请求流量分布到后端所有的服务上，服务可以做到对客户透明地进行水平扩展（scale）。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-5a8b78bb.png&#34; src=&#34;images/index-5a8b78bb.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;而实现 service 这一功能的关键，就是 kube-proxy。kube-proxy 运行在每个节点上，监听 API Server 中服务对象的变化，通过管理 iptables 来实现网络的转发。&lt;/p&gt;
+
+&lt;h3 id=&#34;实例启动和测试&#34;&gt;实例启动和测试&lt;/h3&gt;
+
+&lt;p&gt;我们可以在终端上启动 kube-proxy，也可以使用诸如 systemd 这样的工具来管理它，比如下面就是一个简单的 kube-proxy.service 配置文件&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-shell&#34;&gt;[root@localhost]# cat /usr/lib/systemd/system/kube-proxy.service
+[Unit]
+Description=Kubernetes Proxy Service
+Documentation=http://kubernetes.com
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/sysconfig/kube-proxy
+ExecStart=/usr/bin/kube-proxy \
+    --master=http://172.17.8.100:8080 \
+    --v=4 \
+    --proxy-mode=iptables
+TimeoutStartSec=0
+Restart=on-abnormal
+
+[Install]
+WantedBy=multi-user.target
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;为了方便测试，我们创建一个 rc，里面有三个 pod。这个 pod 运行的是 cizixs/whoami 容器，它是一个简单的 HTTP 服务器，监听在 3000 端口，访问它会返回容器的 hostname。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-shell&#34;&gt;[root@localhost ~]# cat whoami-rc.yml
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: whoami
+spec:
+  replicas: 3
+  selector:
+    app: whoami
+  template:
+    metadata:
+      name: whoami
+      labels:
+        app: whoami
+        env: dev
+    spec:
+      containers:
+      - name: whoami
+        image: cizixs/whoami:v0.5
+        ports:
+        - containerPort: 3000
+        env:
+          - name: MESSAGE
+            value: viola
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;我们为每个 pod 设置了两个 label：app=whoami 和 env=dev，这两个标签很重要，也是后面服务进行绑定 pod 的关键。&lt;/p&gt;
+
+&lt;p&gt;为了使用 service，我们还要定义另外一个文件，并通过 kubectl create -f ./whoami-svc.yml 来创建出来对象：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: whoami
+  name: whoami
+spec:
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+  selector:
+    app: whoami
+    env: dev
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;其中 selector 告诉 kubernetes 这个 service 和后端哪些 pod 绑定在一起，这里包含的键值对会对所有 pod 的 labels 进行匹配，只要完全匹配，service 就会把 pod 作为后端。也就是说，service 和 rc 并不是对应的关系，一个 service 可能会使用多个 rc 管理的 pod 作为后端应用。&lt;/p&gt;
+
+&lt;p&gt;ports 字段指定服务的端口信息：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;port：虚拟 ip 要绑定的 port，每个 service 会创建出来一个虚拟 ip，通过访问 vip:port 就能获取服务的内容。这个 port 可以用户随机选取，因为每个服务都有自己的 vip，也不用担心冲突的情况&lt;/li&gt;
+&lt;li&gt;targetPort：pod 中暴露出来的 port，这是运行的容器中具体暴露出来的端口，一定不能写错&lt;/li&gt;
+&lt;li&gt;protocol：提供服务的协议类型，可以是 TCP 或者 UDP&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;创建之后可以列出 service ，发现我们创建的 service 已经分配了一个虚拟 ip (10.10.10.28)，这个虚拟 ip 地址是不会变化的（除非 service 被删除）。查看 service 的详情可以看到它的 endpoints 列出，对应了具体提供服务的 pod 地址和端口。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;[root@localhost ~]# kubectl get svc
+NAME         CLUSTER-IP    EXTERNAL-IP   PORT(S)    AGE
+kubernetes   10.10.10.1    &amp;lt;none&amp;gt;        443/TCP    19d
+whoami       10.10.10.28   &amp;lt;none&amp;gt;        3000/TCP   1d
+
+[root@localhost ~]# kubectl describe svc whoami
+Name:                   whoami
+Namespace:              default
+Labels:                 name=whoami
+Selector:               app=whoami
+Type:                   ClusterIP
+IP:                     10.10.10.28
+Port:                   &amp;lt;unset&amp;gt; 3000/TCP
+Endpoints:              10.11.32.6:3000,10.13.192.4:3000,10.16.192.3:3000
+Session Affinity:       None
+No events.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;默认的 service 类型是 ClusterIP，这个也可以从上面输出看出来。在这种情况下，只能从集群内部访问这个 IP，不能直接从集群外部访问服务。如果想对外提供服务，我们后面会讲解决方案。&lt;/p&gt;
+
+&lt;p&gt;测试一下，访问 service 服务的时候可以看到它会随机地访问后端的 pod，给出不同的返回：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-shell&#34;&gt;[root@localhost ~]# curl http://10.10.10.28:3000
+viola from whoami-8fpqp
+[root@localhost ~]# curl http://10.10.10.28:3000
+viola from whoami-c0x6h
+[root@localhost ~]# curl http://10.10.10.28:3000
+viola from whoami-8fpqp
+[root@localhost ~]# curl http://10.10.10.28:3000
+viola from whoami-dc9ds
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;默认情况下，服务会随机转发到可用的后端。如果希望保持会话（同一个 client 永远都转发到相同的 pod），可以把 service.spec.sessionAffinity 设置为 ClientIP。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;NOTE&lt;/strong&gt;: 需要注意的是，服务分配的 cluster IP 是一个虚拟 ip，如果你尝试 ping 这个 IP 会发现它没有任何响应，这也是刚接触 kubernetes service 的人经常会犯的错误。实际上，这个虚拟 IP 只有和它的 port 一起的时候才有作用，直接访问它，或者想访问该 IP 的其他端口都是徒劳。&lt;/p&gt;
+
+&lt;h3 id=&#34;外部能够访问的服务&#34;&gt;外部能够访问的服务&lt;/h3&gt;
+
+&lt;p&gt;上面创建的服务只能在集群内部访问，这在生产环境中还不能直接使用。如果希望有一个能直接对外使用的服务，可以使用 NodePort 或者 LoadBalancer 类型的 Service。我们先说说 NodePort ，它的意思是在所有 worker 节点上暴露一个端口，这样外部可以直接通过访问 nodeIP:Port 来访问应用。&lt;/p&gt;
+
+&lt;p&gt;我们先把刚才创建的服务删除：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-shell&#34;&gt;[root@localhost ~]# kubectl delete rc whoami
+replicationcontroller &amp;quot;whoami&amp;quot; deleted
+
+[root@localhost ~]# kubectl delete svc whoami
+service &amp;quot;whoami&amp;quot; deleted
+
+[root@localhost ~]# kubectl get pods,svc,rc
+NAME         CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   10.10.10.1   &amp;lt;none&amp;gt;        443/TCP   14h
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;对我们原来的 Service 配置文件进行修改，把 spec.type 写成 NodePort 类型：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-shell&#34;&gt;[root@localhost ~]# cat whoami-svc.yml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: whoami
+  name: whoami
+spec:
+  ports:
+    - port: 3000
+      protocol: TCP
+      # nodePort: 31000
+  selector:
+    app: whoami
+  type: NodePort
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;因为我们的应用比较简单，只有一个端口。如果 pod 有多个端口，也可以在 spec.ports中继续添加，只有保证多个 port 之间不冲突就行。&lt;/p&gt;
+
+&lt;p&gt;重新创建 rc 和 svc：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-shell&#34;&gt;[root@localhost ~]# kubectl create -f ./whoami-svc.yml
+service &amp;quot;whoami&amp;quot; created
+[root@localhost ~]# kubectl get rc,pods,svc
+NAME        DESIRED   CURRENT   READY     AGE
+rc/whoami   3         3         3         10s
+
+NAME              READY     STATUS    RESTARTS   AGE
+po/whoami-8zc3d   1/1       Running   0          10s
+po/whoami-mc2fg   1/1       Running   0          10s
+po/whoami-z6skj   1/1       Running   0          10s
+
+NAME             CLUSTER-IP     EXTERNAL-IP   PORT(S)          AGE
+svc/kubernetes   10.10.10.1     &amp;lt;none&amp;gt;        443/TCP          14h
+svc/whoami       10.10.10.163   &amp;lt;nodes&amp;gt;       3000:31647/TCP   7s
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;需要注意的是，因为我们没有指定 nodePort 的值，kubernetes 会自动给我们分配一个，比如这里的 31647（默认的取值范围是 30000-32767）。当然我们也可以删除配置中 # nodePort: 31000 的注释，这样会使用 31000 端口。&lt;/p&gt;
+
+&lt;p&gt;nodePort 类型的服务会在所有的 worker 节点（运行了 kube-proxy）上统一暴露出端口对外提供服务，也就是说外部可以任意选择一个节点进行访问。比如我本地集群有三个节点：172.17.8.100、172.17.8.101 和 172.17.8.102：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;[root@localhost ~]# curl http://172.17.8.100:31647
+viola from whoami-mc2fg
+[root@localhost ~]# curl http://172.17.8.101:31647
+viola from whoami-8zc3d
+[root@localhost ~]# curl http://172.17.8.102:31647
+viola from whoami-z6skj
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;有了 nodePort，用户可以通过外部的 Load Balance 或者路由器把流量转发到任意的节点，对外提供服务的同时，也可以做到负载均衡的效果。&lt;/p&gt;
+
+&lt;p&gt;nodePort 类型的服务并不影响原来虚拟 IP 的访问方式，内部节点依然可以通过 vip:port 的方式进行访问。&lt;/p&gt;
+
+&lt;p&gt;LoadBalancer 类型的服务需要公有云支持，如果你的集群部署在公有云（GCE、AWS等）可以考虑这种方式。&lt;/p&gt;
+
+&lt;h2 id=&#34;service-原理解析-iptables&#34;&gt;service 原理解析 (iptables)&lt;/h2&gt;
+
+&lt;p&gt;目前 kube-proxy 默认使用 iptables 模式，上述展现的 service 功能都是通过修改 iptables 实现的。&lt;/p&gt;
+
+&lt;p&gt;我们来看一下从主机上访问 service:port 的时候发生了什么（通过 iptables-save 命令打印出来当前机器上的 iptables 规则）。&lt;/p&gt;
+
+&lt;p&gt;所有发送出去的报文会进入 KUBE-SERVICES 进行处理&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;*nat
+-A PREROUTING -m comment --comment &amp;quot;kubernetes service portals&amp;quot; -j KUBE-SERVICES
+-A OUTPUT -m comment --comment &amp;quot;kubernetes service portals&amp;quot; -j KUBE-SERVICES
+-A POSTROUTING -m comment --comment &amp;quot;kubernetes postrouting rules&amp;quot; -j KUBE-POSTROUTING
+-A KUBE-MARK-MASQ -j MARK --set-xmark 0x4000/0x4000
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;KUBE-SERVICES 每条规则对应了一个 service，它告诉继续进入到某个具体的 service chain 进行处理，比如这里的 KUBE-SVC-OQCLJJ5GLLNFY3XB&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;-A KUBE-SERVICES -d 10.10.10.28/32 -p tcp -m comment --comment &amp;quot;default/whoami: cluster IP&amp;quot; -m tcp --dport 3000 -j KUBE-SVC-OQCLJJ5GLLNFY3XB
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;更具体的 chain 中定义了怎么转发到对应 endpoint 的规则，比如我们的 rc 有三个 pods，这里也就会生成三个规则。这里利用了 iptables 随机和概率转发的功能&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;-A KUBE-SVC-OQCLJJ5GLLNFY3XB -m comment --comment &amp;quot;default/whoami:&amp;quot; -m statistic --mode random --probability 0.33332999982 -j KUBE-SEP-VN72UHNM6XOXLRPW
+-A KUBE-SVC-OQCLJJ5GLLNFY3XB -m comment --comment &amp;quot;default/whoami:&amp;quot; -m statistic --mode random --probability 0.50000000000 -j KUBE-SEP-YXCSPWPTUFI5WI5Y
+-A KUBE-SVC-OQCLJJ5GLLNFY3XB -m comment --comment &amp;quot;default/whoami:&amp;quot; -j KUBE-SEP-FN74S3YUBFMWHBLF
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;我们来看第一个 chain，这个 chain 有两个规则，第一个表示给报文打上 mark；第二个是进行 DNAT（修改报文的目的地址），转发到某个 pod 地址和端口。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;-A KUBE-SEP-VN72UHNM6XOXLRPW -s 10.11.32.6/32 -m comment --comment &amp;quot;default/whoami:&amp;quot; -j KUBE-MARK-MASQ
+-A KUBE-SEP-VN72UHNM6XOXLRPW -p tcp -m comment --comment &amp;quot;default/whoami:&amp;quot; -m tcp -j DNAT --to-destination 10.11.32.6:3000
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;会匹配 chain 的第二条规则，因为地址是发送出去的，报文会根据路由规则进行处理，后续的报文就是通过 flannel 的网络路径发送出去的。&lt;/p&gt;
+
+&lt;p&gt;nodePort 类型的 service 原理也是类似的，在 KUBE-SERVICES chain 的最后，如果目标地址不是 VIP 则会通过 KUBE-NODEPORTS ：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Chain KUBE-SERVICES (2 references)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 KUBE-NODEPORTS  all  --  *      *       0.0.0.0/0            0.0.0.0/0            /* kubernetes service nodeports; NOTE: this must be the last rule in this chain */ ADDRTYPE match dst-type LOCAL
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;而 KUBE-NODEPORTS chain 和 KUBE-SERVICES chain 其他规则一样，都是转发到更具体的 service chain，然后转发到某个 pod 上面。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;-A KUBE-NODEPORTS -p tcp -m comment --comment &amp;quot;default/whoami:&amp;quot; -m tcp --dport 31647 -j KUBE-MARK-MASQ
+-A KUBE-NODEPORTS -p tcp -m comment --comment &amp;quot;default/whoami:&amp;quot; -m tcp --dport 31647 -j KUBE-SVC-OQCLJJ5GLLNFY3XB
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;注意&lt;/strong&gt;：在流量转发出去的时候，就已经选择好了目的 Pod:TargetPod，而源IP是 node 的ip。&lt;/p&gt;
+
+&lt;h2 id=&#34;不足之处&#34;&gt;不足之处&lt;/h2&gt;
+
+&lt;p&gt;看起来 service 是个完美的方案，可以解决服务访问的所有问题，但是 service 这个方案（iptables 模式）也有自己的缺点。&lt;/p&gt;
+
+&lt;p&gt;首先，如果转发的 pod 不能正常提供服务，它不会自动尝试另一个 pod，当然这个可以通过 readiness probes 来解决。每个 pod 都有一个健康检查的机制，当有 pod 健康状况有问题时，kube-proxy 会删除对应的转发规则。&lt;/p&gt;
+
+&lt;p&gt;另外，nodePort 类型的服务也无法添加 TLS 或者更复杂的报文路由机制。&lt;/p&gt;
+
+&lt;p&gt;proxy 的 iptables mode因为使用iptable NAT来完成转发，也存在不可忽视的性能损耗。另外，如果集群中存在上万的Service/Endpoint，那么Node上的iptables rules将会非常庞大，性能还会再打折扣。&lt;/p&gt;
+
+&lt;p&gt;这也导致，目前大部分企业用k8s上生产时，都不会直接用kube-proxy作为服务代理，而是通过自己开发或者通过Ingress Controller来集成HAProxy, Nginx来代替kube-proxy。&lt;/p&gt;
+
+&lt;h1 id=&#34;代码阅读&#34;&gt;代码阅读&lt;/h1&gt;
+
+&lt;h2 id=&#34;重要结构体说明&#34;&gt;重要结构体说明&lt;/h2&gt;
+
+&lt;p&gt;本文以iptables 代理模式为例,对proxy 的功能实现进行分析。基于iptables的kube-proxy的主要职责包括两大块：一块是侦听service更新事件，并更新service相关的iptables规则，一块是侦听endpoint更新事件，更新endpoint相关的iptables规则。也就是说kube-proxy只是作为controller 负责更新更新规则，实现转发服务的是内核的netfilter，体现在用户态则是iptables。&lt;/p&gt;
+
+&lt;h3 id=&#34;proxyserver&#34;&gt;ProxyServer&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;type ProxyServer struct {
+    // k8s client
+    Client                 clientset.Interface
+    EventClient            v1core.EventsGetter
+
+	// 接口中定义了更新iptables 的方法集合，如DeleteChian,DeleteRule, EnsureChain,EnsureRule
+    IptInterface           utiliptables.Interface
+    IpvsInterface          utilipvs.Interface
+    IpsetInterface         utilipset.Interface
+
+	// 定义包装os/exec库中Command, Commandcontext, LookPath方法的接口
+	execer                 exec.Interface
+    // 处理同步时的处理器，有三种模式
+    Proxier                proxy.ProxyProvider
+
+	//接受Event，交于各个处理函数进行处理
+	Broadcaster            record.EventBroadcaster
+
+    // 代理模式，ipvs iptables userspace kernelspace(windows)四种
+    ProxyMode              string
+    // 配置同步周期
+    ConfigSyncPeriod       time.Duration
+
+    // service 与 endpoint 事件处理器
+    ServiceEventHandler    config.ServiceHandler
+    EndpointsEventHandler  config.EndpointsHandler
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;proxier&#34;&gt;Proxier&lt;/h3&gt;
+
+&lt;p&gt;在每一种代理模式下，都定义了自己的Proxier 结构体，该结构体及方法实现了该模式下的代理规则的更新方法。在Iptables 模式下，Proxier 结构体定义如下：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;type Proxier struct {
+    //EndpointChangeTracker中items属性为一个两级map,用来保存所有namespace 下endpoints 的变化信息。
+    //第一级map以namespece 为key，value 值为该namespace下所有endpoints 更新前（previous)、后(current)的信息。
+    //前、后信息分别为一个map ,即第二级map: ServiceMap。
+    //第二级map的key为ServicePortName 结构，标记endpoints 对应的service，value为endpoint信息。
+    // EndpointChangeTracker 中实现了更新endpoint 的方法
+    endpointsChanges *proxy.EndpointChangeTracker
+
+    // 同理，ServiceChangeTracker 中使用一个两级map保存所有namespace 下的service的变化信息，并定义了更新service的方法
+    serviceChanges   *proxy.ServiceChangeTracker
+
+    mu           sync.Mutex // protects the following fields
+
+    serviceMap   proxy.ServiceMap // 同serviceChanges 的第二及map 结构，记录了所有namespace下需要更新iptables规则的service
+    endpointsMap proxy.EndpointsMap //同endpointsChanges 的第二及map 结构，记录了所有namespace 需要更新iptables规则的endpoints
+
+    portsMap     map[utilproxy.LocalPort]utilproxy.Closeable
+
+    endpointsSynced bool  // Proxier 初始化时为False
+    servicesSynced  bool // Proxier 初始化时为False
+    initialized     int32
+
+    syncRunner      *async.BoundedFrequencyRunner //async.BoundedFrequencyRunner 具有QPS功能，控制被托管方法的发生速率
+
+    // These are effectively const and do not need the mutex to be held.
+    iptables       utiliptables.Interface //iptables的执行器，定义了Iptables 的操作方法
+    masqueradeAll  bool
+    masqueradeMark string
+    exec           utilexec.Interface // 抽象了 os/exec 中的方法
+    clusterCIDR    string
+    hostname       string
+    nodeIP         net.IP
+    portMapper     utilproxy.PortOpener //以打开的UDP或TCP端口
+    recorder       record.EventRecorder
+    healthChecker  healthcheck.Server
+    healthzServer  healthcheck.HealthzUpdater
+
+    precomputedProbabilities []string
+
+    iptablesData             *bytes.Buffer
+    existingFilterChainsData *bytes.Buffer
+    filterChains             *bytes.Buffer
+    filterRules              *bytes.Buffer
+    natChains                *bytes.Buffer
+    natRules                 *bytes.Buffer
+
+    endpointChainsNumber int
+
+    // Values are as a parameter to select the interfaces where nodeport works.
+    nodePortAddresses []string
+    // networkInterfacer defines an interface for several net library functions.
+    // Inject for test purpose.
+    networkInterfacer utilproxy.NetworkInterfacer
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;proxier-自定义的链&#34;&gt;Proxier 自定义的链&lt;/h2&gt;
+
+&lt;p&gt;在iptables 原有的5个链上，k8s 又增加了以下自定义链，在自定义链上添加规则，以控制iptables 对k8s 数据包的转发。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;const (
+    iptablesMinVersion = utiliptables.MinCheckVersion // 支持-C/--flag 参数的iptable 最低版本
+    //对于Service type=ClusterIP的每个端口都会在KUBE-SERVICES中有一条对应的规则
+    kubeServicesChain utiliptables.Chain = &amp;quot;KUBE-SERVICES&amp;quot;
+
+    //
+    kubeExternalServicesChain utiliptables.Chain=&amp;quot;KUBE-EXTERNAL-SERVICES&amp;quot;
+
+    //对于Service type=NodePort的每个端口都会在KUBE-NODEPORTS中有一条对应的规则
+    kubeNodePortsChain utiliptables.Chain = &amp;quot;KUBE-NODEPORTS&amp;quot;
+
+    //在KUBE-POSTROUTING链上，对(0x400)包做SNAT
+    kubePostroutingChain utiliptables.Chain = &amp;quot;KUBE-POSTROUTING&amp;quot;
+
+    //打标签链，对于进入此链的报文打标签(0x400)，预示被标签包要做NAT
+    KubeMarkMasqChain utiliptables.Chain = &amp;quot;KUBE-MARK-MASQ&amp;quot;
+
+    //打标签链，对于进入此链的报文打标签(0x800)，预示此包将要被放弃
+    KubeMarkDropChain utiliptables.Chain = &amp;quot;KUBE-MARK-DROP&amp;quot;
+
+    //跳转
+    kubeForwardChain utiliptables.Chain = &amp;quot;KUBE-FORWARD&amp;quot;
+)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;proxy-server-启动&#34;&gt;Proxy Server 启动&lt;/h2&gt;
+
+&lt;p&gt;穿过cobra.Command 包装的一个启动命令，走到跟kube-proxy 服务相关的一个代码入口 Run()。在Run()中，主要就是两件事：&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;生成一个ProxyServer 实例；&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;运行ProxyServer 实例的Run 方法，运行服务。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;kubernetes/cmd/kube-proxy/app/server.go&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func (o *Options) Run() error {
+    if len(o.WriteConfigTo) &amp;gt; 0 {
+        return o.writeConfigFile()
+    }
+
+    proxyServer, err := NewProxyServer(o)  //初始化结构体ProxyServer
+    if err != nil {
+        return err
+    }
+
+    return proxyServer.Run() // 运行ProxyServer
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;proxyserver-初始化&#34;&gt;ProxyServer 初始化&lt;/h2&gt;
+
+&lt;p&gt;进入NewProxyServer(o) 方法，开始ProxyServer 的初始化过程初始化过程中，重要的一个环节就是根据不同的代理模式生成不通的Proxier。初始化过程中，主要变量的初始化及作用已在代码中说明。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;cmd/kube-proxy/app/server_others.go
+func newProxyServer(
+    config *proxyconfigapi.KubeProxyConfiguration,
+    cleanupAndExit bool,
+    cleanupIPVS bool,
+    scheme *runtime.Scheme,
+    master string) (*ProxyServer, error) {
+    ...
+    protocol := utiliptables.ProtocolIpv4 // 获取机器使用的IP协议版本，默认使用IPV4
+    ...
+    // Create a iptables utils.
+    execer := exec.New()  // 包装了os/exec中的command,LookPath,CommandContext 方法，组装一个系统调用的命令和参数
+    dbus = utildbus.New()
+    //iptInterface 赋值为runner结构体，该结构体实现了接口utiliptables.Interface中定义的方法，
+    //各方法中通过runContext()方法调用execer的命令包装方法返回一个被包装的iptables 命令
+    iptInterface = utiliptables.New(execer, dbus, protocol)
+    ...
+    //EventBroadcaster会将收到的Event交于各个处理函数进行处理。接收Event的缓冲队列长为1000，不停地取走Event并广播给各个watcher;
+    //watcher通过recordEvent()方法将Event写入对应的EventSink里，最大重试次数为12次，重试间隔随机生成(见staging/src/k8s.io/client-go/tools/record/event.go);
+    // EnventSink  将在ProxyServer.Run() 中调用s.Broadcaster.StartRecordingToSink（） 传进来;
+    // NewBroadcaster() 最后会启动一个goroutine 运行Loop 方法（staging/src/k8s.io/apimachinery/pkg/watch/mux.go),
+    eventBroadcaster := record.NewBroadcaster()
+
+    //EventRecorder通过generateEvent()实际生成各种Event，并将其添加到监视队列。
+    recorder := eventBroadcaster.NewRecorder(scheme, v1.EventSource{Component: &amp;quot;kube-proxy&amp;quot;, Host: hostname})
+    ...
+    if len(config.HealthzBindAddress) &amp;gt; 0 {//服务健康检查的 IP 地址和端口（IPv4默认为0.0.0.0:10256，对于所有 IPv6 接口设置为 ::）
+        healthzServer = healthcheck.NewDefaultHealthzServer(config.HealthzBindAddress, 2*config.IPTables.SyncPeriod.Duration, recorder, nodeRef)
+        healthzUpdater = healthzServer
+    }
+    ...
+    proxyMode := getProxyMode(string(config.Mode), iptInterface, kernelHandler, ipsetInterface, iptables.LinuxKernelCompatTester{})
+    ...
+    if proxyMode == proxyModeIPTables {
+        klog.V(0).Info(&amp;quot;Using iptables Proxier.&amp;quot;)
+        if config.IPTables.MasqueradeBit == nil {
+            // MasqueradeBit must be specified or defaulted.
+            return nil, fmt.Errorf(&amp;quot;unable to read IPTables MasqueradeBit from config&amp;quot;)
+        }
+
+        // 返回一个Proxier 结构体实例
+        proxierIPTables, err := iptables.NewProxier(...) //参数略
+        if err != nil {
+            return nil, fmt.Errorf(&amp;quot;unable to create proxier: %v&amp;quot;, err)
+        }
+        metrics.RegisterMetrics()
+        proxier = proxierIPTables
+        // Iptables Proxier 实现了 ServiceHandler 和 EndpointsHandler 的接口。
+        serviceEventHandler = proxierIPTables
+        endpointsEventHandler = proxierIPTables
+
+        userspace.CleanupLeftovers(iptInterface)// 无条件强制清除之前userspace 模式的规则
+
+        // 因为无法区分iptables 规则是否由IPVS 代理生成，因此由用户根据实际情况决定是否调用ipvs.CleanupLeftovers()
+        if canUseIPVS {
+            ipvs.CleanupLeftovers(ipvsInterface, iptInterface, ipsetInterface, cleanupIPVS)
+        }
+    } else if proxyMode == proxyModeIPVS {// 初始化IPVS Proxier
+
+    } else { // 初始化 userspace Proxier
+
+    }
+
+    iptInterface.AddReloadFunc(proxier.Sync)
+
+    return &amp;amp;ProxyServer{ // 赋值过程略
+    ...
+    }, nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;proxier-初始化&#34;&gt;Proxier 初始化&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;kubernetes/pkg/proxy/iptables/proxier.go
+
+func NewProxier(...) (*Proxier, error) { //参数略
+    ...
+    //kube-proxy要求NODE节点操作系统中有/sys/module/br_netfilter模块，还要设置bridge-nf-call-iptables=1；
+    //如果不满足要求，kube-proxy在运行过程中设置的某些iptables规则就不会工作。
+    if val, err := sysctl.GetSysctl(sysctlBridgeCallIPTables); err == nil &amp;amp;&amp;amp; val != 1 {
+        klog.Warning(&amp;quot;missing br-netfilter module or unset sysctl br-nf-call-iptables; proxy may not work as intended&amp;quot;)
+    }
+
+    // Generate the masquerade mark to use for SNAT rules.
+    masqueradeValue := 1 &amp;lt;&amp;lt; uint(masqueradeBit) //masqueradeBit: Default 14
+    // 输出一个8位16进制数值 ，默认即0x00004000/0x00004000,用来标记k8s管理的报文。
+    //标记 0x4000的报文（即POD发出的报文)，在离开Node（物理机）的时候需要进行SNAT转换。
+    masqueradeMark := fmt.Sprintf(&amp;quot;%#08x/%#08x&amp;quot;, masqueradeValue, masqueradeValue)
+
+    healthChecker := healthcheck.NewServer(hostname, recorder, nil, nil) // use default implementations of deps
+
+    isIPv6 := ipt.IsIpv6()
+    proxier := &amp;amp;Proxier{
+        portsMap:                 make(map[utilproxy.LocalPort]utilproxy.Closeable),
+        serviceMap:               make(proxy.ServiceMap),
+		...
+        networkInterfacer:        utilproxy.RealNetwork{},
+    }
+    burstSyncs := 2
+    ...
+    //Default: syncPeriod=30s (--iptables-sync-period duration)，将proxier.syncProxyRules 托管至BoundedFrequencyRunner 结构体，
+    //BoundedFrequencyRunner 中含有一个Limiter ，该Limiter 采用&amp;quot;桶令牌&amp;quot; 限流算法控制proxier.syncProxyRules 方法运行的频率。
+    //minSyncPeriod=0 时，无速率限制。限流时，桶类初始令牌数量为burstSyncs。
+    proxier.syncRunner = async.NewBoundedFrequencyRunner(&amp;quot;sync-runner&amp;quot;, proxier.syncProxyRules, minSyncPeriod, syncPeriod, burstSyncs)
+    return proxier, nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;注册resourcehandler&#34;&gt;注册ResourceHandler&lt;/h2&gt;
+
+&lt;p&gt;ProxyServer 及Proxier 这两个重要的结构体初始化完成以后，就进入了proxyServer.Run() 方法。在Run() 方法中，大致做了如下工作：&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;准备工作，如设置OOMScoreAdj, 注册service 和endpoints 的处理方法&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;使用list-watch 机制对service，endpoints资源监听。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;最后进入一个无限循环，对service与endpoints的变化进行iptables规则的同步。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;在Run方法中，主要关注一下对service 和endpoints资源变化的处理方法的注册过程。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;//cmd/kube-proxy/app/server.go
+
+func (s *ProxyServer) Run() error {
+    ...
+
+    //在用户空间通过写oomScoreAdj参数到/proc/self/oom_score_adj文件来改变进程的 oom_adj 内核参数；
+    //oom_adj的值的大小决定了进程被 OOM killer，取值范围[-1000,1000] 选中杀掉的概率,值越低越不容易被杀死.此处默认值是-999。
+    if s.OOMScoreAdj != nil {
+        oomAdjuster = oom.NewOOMAdjuster()
+        if err := oomAdjuster.ApplyOOMScoreAdj(0, int(*s.OOMScoreAdj)); err != nil {
+            klog.V(2).Info(err)
+        }
+    }
+
+    if len(s.ResourceContainer) != 0 {
+        ...
+        //
+        resourcecontainer.RunInResourceContainer(s.ResourceContainer);
+        ...
+    }
+
+    if s.Broadcaster != nil &amp;amp;&amp;amp; s.EventClient != nil {
+        // EventSinkImpl 包装了处理event 的方法create ,update, patchs
+        //s.Broadcaster 已经在ProxyServer 初始化中作为一个goroutine 在运行。
+        s.Broadcaster.StartRecordingToSink(&amp;amp;v1core.EventSinkImpl{Interface: s.EventClient.Events(&amp;quot;&amp;quot;)})
+    }
+
+    // Start up a healthz server if requested
+    if s.HealthzServer != nil {
+        s.HealthzServer.Run()
+    }
+
+    // Start up a metrics server if requested
+    if len(s.MetricsBindAddress) &amp;gt; 0 {
+    ...
+    }
+
+    // Tune conntrack, if requested
+    // Conntracker is always nil for windows
+    if s.Conntracker != nil {
+        max, err := getConntrackMax(s.ConntrackConfiguration)
+        ...
+    }
+    // Default: s.ConfigSyncPeriod =15m (--config-sync-period)
+    //返回一个sharedInformerFactory结构体实例(staing/src/k8s.io/client-go/informers/factory.go)
+    informerFactory := informers.NewSharedInformerFactory(s.Client, s.ConfigSyncPeriod)
+
+
+    //ServiceConfig结构体跟踪记录Service配置信息的变化
+    //informerFactory.Core().V1().Services() 返回一个 serviceInformer 结构体引用(staing/src/k8s.io/client-go/informers/core/v1/service.go
+    serviceConfig := config.NewServiceConfig(informerFactory.Core().V1().Services(), s.ConfigSyncPeriod)
+
+    //RegisterEventHandler 是将Service的处理方法追加到serviceConfig的eventHandlers 中，eventHandlers为一个列表，元素类型ServiceHandler接口
+    // ServiceHandler接口定义了每个hanlder 处理service的api方法:OnServiceAdd,OnServiceUpdate,OnServiceDelete,OnServiceSynced
+    // 此处s.ServiceEventHandler 为proxier，proxier实现了ServiceHandler接口定义的方法
+    //serviceConfig 中的handleAddService,handleUpdateService,handleDeleteService 将会调用每个eventHandler的OnServiceAdd等方法
+    serviceConfig.RegisterEventHandler(s.ServiceEventHandler)
+    go serviceConfig.Run(wait.NeverStop)  //初始化同步service,调用了一次proxier.syncProxyRules()
+
+    endpointsConfig := config.NewEndpointsConfig(informerFactory.Core().V1().Endpoints(), s.ConfigSyncPeriod)
+    endpointsConfig.RegisterEventHandler(s.EndpointsEventHandler)
+    go endpointsConfig.Run(wait.NeverStop)
+
+    // This has to start after the calls to NewServiceConfig and NewEndpointsConfig because those
+    // functions must configure their shared informer event handlers first.
+    go informerFactory.Start(wait.NeverStop)
+
+    // Birth Cry after the birth is successful
+    s.birthCry()
+
+    // Just loop forever for now...
+    s.Proxier.SyncLoop()
+    return nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ServiceConfig 来跟踪 service 配置变化，通过 chan 接收到 &lt;code&gt;set&lt;/code&gt;、&lt;code&gt;add&lt;/code&gt;、&lt;code&gt;remove&lt;/code&gt;的操作，然后调用相应的注册的 ServiceHandler。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;type ServiceConfig struct {
+	lister        listers.ServiceLister
+	listerSynced  cache.InformerSynced
+	eventHandlers []ServiceHandler
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;上面以注释的方式描述了proxier中service处理方法的被调用流程：通过serviceConfig.RegisterEventHandler()方法实现了在serviceConfig中的handleAddService()等方法中调用proxier中的OnServiceAdd()等对应的方法。那么serviceConfig.handleAddService()等方法是在哪里以及何时被调用的呢？再次回看serviceConfig的实例化方法 NewServiceConfig() 挖掘handleAddService()的被调用处。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;kubernetes/pkg/proxy/config/config.go
+
+func NewServiceConfig(serviceInformer coreinformers.ServiceInformer, resyncPeriod time.Duration) *ServiceConfig {
+    result := &amp;amp;ServiceConfig{
+        lister:       serviceInformer.Lister(),
+        listerSynced: serviceInformer.Informer().HasSynced,
+    }
+    //结构体cache.ResourceEventHandlerFuncs 是一个ResourceEventHandler接口类型(staing/src/k8s.io/client-go/tools/cache/controller.go)
+    //将ServicConfig 结构体的handleAddService 等方法赋予了cache.ResourceEventHandlerFuncs,实现一个ResourceEventHandler实例
+    //serviceInformer.Informer() 返回一个sharedIndexInformer 实例(staing/src/k8s.io/client-go/tools/cache/shared_informer.go)
+    //通过AddEventHandlerWithResyncPeriod() 方法，将ResourceEventHandler实例赋值给processorListener结构体的handler属性
+    serviceInformer.Informer().AddEventHandlerWithResyncPeriod(
+        cache.ResourceEventHandlerFuncs{
+            AddFunc:    result.handleAddService,
+            UpdateFunc: result.handleUpdateService,
+            DeleteFunc: result.handleDeleteService,
+        },
+        resyncPeriod,
+    )
+    return result
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;看完上面的注释，大概就明白了proxier 中的OnServiceAdd() 等法法的调用流程 在上边代码serviceInformer.Informer()返回之前，还将调用InformerFor()方法给informerFactory的informers属性赋值f.informers[informerType] = informer, 此行代码的意义可理解为：从api server 监听到 informerType类型资源变化的处理者记录(映射)为informer。此处的资源类型即为service, informer 便为sharedIndexInformer。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func (c *ServiceConfig) handleAddService(obj interface{}) {
+	service, ok := obj.(*v1.Service)
+	...
+	for i := range c.eventHandlers {
+		klog.V(4).Info(&amp;quot;Calling handler.OnServiceAdd&amp;quot;)
+		c.eventHandlers[i].OnServiceAdd(service)
+	}
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;在调用 handleAddService() 中遍历调用 eventHandlers 的 OnServiceAdd() 方法&lt;/p&gt;
+
+&lt;p&gt;具体的调用时机和最上层方法入口还要从informerFactory这个东西说起，这又是k8s 中另一个比较系统的公共组件的实现原理了，即client-go的SharedInformer。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;pkg/proxy/apis/config/register.go
+const GroupName = &amp;quot;kubeproxy.config.k8s.io&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;这个用途是什么？&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&#34;记录资源变化&#34;&gt;记录资源变化&lt;/h2&gt;
+
+&lt;p&gt;上面介绍了ResourceHandler 的注册及被调用过程。 Proxier 实现了 services 和 endpoints 事件各种最终的观察者，最终的事件触发都会在 proxier 中进行处理。对于通过监听 API Server 变化的信息，通过调用ResourceHandler将变化的信息保存到 endpointsChanges 和 serviceChanges。那么一个ResourceHandler是如何实现的呢？service 和endpoints 的变化如何记录为servriceChanges 和endpointsChanges？回看上边源码中被注册的对象s.ServiceEventHandler，s.EndpointsEventHandler的具体实现便可明白。&lt;/p&gt;
+
+&lt;p&gt;service 和endpoints 的处理原则相似，以对servcie 的处理为例，看一下对service 的处理方法。&lt;/p&gt;
+
+&lt;p&gt;service 和endpoints 的处理原则相似，以对servcie 的处理为例，看一下对service 的处理方法。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;//pkg/proxy/iptables/proxier.go
+
+func (proxier *Proxier) OnServiceAdd(service *v1.Service) {
+    proxier.OnServiceUpdate(nil, service)
+}
+
+func (proxier *Proxier) OnServiceUpdate(oldService, service *v1.Service) {
+    if proxier.serviceChanges.Update(oldService, service) &amp;amp;&amp;amp; proxier.isInitialized() {
+        proxier.syncRunner.Run() // 通过channel 发送一个信号，调用tryRun()
+    }
+}
+
+func (proxier *Proxier) OnServiceDelete(service *v1.Service) {
+    proxier.OnServiceUpdate(service, nil)
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;从上边代码中，可以看到，对service的处理方法大致分为三种：&lt;/p&gt;
+
+&lt;p&gt;增加一个service
+删除一个service
+处理一个已存在的service的变化。&lt;/p&gt;
+
+&lt;p&gt;其中，增加、删除service 都是给OnServiceUpdate() 传入参数后，由OnServiceUpdate() 方法处理。因此，重点看一下OnServiceUpdate()调用的update() 方法的实现。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;//pkg/proxy/service.go
+
+func (sct *ServiceChangeTracker) Update(previous, current *v1.Service) bool {
+    svc := current
+    if svc == nil {
+        svc = previous
+    }
+    // previous == nil &amp;amp;&amp;amp; current == nil is unexpected, we should return false directly.
+    if svc == nil {
+        return false
+    }
+    namespacedName := types.NamespacedName{Namespace: svc.Namespace, Name: svc.Name}
+
+    sct.lock.Lock()
+    defer sct.lock.Unlock()
+
+    change, exists := sct.items[namespacedName]
+    if !exists { // 在serviceChanges 中不存在一个以namespacedName 为key 的资源
+        change = &amp;amp;serviceChange{}  // 初始化一个serviceChange
+        change.previous = sct.serviceToServiceMap(previous)
+        sct.items[namespacedName] = change
+    }
+    change.current = sct.serviceToServiceMap(current)
+    // if change.previous equal to change.current, it means no change
+    if reflect.DeepEqual(change.previous, change.current) { // 从update传递进来的资源没有变化，则从serviceChanges中删除。
+        delete(sct.items, namespacedName)
+    }
+    return len(sct.items) &amp;gt; 0
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;update 方法就是根据previous ,current 参数新生成一个change 或者修改一个存在的change。并且把无变化的资源从serviceChanges 中删除。serviceChanges.items 会在将变化信息更新到proxier.serviceMap 后清空。&lt;/p&gt;
+
+&lt;h2 id=&#34;限流同步机制&#34;&gt;限流同步机制&lt;/h2&gt;
+
+&lt;p&gt;在对proxy server 关心的资源变化进行了监听记录之后，最后从s.Proxier.SyncLoop()进入proxier.syncRunner.Loop()方法，由proxier.syncRunner 对托管syncProxyRules() ，syncProxyRules() 实现了修改iptables规则的具体流程。此处值得留意的是proxier.syncRunner采用“令牌桶”算法实现了限流的同步控制。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func (proxier *Proxier) SyncLoop() {
+	proxier.syncRunner.Loop(wait.NeverStop)
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;//pkg/utils/async/bounded_frequency_runner.go
+func (bfr *BoundedFrequencyRunner) Loop(stop &amp;lt;-chan struct{}) {
+    klog.V(3).Infof(&amp;quot;%s Loop running&amp;quot;, bfr.name)
+    bfr.timer.Reset(bfr.maxInterval)
+    for {
+        select {
+        case &amp;lt;-stop:
+            bfr.stop()
+            klog.V(3).Infof(&amp;quot;%s Loop stopping&amp;quot;, bfr.name)
+            return
+        //先确认是否到了运行时机，如果可以运行，就调用syncProxyRules()，之后重新计时。
+        //具体参考Timer 的实现机制
+        case &amp;lt;-bfr.timer.C():
+            bfr.tryRun()
+        case &amp;lt;-bfr.run: //收到一个channel信号
+            bfr.tryRun()
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;修改-iptables-规则&#34;&gt;修改 Iptables 规则&lt;/h2&gt;
+
+&lt;p&gt;介绍了资源监听、记录和同步机制，再来看一下kube-proxy是如何将资源的变化反馈到iptables规则中的。在iptables的代理模式中，syncProxyRule()方法实现了修改iptables规则的细节流程。走读分析该方法，能将明白在node节点观察到的新链及规则产生的方式及目的。&lt;/p&gt;
+
+&lt;p&gt;syncProxyRules()这一单个方法的代码较长（约700+ 行），具体的细节功能也多，本节将对syncProxyRules()里的代码执行流程分开介绍。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;更新proxier.endpointsMap，proxier.servieMap。&lt;/p&gt;
+
+&lt;p&gt;proxier.serviceMap：把sercvieChanges.current 写入proxier.serviceMap，再把存在于sercvieChanges.previous 但不存在于sercvieChanges.current 的service 从 proxier.serviceMap中删除，并且删除的时候，把使用UDP协议的cluster_ip 记录于UDPStaleClusterIP 。&lt;/p&gt;
+
+&lt;p&gt;proxier.endpointsMap：把endpointsChanges.previous 从proxier.endpointsMap 删除，再把endpointsChanges.current 加入proxier.endpointsMap。把存在于endpointsChanges.previous 但不存在于endpointsChanges.current 的endpoint 组装为ServiceEndpoint 结构，把该结构记录于staleEndpoints。&lt;/p&gt;
+
+&lt;p&gt;​具体相关代码流程如下：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;//kubernetes/pkg/proxy/iptables/proxier.go
+func (proxier *Proxier) syncProxyRules() {
+    ...
+    serviceUpdateResult := proxy.UpdateServiceMap(proxier.serviceMap, proxier.serviceChanges)
+    endpointUpdateResult := proxy.UpdateEndpointsMap(proxier.endpointsMap, proxier.endpointsChanges)
+
+    staleServices := serviceUpdateResult.UDPStaleClusterIP
+
+    // 利用endpointUpdateResult.StaleServiceNames，再次更新 staleServices
+    for _, svcPortName := range endpointUpdateResult.StaleServiceNames {
+        if svcInfo, ok := proxier.serviceMap[svcPortName]; ok &amp;amp;&amp;amp; svcInfo != nil &amp;amp;&amp;amp; svcInfo.GetProtocol() == v1.ProtocolUDP {
+            klog.V(2).Infof(&amp;quot;Stale udp service %v -&amp;gt; %s&amp;quot;, svcPortName, svcInfo.ClusterIPString())
+            staleServices.Insert(svcInfo.ClusterIPString())
+        }
+    }
+    ...
+}
+
+//kubernetes/pkg/proxy/servcie.go
+func UpdateServiceMap(serviceMap ServiceMap, changes *ServiceChangeTracker) (result UpdateServiceMapResult) {
+    result.UDPStaleClusterIP = sets.NewString()
+    // apply 方法中，继续调用了merge，filter, umerge
+    // merge:将change.current的servicemap 信息合入proxier.servicemap中。
+    // filter:将change.previous和change.current共同存在的servicemap从将change.previous删除
+    // unmerge: 将change.previous 中使用UDP 的servicemap 从 proxier.serviceMap 中删除，并记录删除的服务IP 到UDPStaleClusterIP
+    //apply中最后重置了proxy.serviceChanges.items
+    serviceMap.apply(changes, result.UDPStaleClusterIP)
+
+    //HCServiceNodePorts 保存proxier.serviceMap 中所有服务的健康检查端口
+    result.HCServiceNodePorts = make(map[types.NamespacedName]uint16)
+    for svcPortName, info := range serviceMap {
+        if info.GetHealthCheckNodePort() != 0 {
+            result.HCServiceNodePorts[svcPortName.NamespacedName] = uint16(info.GetHealthCheckNodePort())
+        }
+    }
+    return result
+}
+
+//kubernetes/pkg/proxy/endpoints.go
+func UpdateEndpointsMap(endpointsMap EndpointsMap, changes *EndpointChangeTracker) (result UpdateEndpointMapResult) {
+    result.StaleEndpoints = make([]ServiceEndpoint, 0)
+    result.StaleServiceNames = make([]ServicePortName, 0)
+
+    //从proixer.endpointsMap 中删除和change.previous 相同的elelment.
+    // 将change.current 添加至proixer.endpointsMap
+    // StaleEndpoints 保存了存在于previous 但不存在current的endpoints
+    // StaleServicenames保存了一种ServicePortName,这样的ServicePortName在change.previous不存在对应的endpoints，在change.current存在endpoints。
+    // 最后重置了了proxy.endpointsChanges.items
+    endpointsMap.apply(changes, &amp;amp;result.StaleEndpoints, &amp;amp;result.StaleServiceNames)
+
+    // computing this incrementally similarly to endpointsMap.
+    result.HCEndpointsLocalIPSize = make(map[types.NamespacedName]int)
+    localIPs := GetLocalEndpointIPs(endpointsMap)
+    for nsn, ips := range localIPs {
+        result.HCEndpointsLocalIPSize[nsn] = len(ips)
+    }
+    return result
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ol&gt;
+&lt;li&gt;在准好了更新iptables需要的资源变量后，接下来就是调用iptables 命令建立了自定义链，并在对应的内核链上引用这些自定义链。这些自定义链在k8s 服务中是必须的，不会跟随资源变化而变化，所以在更新规则之前，提前无条件生成这些链，做好准备工作，随后会在这些自定义链上创建相应的规则。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;相关代码如下：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;    for _, chain := range iptablesJumpChains {
+        if _, err := proxier.iptables.EnsureChain(chain.table, chain.chain); err != nil { //创建链
+            klog.Errorf(&amp;quot;Failed to ensure that %s chain %s exists: %v&amp;quot;, chain.table, kubeServicesChain, err)
+            return
+        }
+        args := append(chain.extraArgs,
+            &amp;quot;-m&amp;quot;, &amp;quot;comment&amp;quot;, &amp;quot;--comment&amp;quot;, chain.comment,
+            &amp;quot;-j&amp;quot;, string(chain.chain),
+        )
+        if _, err := proxier.iptables.EnsureRule(utiliptables.Prepend,  chain.table, chain.sourceChain, args...); err != nil { // 引用链
+            klog.Errorf(&amp;quot;Failed to ensure that %s chain %s jumps to %s: %v&amp;quot;, chain.table, chain.sourceChain, chain.chain, err)
+            return
+        }
+    }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;上边代码完成的iptables命令如下：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;iptables -w -N KUBE-EXTERNAL-SERVICES  -t filter
+iptables -w -I  INPUT -t filter -m conntrack --ctstate NEW  -m  comment --comment -j KUBE-EXTERNAL-SERVICES  kubernetes externally-visible service portals
+
+iptables -w -N KUBE-SERVICES  -t filter
+iptables -w -I OUTPUT -t filter  -m conntrack --ctstate NEW  -m  comment --comment -j  KUBE-SERVICES  kubernetes service portals
+
+iptables -w -N KUBE-SERVICES  -t nat
+iptables -w -I OUTPUT -t nat  -m conntrack --ctstate NEW  -m  comment --comment -j  KUBE-SERVICES  kubernetes service portals
+
+iptables -w -N KUBE-SERVICES  -t nat
+iptables -w -I PREROUTING -t nat  -m conntrack --ctstate NEW  -m  comment --comment -j  KUBE-SERVICES  kubernetes service portals
+
+iptables -w -N KUBE-POSTROUTING  -t nat
+iptables -w -I POSTROUTING -t nat  -m conntrack --ctstate NEW  -m  comment --comment -j  KUBE-POSTROUTING  kubernetes postrouting rules
+
+iptables -w -N KUBE-FORWARD  -t filter
+iptables -w -I FORWARD -t filter  -m conntrack --ctstate NEW  -m  comment --comment -j KUBE-FORWARD  kubernetes forwarding rules
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;将当前内核中filter表和nat 表中的全部规则临时导出到数个buffer，具体的：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;使用 proxier.existingFilterChainsData 保存filter表的信息&lt;/li&gt;
+&lt;li&gt;使用 existingFilterChains保存 proxier.existingFilterChainsData 的chain 信息&lt;/li&gt;
+&lt;li&gt;使用 proxier.iptablesData 保存nat 表的信息&lt;/li&gt;
+&lt;li&gt;使用 existingNATChains 保存 proxier.iptablesData 的chain 信息&lt;/li&gt;
+&lt;li&gt;重置 proxier.filterChains，proxier.filterRules，proxier.natChains，proxier.natRules 四个buffer , 这四个buffer 用来缓存最新的关于k8s 服务于endpoints 的 iptables 信息。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;在上面准备工作做好之后，开始向上述四个buffer中根据条件不断追加内容，缓存内容在同步规则的最后环节刷入内核。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h1 id=&#34;问题&#34;&gt;问题&lt;/h1&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;kube proxy 读取到的数据结构是怎样的？ （输入）&lt;/p&gt;
+
+&lt;p&gt;读取到的数据是监听 API server 的 Service 和 Endpoint 的数据。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;kube proxy 写出的数据机构是怎样的？ （输出）&lt;/p&gt;
+
+&lt;p&gt;通过 Service 和 Endpoint 组装 iptables rules。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;pod 如何发现和路由到远端的 pod？ （egress）&lt;/p&gt;
+
+&lt;p&gt;参考问题 1 和 2 的答案&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;node 接收到流量后怎么路由到相应的 pod 上的？ （ingress）&lt;/p&gt;
+
+&lt;p&gt;收到的报文的目的 IP 是 Pod 的 IP，Node 上有到 Pod 的路由直接转发给 Pod。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;kube-proxy 有多种实现方式：userspace、iptables、ipvs，如何分别实现的？&lt;/p&gt;
+
+&lt;p&gt;可以在命令行中指定模式，用 &lt;code&gt;interface ProxyProvider&lt;/code&gt;，每种模式都会有一个 Proxier 来实现这个 interface。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Proxy 如何解决了同一主宿机相同服务端口冲突的问题？&lt;/p&gt;
+
+&lt;p&gt;Pod 的 IP 不一样，即使端口冲突也没关系。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;ServiceInformer 是如何工作的？&lt;/p&gt;
+
+&lt;p&gt;list-watch 机制如何实现的？&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;ServicePortName 为什么是负载均衡的唯一标识？&lt;/p&gt;
+
+&lt;p&gt;// ServicePortName carries a namespace + name + portname.  This is the unique
+// identifier for a load-balanced service.
+type ServicePortName struct {
+    types.NamespacedName
+    Port string
+}&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;既然 kube-proxy 能够自动监听 apiserver 的变化，并更新 iptables，为什么这里还要再每隔一段时间强制同步一次呢？&lt;/p&gt;
+
+&lt;p&gt;我的看法是这只是安全防护措施，来规避有些情况（比如代码 bug，或者网络、环境问题等原因）下数据可能没有及时同步。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;更新 iptable rule 的时候用什么策略？如果直接更新规则会影响正在转发的流量吗？&lt;/p&gt;
+
+&lt;p&gt;已经存在的规则不会变，先写入跟新后的规则，然后删除旧的规则。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h1 id=&#34;总结&#34;&gt;总结&lt;/h1&gt;
+
+&lt;p&gt;node节点上的iptables中有到达所有service的规则，service 的cluster IP并不是一个实际的IP，它的存在只是为了找出实际的endpoint地址，对达到cluster IP的报文都要进行DNAT为Pod IP(+port)，不同node上的报文实际上是通过POD IP传输的，cluster IP只是本node节点的一个概念，用于查找并DNAT，即目的地址为clutter IP的报文只是本node发送的，其他节点不会发送(也没有路由支持)，即默认下cluster ip仅支持本node节点的service访问，如果需要跨node节点访问，可以使用插件实现，如flannel，它将pod  ip进行了封装&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-46f87b3f.png&#34; src=&#34;images/index-46f87b3f.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;最后用两张图总结一下 kube-proxy 更新iptables 的流程&lt;/p&gt;
+
+&lt;p&gt;1) 资源更新信息来源&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-7e56e103.png&#34; src=&#34;images/index-7e56e103.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;2) 链建立及规则导向&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-6ef3198a.png&#34; src=&#34;images/index-6ef3198a.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-6ef3198a.png&#34; src=&#34;images/index-6ef3198a.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;另外：对于数据包的出入口，有这么一句心得：只要你站在内核的角度理解，无论从虚拟网卡还是物理网卡收到一个包，对内核来说都是收包，都是prerouting链开始。无论一个包去往物理网卡还是虚拟网卡，对内核来说都是发出，都是从postrouting结束。本机进程收到就是input链，本机进程发出就是output链。&lt;/p&gt;
+
+&lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://dockone.io/article/895&#34; target=&#34;_blank&#34;&gt;我是怎么阅读kubernetes源代码的？&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://cizixs.com/2017/04/07/kube-proxy-source-code-analysis/&#34; target=&#34;_blank&#34;&gt;kube-proxy 源码解析&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.cnblogs.com/charlieroro/p/9588019.html&#34; target=&#34;_blank&#34;&gt;理解kubernetes环境的iptables&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://rootdeep.github.io/posts/kube-proxy-code-analysis/&#34; target=&#34;_blank&#34;&gt;kube-proxy 源码分析&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -1485,6 +2535,766 @@ func doSomething(pod) {
     </item>
     
     <item>
+      <title>Calico 架构与实践</title>
+      <link>/post/cloud/network/201812-calico/</link>
+      <pubDate>Fri, 07 Dec 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/network/201812-calico/</guid>
+      <description>
+
+&lt;h2 id=&#34;calico&#34;&gt;calico&lt;/h2&gt;
+
+&lt;p&gt;calico是一个比较有趣的虚拟网络解决方案，适用于容器的解决方案，完全利用路由规则实现动态组网，通过BGP协议通告路由。&lt;/p&gt;
+
+&lt;p&gt;calico的好处是endpoints组成的网络是单纯的三层网络，报文的流向完全通过路由规则控制，没有overlay等额外开销。&lt;/p&gt;
+
+&lt;p&gt;calico的endpoint可以漂移，并且实现了acl。&lt;/p&gt;
+
+&lt;p&gt;calico的缺点是路由的数目与容器数目相同，非常容易超过路由器、三层交换、甚至node的处理能力，从而限制了整个网络的扩张。&lt;/p&gt;
+
+&lt;p&gt;calico的每个node上会设置大量（海量)的iptables规则、路由，运维、排障难度大。&lt;/p&gt;
+
+&lt;p&gt;calico的原理决定了它不可能支持VPC，容器只能从calico设置的网段中获取ip。&lt;/p&gt;
+
+&lt;p&gt;calico目前的实现没有流量控制的功能，会出现少数容器抢占node多数带宽的情况。&lt;/p&gt;
+
+&lt;p&gt;calico的网络规模受到BGP网络规模的限制。&lt;/p&gt;
+
+&lt;h3 id=&#34;名词解释&#34;&gt;名词解释&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;endpoint:  接入到calico网络中的网卡称为endpoint&lt;/li&gt;
+&lt;li&gt;AS:        网络自治系统，通过BGP协议与其它AS网络交换路由信息&lt;/li&gt;
+&lt;li&gt;ibgp:      AS内部的BGP Speaker，与同一个AS内部的ibgp、ebgp交换路由信息。&lt;/li&gt;
+&lt;li&gt;ebgp:      AS边界的BGP Speaker，与同一个AS内部的ibgp、其它AS的ebgp交换路由信息。&lt;/li&gt;
+&lt;li&gt;workloadEndpoint:  虚拟机、容器使用的endpoint&lt;/li&gt;
+&lt;li&gt;hostEndpoints:     物理机(node)的地址&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;calico在ip-fabric中的部署方式&#34;&gt;calico在ip fabric中的部署方式&lt;/h3&gt;
+
+&lt;p&gt;如果底层的网络是ip fabric的方式，三层网络是可靠的，只需要部署一套calico。&lt;/p&gt;
+
+&lt;p&gt;剩下的关键点就是怎样设计BGP网络，&lt;a href=&#34;https://docs.projectcalico.org/v2.1/reference/private-cloud/l3-interconnect-fabric&#34; target=&#34;_blank&#34;&gt;calico over ip fabrics&lt;/a&gt;中给出两种设计方式:
+1. AS per rack:   每个rack(机架)组成一个AS，每个rack的TOR交换机与核心交换机组成一个AS
+2. AS per server: 每个node做为一个AS，TOR交换机组成一个transit AS&lt;/p&gt;
+
+&lt;p&gt;这两种方式采用的是&lt;a href=&#34;https://tools.ietf.org/html/draft-ietf-rtgwg-bgp-routing-large-dc-11&#34; target=&#34;_blank&#34;&gt;Use of BGP for routing in large-scale data centers&lt;/a&gt;中的建议。&lt;/p&gt;
+
+&lt;h4 id=&#34;as-per-rack&#34;&gt;AS per rack&lt;/h4&gt;
+
+&lt;ol&gt;
+&lt;li&gt;一个机架作为一个AS，分配一个AS号，node是ibgp，TOR交换机是ebgp&lt;/li&gt;
+&lt;li&gt;node只与TOR交换机建立BGP连接，TOR交换机与机架上的所有node建立BGP连接&lt;/li&gt;
+&lt;li&gt;所有TOR交换机之间以node-to-node mesh方式建立BGP连接&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;TOR三层联通：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/calico-1.png&#34; alt=&#34;calico-1&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;每个机架上node的数目是有限的，BGP压力转移到了TOR交换机。当机架数很多，TOR交换机组成BGP mesh压力会过大。&lt;/p&gt;
+
+&lt;p&gt;endpoints之间的通信过程:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;EndpointA发出报文  --&amp;gt; nodeA找到了下一跳地址nodeB --&amp;gt; 报文送到TOR交换机A --&amp;gt; 报文送到核心交换机
+                                                                                      |
+                                                                                      v
+EndpointB收到了报文 &amp;lt;--  nodeB收到了报文 &amp;lt;-- TOR交换机B收到了报文 &amp;lt;--  核心交换机将报文送达TOR交换机B
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;优化-downward-default-model-减少需要记录的路由&#34;&gt;优化：“Downward Default model”减少需要记录的路由&lt;/h4&gt;
+
+&lt;p&gt;Downward Default Model在上面的几种组网方式的基础上，优化了路由的管理。&lt;/p&gt;
+
+&lt;p&gt;在上面的三种方式中，每个node、每个TOR交换机、每个核心交换机都需要记录全网路由。&lt;/p&gt;
+
+&lt;p&gt;“Downward Default model”模式中:
+1. 每个node向上(TOR)通告所有路由信息，而TOR向下(node)只通告一条默认路由
+2. 每个TOR向上(核心交换机)通告所有路由，核心交换机向下(TOR)只通告一条默认路由
+3. node只知晓本地的路由
+4. TOR只知道接入到自己的所有node上的路由
+5. 核心交换机知晓所有的路由&lt;/p&gt;
+
+&lt;p&gt;这种模式减少了TOR交换机和node上的路由数量，但缺点是，发送到无效IP的流量必须到达核心交换机以后，才能被确定为无效。&lt;/p&gt;
+
+&lt;p&gt;endpoints之间的通信过程:&lt;/p&gt;
+
+&lt;p&gt;EndpointA发出报文  &amp;ndash;&amp;gt; nodeA默认路由到TOR交换机A &amp;ndash;&amp;gt; TOR交换机A默认路由到核心交换机 &amp;ndash;+
+                                                                                      |
+                                                                                      v
+EndpointB收到了报文 &amp;lt;&amp;ndash;  nodeB收到了报文 &amp;lt;&amp;ndash; TOR交换机B收到了报文 &amp;lt;&amp;ndash; 核心交换机找到了下一跳地址nodeB&lt;/p&gt;
+
+&lt;h2 id=&#34;calico验证&#34;&gt;calico验证&lt;/h2&gt;
+
+&lt;h3 id=&#34;etcd&#34;&gt;etcd&lt;/h3&gt;
+
+&lt;p&gt;在节点上执行&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;docker run -d -p 2379:2379 -p 2380:2380 --name calico_etcd elcolio/etcd \
+-name etcd1 \
+-advertise-client-urls http://10.48.35.14:2379 \
+-listen-client-urls http://0.0.0.0:2379 \
+-initial-advertise-peer-urls http://10.48.35.14:2380 \
+-listen-peer-urls http://0.0.0.0:2380 \
+-initial-cluster-token etcd-cluster \
+-initial-cluster &amp;quot;etcd1=http://10.48.35.14:2380&amp;quot; \
+-initial-cluster-state new
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;查看集群状态&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;# curl 10.48.35.14:2379/version
+etcd 2.0.10
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;设置多个节点共用相同的store&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;vim /etc/docker/daemon.json
+{
+    &amp;quot;cluster-store&amp;quot;:&amp;quot;etcd://10.48.35.14:2379&amp;quot;,
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;重启docker服务&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;systemctl restart  docker
+
+sudo service docker restart
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;etcd保存的calico信息&#34;&gt;etcd保存的calico信息&lt;/h4&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo etcdctl ls /calico
+/calico/v1
+/calico/bgp
+/calico/ipam
+
+
+$ curl http://127.0.0.1:2379/v2/keys/
+{&amp;quot;action&amp;quot;:&amp;quot;get&amp;quot;,&amp;quot;node&amp;quot;:{&amp;quot;dir&amp;quot;:true,&amp;quot;nodes&amp;quot;:[{&amp;quot;key&amp;quot;:&amp;quot;/docker&amp;quot;,&amp;quot;dir&amp;quot;:true,&amp;quot;modifiedIndex&amp;quot;:3,&amp;quot;createdIndex&amp;quot;:3},{&amp;quot;key&amp;quot;:&amp;quot;/calico&amp;quot;,&amp;quot;dir&amp;quot;:true,&amp;quot;modifiedIndex&amp;quot;:7,&amp;quot;createdIndex&amp;quot;:7}]}}
+
+$ curl 10.48.35.14:2379/v2/keys/calico/bgp/v1/host/k8s-/ip_addr_v4 | python -m json.tool
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   156  100   156    0     0   119k      0 --:--:-- --:--:-- --:--:--  152k
+{
+    &amp;quot;action&amp;quot;: &amp;quot;get&amp;quot;,
+    &amp;quot;node&amp;quot;: {
+        &amp;quot;createdIndex&amp;quot;: 74,
+        &amp;quot;key&amp;quot;: &amp;quot;/calico/bgp/v1/host/k8s-/ip_addr_v4&amp;quot;,
+        &amp;quot;modifiedIndex&amp;quot;: 74,
+        &amp;quot;value&amp;quot;: &amp;quot;10.48.35.14&amp;quot;
+    }
+}
+
+$ sudo etcdctl get /calico/bgp/v1/host/k8s-/ip_addr_v4
+10.48.35.14
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;calico安装&#34;&gt;calico安装&lt;/h3&gt;
+
+&lt;p&gt;直接下载预编译好的可执行文件就可以直接使用了&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;sudo wget -O /bin/calicoctl https://github.com/projectcalico/calicoctl/releases/download/v1.6.1/calicoctl
+sudo chmod +x /bin/calicoctl
+
+curl -O -L https://github.com/projectcalico/calicoctl/releases/download/v3.1.5/calicoctl
+chmod +x calicoctl
+mv calicoctl /user/local/bin/
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;下载 &lt;code&gt;calico node&lt;/code&gt; 镜像&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;docker pull calico/node
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;启动calico服务&#34;&gt;启动calico服务:&lt;/h3&gt;
+
+&lt;p&gt;在每台主机上均运行命令：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;sudo calicoctl node run --node-image=calico/node:v2.6.10
+
+sudo calicoctl node run --ip=10.48.35.14 --name node01 --node-image quay.io/calico/node:v2.6.0
+
+k8s-ep98
+sudo calicoctl node run --ip=10.48.35.35 --name node02 --node-image quay.io/calico/node:v2.6.0
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;其中 calicoctl 命令里的 name，每台主机均可以根据自身 ip 来填写。 命令实际使用 calico/node 镜像启动了一个容器，执行输出内容如下：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;sudo calicoctl node run --name node01 --ip=10.48.32.5
+Running command to load modules: modprobe -a xt_set ip6_tables
+Enabling IPv4 forwarding
+Enabling IPv6 forwarding
+Increasing conntrack limit
+Removing old calico-node container (if running).
+Running the following command to start calico-node:
+
+docker run --net=host --privileged --name=calico-node -d --restart=always -e IP=10.48.32.5 -e ETCD_ENDPOINTS=http://127.0.0.1:2379 -e NODENAME=node01 -e CALICO_NETWORKING_BACKEND=bird -e CALICO_LIBNETWORK_ENABLED=true -v /var/log/calico:/var/log/calico -v /var/run/calico:/var/run/calico -v /lib/modules:/lib/modules -v /run:/run -v /run/docker/plugins:/run/docker/plugins -v /var/run/docker.sock:/var/run/docker.sock quay.io/calico/node:latest
+
+Image may take a short time to download if it is not available locally.
+Container started, checking progress logs.
+
+2019-03-03 05:40:10.424 [INFO][9] startup.go 256: Early log level set to info
+2019-03-03 05:40:10.424 [INFO][9] startup.go 272: Using NODENAME environment for node name
+2019-03-03 05:40:10.424 [INFO][9] startup.go 284: Determined node name: node01
+2019-03-03 05:40:10.425 [INFO][9] startup.go 97: Skipping datastore connection test
+2019-03-03 05:40:10.473 [INFO][9] startup.go 367: Building new node resource Name=&amp;quot;node01&amp;quot;
+2019-03-03 05:40:10.473 [INFO][9] startup.go 382: Initialize BGP data
+2019-03-03 05:40:10.473 [INFO][9] startup.go 476: Using IPv4 address from environment: IP=10.48.32.5
+2019-03-03 05:40:10.476 [INFO][9] startup.go 509: IPv4 address 10.48.32.5 discovered on interface br0
+2019-03-03 05:40:10.476 [INFO][9] startup.go 452: Node IPv4 changed, will check for conflicts
+2019-03-03 05:40:10.477 [INFO][9] startup.go 647: No AS number configured on node resource, using global value
+2019-03-03 05:40:10.477 [WARNING][9] startup_linux.go 47: Expected /var/lib/calico to be mounted into the container but it wasn&#39;t present. Node name may not be detected properly
+2019-03-03 05:40:10.493 [INFO][9] startup.go 536: CALICO_IPV4POOL_NAT_OUTGOING is true (defaulted) through environment variable
+2019-03-03 05:40:10.493 [INFO][9] startup.go 781: Ensure default IPv4 pool is created. IPIP mode:
+2019-03-03 05:40:10.494 [INFO][9] startup.go 791: Created default IPv4 pool (192.168.0.0/16) with NAT outgoing true. IPIP mode:
+2019-03-03 05:40:10.495 [INFO][9] startup.go 536: FELIX_IPV6SUPPORT is true (defaulted) through environment variable
+2019-03-03 05:40:10.495 [INFO][9] startup_linux.go 79: IPv6 supported on this platform: true
+2019-03-03 05:40:10.495 [INFO][9] startup.go 536: CALICO_IPV6POOL_NAT_OUTGOING is false (defaulted) through environment variable
+2019-03-03 05:40:10.495 [INFO][9] startup.go 781: Ensure default IPv6 pool is created. IPIP mode: Never
+2019-03-03 05:40:10.496 [INFO][9] startup.go 791: Created default IPv6 pool (fdb3:cdc5:a7b8::/48) with NAT outgoing false. IPIP mode: Never
+2019-03-03 05:40:10.498 [INFO][9] startup.go 181: Using node name: node01
+Starting libnetwork service
+Calico node started successfully
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;calico/node 中的进程&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo docker exec -it calico-node ps aux
+PID   USER     TIME   COMMAND
+1 root       0:00 /sbin/runsvdir -P /etc/service/enabled
+198 root       0:00 runsv bird6
+199 root       0:00 runsv confd
+200 root       0:00 runsv bird
+201 root       0:00 runsv felix
+202 root       0:00 runsv libnetwork
+203 root       0:00 svlogd /var/log/calico/confd
+204 root       0:01 svlogd /var/log/calico/felix
+205 root       0:00 svlogd -tt /var/log/calico/bird6
+206 root       0:00 svlogd /var/log/calico/libnetwork
+207 root       0:00 svlogd -tt /var/log/calico/bird
+208 root       0:13 bird6 -R -s /var/run/calico/bird6.ctl -d -c /etc/calico/c
+209 root       0:07 confd -confdir=/etc/calico/confd -interval=5 -watch --log
+210 root      22:38 calico-felix
+211 root       0:13 bird -R -s /var/run/calico/bird.ctl -d -c /etc/calico/con
+212 root       0:05 libnetwork-plugin
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;创建calico网络&#34;&gt;创建calico网络&lt;/h3&gt;
+
+&lt;p&gt;先创建两个网络：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;# sudo docker network create --driver calico --ipam-driver calico-ipam net1
+# sudo docker network create --driver calico --ipam-driver calico-ipam net2
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;docker 创建网络的时候，会调用 calico 的网络驱动，由驱动完成具体的工作。注意这个网络是跨主机的，因此无论在哪台机器创建，在其他机器上都能看到：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo docker network ls
+NETWORK ID          NAME                DRIVER              SCOPE
+0887c53db680        bridge              bridge              local
+2e0533ba7fad        host                host                local
+e8a0a439868f        net1                calico              global
+d8af5a88e634        net2                calico              global
+285e1438e0e7        none                null                local
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;创建calico网络的容器&#34;&gt;创建calico网络的容器&lt;/h3&gt;
+
+&lt;p&gt;然后分别在网络中运行容器：&lt;/p&gt;
+
+&lt;p&gt;node01:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;ok
+sudo docker run -tid --name=test1 --net=net1 busybox
+sudo docker run --net net2 --name test2 -tid busybox
+
+sudo docker run -tid --name=test5 --net=net1 busybox
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;node02:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;sudo docker run -tid --name=test3 --net=net2 busybox
+sudo docker run --net net1 --name test4 -tid busybox
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;calico网络连通性&#34;&gt;calico网络连通性&lt;/h3&gt;
+
+&lt;p&gt;组网的拓扑如图&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/calico-2.png&#34; alt=&#34;calico-2&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;test1和test4都在net1中，可以连通。通过如下配置test1可以ping通test4。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo docker exec -it test1 ping 192.168.105.195 -c 3
+PING 192.168.105.195 (192.168.105.195): 56 data bytes
+64 bytes from 192.168.105.195: seq=0 ttl=62 time=0.229 ms
+64 bytes from 192.168.105.195: seq=1 ttl=62 time=0.274 ms
+64 bytes from 192.168.105.195: seq=2 ttl=62 time=0.256 ms
+
+--- 192.168.105.195 ping statistics ---
+3 packets transmitted, 3 packets received, 0% packet loss
+round-trip min/avg/max = 0.229/0.253/0.274 ms
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;同一个网络 docker 会保存各自的名字和 IP 的对应关系，而不同网络的容器无法解析，而且不能相互通信。
+test1与test2在不同的网络中，无法ping通。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo docker exec -it test1 ping 192.168.246.196 -c 3
+PING 192.168.246.196 (192.168.246.196): 56 data bytes
+
+--- 192.168.246.196 ping statistics ---
+3 packets transmitted, 0 packets received, 100% packet loss
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;路由&#34;&gt;路由&lt;/h4&gt;
+
+&lt;h5 id=&#34;node1&#34;&gt;node1&lt;/h5&gt;
+
+&lt;p&gt;&lt;strong&gt;主机网卡&lt;/strong&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ ip addr show
+16: cali6f588e66d6f@if15: &amp;lt;BROADCAST,MULTICAST,UP,LOWER_UP&amp;gt; mtu 1500 qdisc noqueue state UP
+    link/ether 52:f7:01:67:89:90 brd ff:ff:ff:ff:ff:ff link-netnsid 2
+18: cali3ea014c6cc8@if17: &amp;lt;BROADCAST,MULTICAST,UP,LOWER_UP&amp;gt; mtu 1500 qdisc noqueue state UP
+    link/ether 02:2a:51:4f:26:c0 brd ff:ff:ff:ff:ff:ff link-netnsid 1
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;strong&gt;容器test1 网卡&lt;/strong&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo docker exec test1 ip addr show
+1: lo: &amp;lt;LOOPBACK,UP,LOWER_UP&amp;gt; mtu 65536 qdisc noqueue qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+15: cali0@if16: &amp;lt;BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN&amp;gt; mtu 1500 qdisc noqueue
+    link/ether ee:ee:ee:ee:ee:ee brd ff:ff:ff:ff:ff:ff
+    inet 192.168.246.195/32 scope global cali0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::ecee:eeff:feee:eeee/64 scope link
+       valid_lft forever preferred_lft forever
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;容器网卡cali0即15号网卡，对接host节点16号网卡；&lt;/li&gt;
+&lt;li&gt;也再次印证容器获取的是/32位主机地址；&lt;/li&gt;
+&lt;li&gt;注意容器网卡的mac地址”ee:ee:ee:ee:ee:ee”, 这是1个固定的特殊地址（所有calico生成的容器mac地址均一样），因为calico只关心三层的ip地址，而不关心二层mac地址&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;主机路由&lt;/strong&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ ip route
+default via 10.48.35.1 dev br0
+10.48.35.0/24 dev br0 proto kernel scope link src 10.48.35.14
+169.254.0.0/16 dev br0 scope link metric 1005
+172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1
+192.168.105.192/26 via 10.48.35.35 dev br0 proto bird
+blackhole 192.168.246.192/26 proto bird
+192.168.246.195 dev cali6f588e66d6f scope link
+192.168.246.196 dev cali3ea014c6cc8 scope link
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;calico默认在每个节点上创建一个 26 位掩码的子网，该子网可以有64个IP地址。在本机可以通过calico学习到到其他节点虚拟的路由，在本例中，如图第5条路由。&lt;/p&gt;
+
+&lt;p&gt;最后两条路由是到本机容器的路由，发送到对应的网卡。&lt;/p&gt;
+
+&lt;p&gt;第二条路由是到hulk容器的路由。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;容器test1 路由&lt;/strong&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo docker exec test1 ip route
+default via 169.254.1.1 dev cali0
+169.254.1.1 dev cali0 scope link
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;容器网关“169.254.1.1”是1个预留本地ip地址，通过cali0端口发送到网关；&lt;/li&gt;
+&lt;li&gt;calico为简化网络配置,将容器的网关设置为1个固定的本地保留地址，容器内路由规则都是一样的，不需要动态更新；&lt;/li&gt;
+&lt;li&gt;确定下一跳后，容器会发送查询下一跳”169.254.1.1”的mac地址的ARP&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;这个 ARP 请求发到哪里了呢？要回答这个问题，就要知道 cali0 是 veth pair 的一端，其对端是主机上 caliXXXX 命名的 interface，可以通过 ethtool -S cali0 列出对端的 interface idnex。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo docker exec test1 ip neigh show
+169.254.1.1 dev cali0 lladdr 52:f7:01:67:89:90 used 0/0/0 probes 1 STALE
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;默认网卡 169.254.1.1 的mac地址是 cali0 对接网卡的mac地址，也就是host节点的16号网卡的mac地址。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo tcpdump -i cali6f588e66d6f -e -nn
+11:11:15.375778 ee:ee:ee:ee:ee:ee &amp;gt; 52:f7:01:67:89:90, ethertype ARP (0x0806), length 42: Request who-has 169.254.1.1 tell 192.168.246.195, length 28
+11:11:15.375795 52:f7:01:67:89:90 &amp;gt; ee:ee:ee:ee:ee:ee, ethertype ARP (0x0806), length 42: Reply 169.254.1.1 is-at 52:f7:01:67:89:90, length 28
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;通过在host节点”cali6f588e66d6f”网卡上抓二层包发现，容器的”cali0”网卡（mac地址”ee:ee:ee:ee:ee:ee”）发出的request包，host节点的”cali6f588e66d6f”网卡直接以本地mac地址”52:f7:01:67:89:90”回复；
+如果清除容器的arp表，可以更清晰的看到容器的arp请求报文被host节点对应的网卡响应&lt;/p&gt;
+
+&lt;p&gt;换句话说，它把自己的 MAC 地址作为应答返回给容器。容器的后续报文 IP 地址还是目的容器，但是 MAC 地址就变成了主机上该 interface 的地址，也就是说所有的报文都会发给主机，然后主机根据 IP 地址进行转发。&lt;/p&gt;
+
+&lt;p&gt;主机这个 interface 不管 ARP 请求的内容，直接用自己的 MAC 地址作为应答的行为被成为 ARP proxy，是 calico 开启的，可以通过下面的命令确认：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ cat /proc/sys/net/ipv4/conf/cali6f588e66d6f/proxy_arp
+1
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;总的来说，可以认为 calico 把主机作为容器的默认网关来使用，所有的报文发到主机，然后主机根据路由表进行转发。和经典的网络架构不同的是，calico 并没有给默认网络配置一个 IP 地址（这样每个网络都会额外消耗一个 IP 资源，而且主机上也会增加对应的 IP 地址和路由信息），而是通过 arp proxy 和修改容器路由表来实现。&lt;/p&gt;
+
+&lt;h3 id=&#34;calico的使用&#34;&gt;calico的使用&lt;/h3&gt;
+
+&lt;p&gt;在calico中，IP被称为Endpoint，宿主机上的容器IP称为workloadEndpoint，物理机IP称为hostEndpoint。ipPool等一同被作为资源管理。&lt;/p&gt;
+
+&lt;p&gt;查看默认的地址段:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo calicoctl get ippool -o wide
+CIDR                       NAT     IPIP
+192.168.0.0/16             true    false
+fd80:24e2:f998:72d6::/64   false   false
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;会创建默认一个IP地址池为容器使用，这里用的是 &lt;code&gt;192.168.0.0/16&lt;/code&gt;。&lt;/p&gt;
+
+&lt;p&gt;calico为每个宿主机的容器分配了一个网段
+宿主机上每个容器都有一条对应的路由表项，下一跳是veth pair，&lt;/p&gt;
+
+&lt;p&gt;calico 并没有给默认网络配置一个 IP 地址（这样每个网络都会额外消耗一个 IP 资源，而且主机上也会增加对应的 IP 地址和路由信息）。
+calico开启了arp proxy，这样每个宿主机端的veth pair都会回复容器对默认网关的arp请求。
+主机这个 interface 不管 ARP 请求的内容，直接用自己的 MAC 地址作为应答的行为被成为 ARP proxy，是 calico 开启的，可以通过下面的命令确认：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ cat /proc/sys/net/ipv4/conf/calif24874aae57/proxy_arp
+1
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;组件和架构&#34;&gt;组件和架构&lt;/h3&gt;
+
+&lt;p&gt;calico 做的事情：
+- 分配和管理 IP
+- 配置上容器的 veth pair 和容器内默认路由
+- 根据集群网络情况实时更新节点上路由表&lt;/p&gt;
+
+&lt;p&gt;从部署过程可以知道，除了 etcd 保存了数据之外，节点上也就只运行了一个 calico-node 的容器，所以推测是这个容器实现了上面所有的功能。calico/node 这个容器运行如下的进程&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-shell&#34;&gt;[root@node00 ~]# docker exec -it calico-node sh
+/ # ps aux
+PID   USER     TIME   COMMAND
+    1 root       0:01 /sbin/runsvdir -P /etc/service/enabled
+   75 root       0:00 runsv felix
+   76 root       0:00 runsv bird
+   77 root       0:00 runsv bird6
+   78 root       0:00 runsv confd
+   79 root       0:00 runsv libnetwork
+   80 root       0:02 svlogd /var/log/calico/felix
+   81 root      30:49 calico-felix
+   82 root       0:00 svlogd /var/log/calico/confd
+   83 root       0:05 confd -confdir=/etc/calico/confd -interval=5 -watch --log-level=debug -node=http://172.17.8.100:2379 -client-key= -client-cert= -client-ca-keys=
+   84 root       0:00 svlogd -tt /var/log/calico/bird
+   85 root       0:20 bird -R -s /var/run/calico/bird.ctl -d -c /etc/calico/confd/config/bird.cfg
+   86 root       0:00 svlogd -tt /var/log/calico/bird6
+   87 root       0:18 bird6 -R -s /var/run/calico/bird6.ctl -d -c /etc/calico/confd/config/bird6.cfg
+   94 root       0:00 svlogd /var/log/calico/libnetwork
+   95 root       0:04 libnetwork-plugin
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;runsv 是一个 minimal 的 init 系统提供的命令，用来管理多个进程，可以看到它运行的进程包括：felix、bird、bird6、confd 和 libnetwork，这部分就介绍各个进程的功能。&lt;/p&gt;
+
+&lt;h4 id=&#34;libnetwork-plugin&#34;&gt;libnetwork plugin&lt;/h4&gt;
+
+&lt;p&gt;libnetwork-plugin 是 calico 提供的 docker 网络插件，主要提供的是 IP 管理和网络管理的功能。&lt;/p&gt;
+
+&lt;p&gt;默认情况下，当网络中出现第一个容器时，calico 会为容器所在的节点分配一段子网（子网掩码为 /26，比如192.168.196.128/26），后续出现在该节点上的容器都从这个子网中分配 IP 地址。这样做的好处是能够缩减节点上的路由表的规模，按照这种方式节点上 2^6 = 64 个 IP 地址只需要一个路由表项就行，而不是为每个 IP 单独创建一个路由表项。节点上创建的子网段可以在etcd 中 /calico/ipam/v2/host/&lt;node_name&gt;/ipv4/block/ 看到。&lt;/p&gt;
+
+&lt;p&gt;calico 还允许创建容器的时候指定 IP 地址，如果用户指定的 IP 地址不在节点分配的子网段中，calico 会专门为该地址添加一个 /32 的网段。&lt;/p&gt;
+
+&lt;h4 id=&#34;bird&#34;&gt;BIRD&lt;/h4&gt;
+
+&lt;p&gt;BIRD（BIRD Internet Routing Daemon） 是一个常用的网络路由软件，支持很多路由协议（BGP、RIP、OSPF等），calico 用它在节点之间共享路由信息。&lt;/p&gt;
+
+&lt;p&gt;关于 BIRD 如何配置 BGP 协议，可以参考官方文档，对应的配置文件在 /etc/calico/confd/config/ 目录。&lt;/p&gt;
+
+&lt;p&gt;NOTE：至于为什么选择 BGP 协议而不是其他的路由协议，官网上也有介绍: &lt;a href=&#34;https://www.projectcalico.org/why-bgp/&#34; target=&#34;_blank&#34;&gt;Why BGP?&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;默认所有的节点使用相同的 AS number 64512，因为 AS number 是一个32 比特的字段，所以有效取值范围是 [0-4294967295]，可以通过 calicoctl config get asNumber 命令查看当前节点使用的 AS number。&lt;/p&gt;
+
+&lt;p&gt;默认情况下，每个 calico 节点会和集群中其他所有节点建立 BGP peer 连接，也就是说这是一个 O(n^2) 的增长趋势。在集群规模比较小的情况下，这种模式是可以接受的，但是当集群规模扩展到百个节点、甚至更多的时候，这样的连接数无疑会带来很大的负担。为了解决集群规模较大情况下 BGP client 连接数膨胀的问题，calico 引入了 RR（Router Reflector） 的功能。&lt;/p&gt;
+
+&lt;p&gt;RR 的基本思想是选择一部分节点（一个或者多个）作为 Global BGP Peer，它们和所有的其他节点互联来交换路由信息，其他的节点只需要和 Global BGP Peer 相连就行，不需要之间再两两连接。更多的组网模式也是支持的，不管怎么组网，最核心的思想就是所有的节点能获取到整个集群的路由信息。&lt;/p&gt;
+
+&lt;p&gt;calico 对 BGP 的使用还是相对简单的，BGP 协议的原理不是一两句话能解释清楚的，以后有机会单独写篇文章来说吧。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;bird&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;bird -R -s /var/run/calico/bird.ctl -d -c /etc/calico/confd/config/bird.cfg&lt;/p&gt;
+
+&lt;p&gt;-R 选项指定启动后恢复
+-s 指定通信的socket
+-d 指定 debug信息
+-c 指定配置文件&lt;/p&gt;
+
+&lt;p&gt;bird配置&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;/ # cat /etc/calico/confd/config/bird.cfg
+# Generated by confd
+include &amp;quot;bird_aggr.cfg&amp;quot;;
+include &amp;quot;custom_filters.cfg&amp;quot;;
+include &amp;quot;bird_ipam.cfg&amp;quot;;
+
+router id 10.48.35.14;
+
+# Configure synchronization between routing tables and kernel.
+protocol kernel {
+  learn;             # Learn all alien routes from the kernel
+  persist;           # Don&#39;t remove routes on bird shutdown
+  scan time 2;       # Scan kernel routing table every 2 seconds
+  import all;
+  export filter calico_ipip; # Default is export none
+  graceful restart;  # Turn on graceful restart to reduce potential flaps in
+                     # routes when reloading BIRD configuration.  With a full
+                     # automatic mesh, there is no way to prevent BGP from
+                     # flapping since multiple nodes update their BGP
+                     # configuration at the same time, GR is not guaranteed to
+                     # work correctly in this scenario.
+}
+
+# Watch interface up/down events.
+protocol device {
+  debug { states };
+  scan time 2;    # Scan interfaces every 2 seconds
+}
+
+protocol direct {
+  debug { states };
+  interface -&amp;quot;cali*&amp;quot;, &amp;quot;*&amp;quot;; # Exclude cali* but include everything else.
+}
+
+# Template for all BGP clients
+template bgp bgp_template {
+  debug { states };
+
+  description &amp;quot;Connection to BGP peer&amp;quot;;
+  local as 64512;
+  multihop;
+  gateway recursive; # This should be the default, but just in case.
+  import all;        # Import all routes, since we don&#39;t know what the upstream
+                     # topology is and therefore have to trust the ToR/RR.
+  export filter calico_pools;  # Only want to export routes for workloads.
+  next hop self;     # Disable next hop processing and always advertise our
+                     # local address as nexthop
+  source address 10.48.35.14;  # The local address we use for the TCP connection
+  add paths on;
+  graceful restart;  # See comment in kernel section about graceful restart.
+}
+
+# For peer /host/k8s-ep133./ip_addr_v4
+protocol bgp Mesh_10_48_32_5 from bgp_template {
+  neighbor 10.48.32.5 as 64512;
+}
+
+# For peer /host/k8s-ep98./ip_addr_v4
+protocol bgp Mesh_10_48_35_35 from bgp_template {
+  neighbor 10.48.35.35 as 64512;
+}
+
+# For peer /host/k8s-/ip_addr_v4
+# Skipping ourselves (10.48.35.14)
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;confd&#34;&gt;confd&lt;/h4&gt;
+
+&lt;p&gt;因为 bird 的配置文件会根据用户设置的变化而变化，因此需要一种动态的机制来实时维护配置文件并通知 bird 使用最新的配置，这就是 confd 的工作。confd 监听 etcd 的数据，用来更新 bird 的配置文件，并重新启动 bird 进程让它加载最新的配置文件。confd 的工作目录是 /etc/calico/confd，里面有三个目录：&lt;/p&gt;
+
+&lt;p&gt;conf.d：confd 需要读取的配置文件，每个配置文件告诉 confd 模板文件在什么，最终生成的文件应该放在什么地方，更新时要执行哪些操作等
+config：生成的配置文件最终放的目录
+templates：模板文件，里面包括了很多变量占位符，最终会替换成 etcd 中具体的数据
+具体的配置文件很多，我们只看一个例子：&lt;/p&gt;
+
+&lt;p&gt;它会监听 etcd 的 /calico/bgp/v1 路径，一旦发现更新，就用其中的内容更新模板文件 bird.cfg.mesh.template，把新生成的文件放在 /etc/calico/confd/config/bird.cfg，文件改变之后还会运行 reload_cmd 指定的命令重启 bird 程序。&lt;/p&gt;
+
+&lt;p&gt;NOTE：关于 confd 的使用和工作原理请参考&lt;a href=&#34;https://github.com/kelseyhightower/confd&#34; target=&#34;_blank&#34;&gt;它的官方 repo&lt;/a&gt;。&lt;/p&gt;
+
+&lt;h4 id=&#34;felix&#34;&gt;felix&lt;/h4&gt;
+
+&lt;p&gt;felix 负责最终网络相关的配置，也就是容器网络在 linux 上的配置工作，比如：&lt;/p&gt;
+
+&lt;p&gt;更新节点上的路由表项
+更新节点上的 iptables 表项
+它的主要工作是从 etcd 中读取网络的配置，然后根据配置更新节点的路由和 iptables，felix 的代码在 &lt;a href=&#34;https://github.com/projectcalico/felix&#34; target=&#34;_blank&#34;&gt;github projectcalico/felix&lt;/a&gt;。&lt;/p&gt;
+
+&lt;h4 id=&#34;etcd-1&#34;&gt;etcd&lt;/h4&gt;
+
+&lt;p&gt;etcd 已经在前面多次提到过，它是一个分布式的键值存储数据库，保存了 calico 网络元数据，用来协调 calico 网络多个节点。可以使用 etcdctl 命令行来读取 calico 在 etcd 中保存的数据：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;etcdctl -C 172.17.8.100:2379 ls /calico
+/calico/ipam
+/calico/v1
+/calico/bgp
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;每个目录保存的数据大致功能如下：
+- &lt;code&gt;/calico/ipam&lt;/code&gt;：IP 地址分配管理，保存了节点上分配的各个子网段以及网段中 IP 地址的分配情况
+- &lt;code&gt;/calico/v1&lt;/code&gt;：profile 和 policy 的配置信息，节点上运行的容器 endpoint 信息（IP 地址、veth pair interface 的名字等），
+- &lt;code&gt;/calico/bgp&lt;/code&gt;：和 BGP 相关的信息，包括 mesh 是否开启，每个节点作为 gateway 通信的 IP 地址，AS number 等&lt;/p&gt;
+
+&lt;h3 id=&#34;强大的防火墙功能&#34;&gt;强大的防火墙功能&lt;/h3&gt;
+
+&lt;p&gt;从前面的实验我们不仅知道了 calico 容器网络的报文流程是怎样的，还发现了一个事实：默认情况下，同一个网络的容器能通信（不管容器是不是在同一个主机上），不同网络的容器是无法通信的。&lt;/p&gt;
+
+&lt;p&gt;这个行为是 calico 强大的防火墙实现的，默认情况下 calico 为每个网络创建一个 profile：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo calicoctl get profile net1 -o yaml
+- apiVersion: v1
+  kind: profile
+  metadata:
+    name: net1
+    tags:
+    - net1
+  spec:
+    egress:
+    - action: allow
+      destination: {}
+      source: {}
+    ingress:
+    - action: allow
+      destination: {}
+      source:
+        tag: net1
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;profile 是和网络对应的，比如上面 metadata.name 的值是 net1，代表它匹配 net1网络，并应用到所有的 net1 网络容器中&lt;/li&gt;
+&lt;li&gt;calico 使用 label 来增加防火墙规则的灵活性，源地址和目的地址都可以通过 label 匹配&lt;/li&gt;
+&lt;li&gt;profile 中 metadata.tags 会应用到网络中所有的容器上&lt;/li&gt;
+&lt;li&gt;如果有定义，profile中的 metadata.labels 也会应用到网络中所有的容器上&lt;/li&gt;
+&lt;li&gt;spec 指定 profile 默认的网络规则，egress 没有限制，ingress 表示只运行 tag 为 net1 容器（也就是同一个网络的容器）的访问&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;每一个加入到网络的容器都会加上这个 profile，以此来实现网络之间的隔离。可以通过查看 endpoints 的详情得到它上面绑定的 profiles：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo calicoctl get workloadEndpoint 6f588e66d6fef025fe7edb404ffb1684465b20f9454869089bcda08fbf5bc33e -o yaml
+- apiVersion: v1
+kind: workloadEndpoint
+metadata:
+name: 6f588e66d6fef025fe7edb404ffb1684465b20f9454869089bcda08fbf5bc33e
+node: k8s-
+orchestrator: libnetwork
+workload: libnetwork
+spec:
+interfaceName: cali6f588e66d6f
+ipNetworks:
+- 192.168.246.195/32
+mac: ee:ee:ee:ee:ee:ee
+profiles:
+- net1
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;iptables&#34;&gt;iptables&lt;/h4&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo iptables -L
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination
+cali-INPUT  all  --  anywhere             anywhere             /* cali:Cz_u1IQiXIMmKD4c */
+KUBE-FIREWALL  all  --  anywhere             anywhere
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination
+cali-FORWARD  all  --  anywhere             anywhere             /* cali:wUHhoiAYhphO9Mso */
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination
+cali-OUTPUT  all  --  anywhere             anywhere             /* cali:tVnHkvAo15HuiPy0 */
+KUBE-FIREWALL  all  --  anywhere             anywhere
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;用户也可以根据需求修改 profile 和 policy，可以参考&lt;a href=&#34;https://docs.projectcalico.org/v2.6/getting-started/docker/tutorials/security-using-calico-profiles-and-policy&#34; target=&#34;_blank&#34;&gt;官方教程&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;不过上面的防火墙都是针对网络的（网络中的容器的规则都是相同的），不能精细化到容器，也就是说只能做到网络之间的隔离和连通。不过 calico 也提供了对容器级别防火墙的支持，它主要是借助 docker 容器上的 label，通过匹配这些键值对来精细化控制防火墙。启动 docker label 支持需要在 calicoctl node run 命令运行时加上 &amp;ndash;use-docker-networking-container-labels 参数，而且一旦启用后原来的 profile 就被废弃不能用了（可以用纯 policy 实现原来的 profile 功能）。容器启动的时候需要添加上 label 用来作为 policy 的标识，比如 &amp;ndash;label org.projectcalico.label.role=frontend，具体的使用案例请参考&lt;a href=&#34;https://docs.projectcalico.org/v2.6/getting-started/docker/tutorials/security-using-docker-labels-and-calico-policy&#34; target=&#34;_blank&#34;&gt;这个教程&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;如果只要提供网络之间的隔离，可以使用 profile 和 policy；如果要实现精细化的容器之间的隔离，就需要启用容器的 label 功能了。在底层，calico 的 flelix 组件会实时跟踪 profile 和 policy 的内容，并更新各个节点的 iptables。&lt;/p&gt;
+
+&lt;h2 id=&#34;总结&#34;&gt;总结&lt;/h2&gt;
+
+&lt;p&gt;calico 的核心是通过维护路由规则实现容器的通信，路由信息的传播是 BIRD 软件通过 BGP 协议完成的，而节点上路由和防火墙规则是 felix 维护的。&lt;/p&gt;
+
+&lt;p&gt;从 calico 本身的特性来说，它没有办法实现 VPC 网络，并且需要维护大量的路由表项和 iptables 表项，如果要部署在规模很大的生产环境中，需要预先规划系统的 iptables 和路由表项的上限。&lt;/p&gt;
+
+&lt;p&gt;在我看来，calico 最大的优点有两个：直接三层互联的网络，不需要报文封装，因此性能更好而且能和原来的网络设施直接融合；强大的防火墙规则，利用 label 机制灵活地匹配容器，几乎可以设置任何需求的防火墙。&lt;/p&gt;
+
+&lt;p&gt;但 calico 并非没有缺点，首先是它引入了 BGP 协议，虽然 bird 的配置很简单，但是运维这个系统需要熟悉 BGP 协议，这无疑会增加了人力、时间和金钱方面的投入；其次，calico 能支持的网络规模也有上限，虽然可以通过 Router Reflector 来缓解，但这么做又大大增加了网络规划、使用和排查的复杂度；最后 calico 无法用来实现 VPC 网络，IP 地址空间是所有租户共享的，租户之间是通过防火墙隔离的。&lt;/p&gt;
+
+&lt;h3 id=&#34;针对flannel与calico网络方案做简单的对比&#34;&gt;针对flannel与calico网络方案做简单的对比&lt;/h3&gt;
+
+&lt;p&gt;&lt;img src=&#34;images/calico-3.png&#34; alt=&#34;calico-3&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;命令&#34;&gt;命令&lt;/h2&gt;
+
+&lt;h3 id=&#34;创建-查看-更新-删除资源&#34;&gt;创建/查看/更新/删除资源&lt;/h3&gt;
+
+&lt;p&gt;分别使用creat/get/replace/delete来创建/查看/更新/删除资源。&lt;/p&gt;
+
+&lt;p&gt;创建资源:&lt;/p&gt;
+
+&lt;p&gt;calicoctl create &amp;ndash;filename=&lt;FILENAME&gt; [&amp;ndash;skip-exists] [&amp;ndash;config=&lt;CONFIG&gt;]
+资源使用yaml文件描述，可以创建以下资源:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;node                //物理机
+bgpPeer             //与本机建立了bgp连接的node
+hostEndpoint
+workloadEndpoint
+ipPool
+policy
+profile
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;查看资源:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;calicoctl get ([--scope=&amp;lt;SCOPE&amp;gt;] [--node=&amp;lt;NODE&amp;gt;] [--orchestrator=&amp;lt;ORCH&amp;gt;]
+          [--workload=&amp;lt;WORKLOAD&amp;gt;] (&amp;lt;KIND&amp;gt; [&amp;lt;NAME&amp;gt;]) |
+          --filename=&amp;lt;FILENAME&amp;gt;)
+          [--output=&amp;lt;OUTPUT&amp;gt;] [--config=&amp;lt;CONFIG&amp;gt;]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;可以通过下面命令查看所有资源:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;calicoctl  get  [资源类型］
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;例如:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;calicoctl get node
+calicoctl delete node node01
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;ip地址管理&#34;&gt;IP地址管理&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;calicoctl ipam &amp;lt;command&amp;gt; [&amp;lt;args&amp;gt;...]
+
+  release      Release a calico assigned IP address.         
+  show         Show details of a calico assigned IP address.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;运行时设置&#34;&gt;运行时设置&lt;/h3&gt;
+
+&lt;p&gt;&lt;code&gt;calicoctl config&lt;/code&gt; 获取和更改calico的配置项.&lt;/p&gt;
+
+&lt;h2 id=&#34;日志&#34;&gt;日志&lt;/h2&gt;
+
+&lt;p&gt;/var/log/calico/libnetwork/current&lt;/p&gt;
+
+&lt;h2 id=&#34;参考资料&#34;&gt;参考资料&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.lijiaocn.com/%E9%A1%B9%E7%9B%AE/2017/04/11/calico-usage.html&#34; target=&#34;_blank&#34;&gt;Calico网络的原理、组网方式与使用&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://leebriggs.co.uk/blog/2017/02/18/kubernetes-networking-calico.html&#34; target=&#34;_blank&#34;&gt;Kubernetes Networking: Part 2 - Calico&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://docs.projectcalico.org/v2.6/usage/troubleshooting/faq&#34; target=&#34;_blank&#34;&gt;calico: Frequently Asked Questions&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Kubernetes 框架</title>
       <link>/post/cloud/k8s/201811-k8s-arch/</link>
       <pubDate>Tue, 20 Nov 2018 00:00:00 +0000</pubDate>
@@ -1829,577 +3639,135 @@ k8s系统的梳理了任务的形态以及任务之间的关系，并为未来�
     </item>
     
     <item>
-      <title></title>
-      <link>/post/cloud/k8s/201812-k8s-resource-management/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <title>基于区块链智能合约的相亲</title>
+      <link>/post/blockchain/201807-contract-love/</link>
+      <pubDate>Tue, 03 Jul 2018 00:00:00 +0000</pubDate>
       
-      <guid>/post/cloud/k8s/201812-k8s-resource-management/</guid>
+      <guid>/post/blockchain/201807-contract-love/</guid>
       <description>
 
-&lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
+&lt;p&gt;最近在找对象，突发奇想做个基于区块链的相亲合约。&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://cizixs.com/2018/06/25/kubernetes-resource-management/&#34; target=&#34;_blank&#34;&gt;https://cizixs.com/2018/06/25/kubernetes-resource-management/&lt;/a&gt;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title></title>
-      <link>/post/cloud/k8s/201901-how-read-kubeproxy/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/post/cloud/k8s/201901-how-read-kubeproxy/</guid>
-      <description>
+&lt;p&gt;听说有个程序员在婚恋网站上挂了1个多月都没人搭理他，然后给自己加了个 &lt;code&gt;区块链工程师&lt;/code&gt; 的标签，几天后收到大量私信😝&lt;/p&gt;
 
-&lt;p&gt;以阅读 K8S 一个模块 kube-proxy 来讲讲我是如何阅读源码的&lt;/p&gt;
-
-&lt;h1 id=&#34;架构&#34;&gt;架构&lt;/h1&gt;
-
-&lt;h1 id=&#34;问题&#34;&gt;问题&lt;/h1&gt;
-
-&lt;ol&gt;
-&lt;li&gt;Proxy 如何解决了同一主宿机相同服务端口冲突的问题？&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://dockone.io/article/895&#34; target=&#34;_blank&#34;&gt;我是怎么阅读kubernetes源代码的？&lt;/a&gt;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title></title>
-      <link>/post/cloud/k8s/201903-k8s-service-register.md/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/post/cloud/k8s/201903-k8s-service-register.md/</guid>
-      <description>
-
-&lt;h1 id=&#34;服务发现&#34;&gt;服务发现&lt;/h1&gt;
-
-&lt;p&gt;Kubernetes 支持2种基本的服务发现模式 —— 环境变量和 DNS。&lt;/p&gt;
-
-&lt;p&gt;环境变量
-当 Pod 运行在 Node 上，kubelet 会为每个活跃的 Service 添加一组环境变量。 它同时支持 Docker links 兼容 变量（查看 makeLinkVariables）、简单的 {SVCNAME}_SERVICE_HOST 和 {SVCNAME}_SERVICE_PORT 变量，这里 Service 的名称需大写，横线被转换成下划线。&lt;/p&gt;
-
-&lt;p&gt;举个例子，一个名称为 &amp;ldquo;redis-master&amp;rdquo; 的 Service 暴露了 TCP 端口 6379，同时给它分配了 Cluster IP 地址 10.0.0.11，这个 Service 生成了如下环境变量：&lt;/p&gt;
-
-&lt;h2 id=&#34;服务发布&#34;&gt;服务发布&lt;/h2&gt;
-
-&lt;p&gt;对一些应用（如 Frontend）的某些部分，可能希望通过外部（Kubernetes 集群外部）IP 地址暴露 Service。&lt;/p&gt;
-
-&lt;p&gt;Kubernetes ServiceTypes 允许指定一个需要的类型的 Service，默认是 ClusterIP 类型。&lt;/p&gt;
-
-&lt;p&gt;Type 的取值以及行为如下：&lt;/p&gt;
+&lt;h2 id=&#34;传统相亲平台的痛点&#34;&gt;传统相亲平台的痛点&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;ClusterIP：通过集群的内部 IP 暴露服务，选择该值，服务只能够在集群内部可以访问，这也是默认的 ServiceType。&lt;/li&gt;
-&lt;li&gt;NodePort：通过每个 Node 上的 IP 和静态端口（NodePort）暴露服务。NodePort 服务会路由到 ClusterIP 服务，这个 ClusterIP 服务会自动创建。通过请求 &lt;NodeIP&gt;:&lt;NodePort&gt;，可以从集群的外部访问一个 NodePort 服务。&lt;/li&gt;
-&lt;li&gt;LoadBalancer：使用云提供商的负载均衡器，可以向外部暴露服务。外部的负载均衡器可以路由到 NodePort 服务和 ClusterIP 服务。&lt;/li&gt;
-&lt;li&gt;ExternalName：通过返回 CNAME 和它的值，可以将服务映射到 externalName 字段的内容（例如， foo.bar.example.com）。 没有任何类型代理被创建，这只有 Kubernetes 1.7 或更高版本的 kube-dns 才支持。&lt;/li&gt;
+&lt;li&gt;中介所收费贵，介绍的还不靠谱&lt;/li&gt;
+&lt;li&gt;百合网、珍爱网之流坑爹，看个消息要钱，还都是机器人发的&lt;/li&gt;
+&lt;li&gt;虚假信息多，各种酒拖&lt;/li&gt;
+&lt;li&gt;效率低&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h3 id=&#34;nodeport-类型&#34;&gt;NodePort 类型&lt;/h3&gt;
+&lt;h2 id=&#34;区块链相亲的优势&#34;&gt;区块链相亲的优势&lt;/h2&gt;
 
-&lt;p&gt;如果设置 type 的值为 &amp;ldquo;NodePort&amp;rdquo;，Kubernetes master 将从给定的配置范围内（默认：30000-32767）分配端口，每个 Node 将从该端口（每个 Node 上的同一端口）代理到 Service。该端口将通过 Service 的 &lt;code&gt;spec.ports[*].nodePort&lt;/code&gt; 字段被指定。&lt;/p&gt;
+&lt;p&gt;LoveChain可以解决三大婚恋社交问题，分别是安全性、激励性、产业生态。&lt;/p&gt;
 
-&lt;p&gt;如果需要指定的端口号，可以配置 nodePort 的值，系统将分配这个端口，否则调用 API 将会失败（比如，需要关心端口冲突的可能性）。&lt;/p&gt;
+&lt;h3 id=&#34;安全性&#34;&gt;安全性&lt;/h3&gt;
 
-&lt;p&gt;这可以让开发人员自由地安装他们自己的负载均衡器，并配置 Kubernetes 不能完全支持的环境参数，或者直接暴露一个或多个 Node 的 IP 地址。&lt;/p&gt;
+&lt;p&gt;安全性问题又分为三类：用户身份的真实性、网站登记信息的私密性、以及线下实地见面的安全性。&lt;/p&gt;
 
-&lt;p&gt;需要注意的是，Service 将能够通过 &lt;code&gt;&amp;lt;NodeIP&amp;gt;:spec.ports[*].nodePort&lt;/code&gt; 和 &lt;code&gt;spec.clusterIp:spec.ports[*].port&lt;/code&gt; 而对外可见。&lt;/p&gt;
+&lt;p&gt;针对真实用户，运用 AI、大数据、生物识别认证等技术对用户的合法身份进行有效认证，结合百合佳缘积累的社交黑名单库，对可疑的用户进行拦截和清除。同时，反垃圾监测系统可以将可疑用户进行账号隔离，并对其发出的垃圾信息进行单边隐藏，保护合法的用户利益。&lt;/p&gt;
 
-&lt;h3 id=&#34;loadbalancer-类型&#34;&gt;LoadBalancer 类型&lt;/h3&gt;
+&lt;p&gt;针对用户敏感信息私密性的保护，其中提及一旦成为平台认证的合法用户，会有一个虚拟用户钱包，钱包由用户自己设置账号和密码， 只要把密钥安全存放，任何人都无法获取用户账户内的虚拟资产。用 户可以用自己的公私钥进行对自己的虚拟资产进行消费交易。&lt;/p&gt;
 
-&lt;p&gt;使用支持外部负载均衡器的云提供商的服务，设置 type 的值为 &amp;ldquo;LoadBalancer&amp;rdquo;，将为 Service 提供负载均衡器。 负载均衡器是异步创建的，关于被提供的负载均衡器的信息将会通过 Service 的 status.loadBalancer 字段被发布出去。&lt;/p&gt;
+&lt;p&gt;针对线下活动，采用智能合约，质押数字资产存放于平台，只有利益相关方的密钥才可以转移价值，其它人无权转移。当有人违约时，按照智能合约的约定，质押数字资产会自动转移到守约者账户。当各方都遵循合约约定时，合约 履行完毕，质押数字资产自动退到质押方各自账户。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;kind: Service
-apiVersion: v1
-metadata:
-  name: my-service
-spec:
-  selector:
-    app: MyApp
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 9376
-      nodePort: 30061
-  clusterIP: 10.0.171.239
-  loadBalancerIP: 78.11.24.19
-  type: LoadBalancer
-status:
-  loadBalancer:
-    ingress:
-      - ip: 146.148.47.155
-&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;线下智能约会场景&lt;/p&gt;
 
-&lt;p&gt;来自外部负载均衡器的流量将直接打到 backend Pod 上，不过实际它们是如何工作的，这要依赖于云提供商。 在这些情况下，将根据用户设置的 loadBalancerIP 来创建负载均衡器。 某些云提供商允许设置 loadBalancerIP。如果没有设置 loadBalancerIP，将会给负载均衡器指派一个临时 IP。 如果设置了 loadBalancerIP，但云提供商并不支持这种特性，那么设置的 loadBalancerIP 值将会被忽略掉。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;images/con-love-1.png&#34; alt=&#34;con-love-1&#34; /&gt;&lt;/p&gt;
 
-&lt;h3 id=&#34;外部-ip&#34;&gt;外部 IP&lt;/h3&gt;
+&lt;h3 id=&#34;激励性&#34;&gt;激励性&lt;/h3&gt;
 
-&lt;p&gt;如果外部的 IP 路由到集群中一个或多个 Node 上，Kubernetes Service 会被暴露给这些 externalIPs。 通过外部 IP（作为目的 IP 地址）进入到集群，打到 Service 的端口上的流量，将会被路由到 Service 的 Endpoint 上。 externalIPs 不会被 Kubernetes 管理，它属于集群管理员的职责范畴。&lt;/p&gt;
+&lt;p&gt;由于婚恋社交的用户粘性比较低，因此可以通过代币奖励来提高积极性，比如通过注册账户、上传照片、主动发消息、身份认证、朋友圈发帖等方式获得激励点。这些代币平台可以应用于多种业务，包括情感咨询、婚礼婚庆甚至婚房等。&lt;/p&gt;
 
-&lt;p&gt;根据 Service 的规定，externalIPs 可以同任意的 ServiceType 来一起指定。 在下面的例子中，my-service 可以在 80.11.12.10:80（外部 IP:端口）上被客户端访问。&lt;/p&gt;
+&lt;h3 id=&#34;产业生态&#34;&gt;产业生态&lt;/h3&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;kind: Service
-apiVersion: v1
-metadata:
-  name: my-service
-spec:
-  selector:
-    app: MyApp
-  ports:
-    - name: http
-      protocol: TCP
-      port: 80
-      targetPort: 9376
-  externalIPs:
-    - 80.11.12.10
-&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;可以预见，未来的婚恋问题将向低结婚欲望、大龄未婚等发现发展，这方面的产业生态将发生改变，需要提前去布局。&lt;/p&gt;
 
-&lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
+&lt;h2 id=&#34;实现&#34;&gt;实现&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&#34;https://jimmysong.io/kubernetes-handbook/concepts/service.html&#34; target=&#34;_blank&#34;&gt;https://jimmysong.io/kubernetes-handbook/concepts/service.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;基于以太坊，做了一个简单的demo&lt;/p&gt;
+
+&lt;p&gt;请前往&lt;a href=&#34;http://airdropfans.com/love&#34; target=&#34;_blank&#34;&gt;airdropfans区块恋&lt;/a&gt;体验。&lt;/p&gt;
 </description>
     </item>
     
     <item>
-      <title></title>
-      <link>/post/cloud/k8s/201904-k8s-loadbalancer.md/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <title>基于区块链智能合约的彩票</title>
+      <link>/post/blockchain/201806-contract-casino/</link>
+      <pubDate>Tue, 12 Jun 2018 00:00:00 +0000</pubDate>
       
-      <guid>/post/cloud/k8s/201904-k8s-loadbalancer.md/</guid>
+      <guid>/post/blockchain/201806-contract-casino/</guid>
       <description>
 
-&lt;h1 id=&#34;负载均衡的概念&#34;&gt;负载均衡的概念&lt;/h1&gt;
+&lt;p&gt;如果要问智能合约最适合做什么应用，还有比彩票（赌博）更好的答案吗？ 恐怕没有&lt;/p&gt;
 
-&lt;p&gt;负载均衡是将工作负载分布到多个服务器来提高网站、应用、数据库，来提高服务的性能和可靠性，是高可用网络基础架构的关键组件。&lt;/p&gt;
-
-&lt;p&gt;&lt;img alt=&#34;index-208b3c01.png&#34; src=&#34;images/index-208b3c01.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
-图1，负载均衡示意图&lt;/p&gt;
-
-&lt;p&gt;上图看到用户访问App时会先经过负载均衡（Load Balancer），再由负载均衡器将请求转发给后端服务器上的应用程序。&lt;/p&gt;
-
-&lt;p&gt;负载均衡主要分为两种：四层和七层负载均衡。&lt;/p&gt;
-
-&lt;ol&gt;
-&lt;li&gt;&lt;p&gt;四层负载均衡&lt;/p&gt;
-
-&lt;p&gt;基于IP+端口的负载均衡，即在OSI第4层工作，就是通过发布三层的IP地址（VIP），然后加四层的端口号，来决定哪些流量需要做负载均衡，对需要处理的流量进行NAT处理，转发至后台服务器，并记录下这个TCP或者UDP的流量是由哪台服务器处理的，后续这个连接的所有流量都同样转发到同一台服务器处理。这种Load Balance不理解应用协议（如HTTP/FTP/MySQL等等）。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;七层负载均衡&lt;/p&gt;
-
-&lt;p&gt;工作在OSI的最高层，第7层应用层，就是在四层的基础上，再考虑应用层的特征，比如同一个Web服务器的负载均衡，除了根据VIP加80端口辨别是否需要处理的流量，还可根据七层的URL、浏览器类别、语言来决定是否要进行负载均衡。举个例子，如果你的Web服务器分成两组，一组是中文语言的，一组是英文语言的，那么七层负载均衡就可以当用户来访问你的域名时，自动辨别用户语言，然后选择对应的语言服务器组进行负载均衡处理。&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;p&gt;&lt;img alt=&#34;index-6c22358d.png&#34; src=&#34;images/index-6c22358d.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
-图2，四层和七层负载均衡的区别&lt;/p&gt;
-
-&lt;p&gt;四层负载均衡更像是路由器的工作方式，修改IP后转发即可；七层负载均衡需要获取到应用层信息，就需要与客户端建立连接并且解析应用层的内容，同时与服务端建立连接，将请求发送到对应的后端服务上。&lt;/p&gt;
-
-&lt;h1 id=&#34;k8s-负载均衡&#34;&gt;K8S 负载均衡&lt;/h1&gt;
-
-&lt;p&gt;现在的后端服务从物理机向容器的运行环境转移，之前物理机的负载均衡已经不适用基于Kubernetes的容器网络了，Kubernetes也需要支持更加灵活和特性广泛的负载均衡。&lt;/p&gt;
-
-&lt;p&gt;云环境下后端服务是运行在容器里的，容器是用Kubernetes通过Pod来编排和管理的，Pod是一组功能密切相关的容器的合集，提供一种服务。&lt;/p&gt;
-
-&lt;p&gt;K8S 的负载均衡主要分为两个层面：
-- 集群内部层面，包括资源分配、内部流量的访问
-- 外部访问集群&lt;/p&gt;
-
-&lt;h3 id=&#34;调度层面&#34;&gt;调度层面&lt;/h3&gt;
-
-&lt;p&gt;分配Pod到Node时就会考虑将一个Service的Pod打散分布，根据资源的容量和性能来部署Pod。作为调度过程的一部分，它需要充分考虑管理可用性，避免遇到资源瓶颈。达到整体运行良好的运行状况。&lt;/p&gt;
-
-&lt;h3 id=&#34;service&#34;&gt;Service&lt;/h3&gt;
-
-&lt;p&gt;我们知道 Pod 的生命周期是短暂的，会因为一些原因而被销毁而在别的 Node 重新创建，因此 Pod 的 IP 地址会变化，而其他服务无法知道新的 IP 地址，这就需要定义一个 Service 暴露给其他服务使用，一个 Service 可以有一个或多个 Pod 逻辑分组的抽象，这样前端应用程序向 Service IP 发起请求就可以了，而不需要关心具体的 Pod 的状态和 IP。Service IP 是固定不变的。&lt;/p&gt;
-
-&lt;p&gt;Service通过标签来选取服务后端，一般配合Replication Controller或者Deployment来保证后端容器的正常运行。&lt;/p&gt;
-
-&lt;p&gt;Service有三种类型：&lt;/p&gt;
+&lt;h2 id=&#34;传统彩票的痛点&#34;&gt;传统彩票的痛点&lt;/h2&gt;
 
 &lt;ul&gt;
-&lt;li&gt;ClusterIP：默认类型，自动分配一个仅cluster内部可以访问的虚拟IP&lt;/li&gt;
-&lt;li&gt;NodePort：在ClusterIP基础上为Service在每台机器上绑定一个端口，这样就可以通过&lt;NodeIP&gt;:NodePort来访问该服务&lt;/li&gt;
-&lt;li&gt;LoadBalancer：在NodePort的基础上，借助cloud provider创建一个外部的负载均衡器，并将请求转发到&lt;NodeIP&gt;:NodePort&lt;/li&gt;
+&lt;li&gt;不透明，存在信任危机&lt;/li&gt;
+&lt;li&gt;效率低，为了小概率中奖而花费很多精力关注开奖日期，错失兑奖时间&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;另外，也可以将已有的服务以Service的形式加入到Kubernetes集群中来，只需要在创建Service的时候不指定Label selector，而是在Service创建好后手动为其添加endpoint。&lt;/p&gt;
+&lt;h2 id=&#34;区块链彩票的优势&#34;&gt;区块链彩票的优势&lt;/h2&gt;
 
-&lt;p&gt;Service 通过 VIP 实现的是一个4层负载均衡的功能。&lt;/p&gt;
+&lt;p&gt;通过区块链技术将传统的纸质彩票进行电子化，利用区块链技术的不可篡改性解决电子化彩票号码可以被篡改的问题。&lt;/p&gt;
 
-&lt;h4 id=&#34;service-定义&#34;&gt;Service 定义&lt;/h4&gt;
+&lt;p&gt;每家彩票站作为区块链的一个节点，将卖出的彩票写入区块链中，不可篡改。&lt;/p&gt;
 
-&lt;p&gt;一个 Service 在 Kubernetes 中是一个 REST 对象，和 Pod 类似。 像所有的 REST 对象一样， Service 定义可以基于 POST 方式，请求 apiserver 创建新的实例。 例如，假定有一组 Pod，它们对外暴露了 9376 端口，同时还被打上 &amp;ldquo;app=MyApp&amp;rdquo; 标签。&lt;/p&gt;
+&lt;p&gt;通过智能合约打造一个智能电子彩票交易系统&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;kind: Service
-apiVersion: v1
-metadata:
-  name: my-service
-spec:
-  selector:
-    app: MyApp
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 9376
-&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;当购买彩票的人确定好号码，下注的数量后。该智能交易系统会自动生成智能合约将购买的彩票号码，下注的数量，彩票的价格和中奖的赔率等条件写入智能合约。再者就是彩票公司的数字货币钱包和购彩者的数字货币钱包一并写入智能合约中，交由计算机自动执行。&lt;/p&gt;
 
-&lt;p&gt;上述配置将创建一个名称为 “my-service” 的 Service 对象，它会将请求代理到使用 TCP 端口 9376，并且具有标签 &amp;ldquo;app=MyApp&amp;rdquo; 的 Pod 上。 这个 Service 将被指派一个 IP 地址（通常称为 “Cluster IP”），它会被服务的代理使用（见下面）。 该 Service 的 selector 将会持续评估，处理结果将被 POST 到一个名称为 “my-service” 的 Endpoints 对象上。&lt;/p&gt;
+&lt;p&gt;当购彩者确认购买后，智能合约自动从购彩者的数字货币钱包将彩票的购买费用转到彩票公司。当该期彩票开奖时，智能合约能够自动根据开奖的号码和每一位购彩者所购的号码来进行判断中奖的情况。如果有中奖，智能合约就能够根据中奖的金额，自动将奖金从彩票公司的数字货币钱包转到中奖者的数字货币钱包，整个过程不需要人为的参与，全程由计算机自动执行。&lt;/p&gt;
 
-&lt;p&gt;需要注意的是， Service 能够将一个接收端口映射到任意的 targetPort。 默认情况下，targetPort 将被设置为与 port 字段相同的值。 可能更有趣的是，targetPort 可以是一个字符串，引用了 backend Pod 的一个端口的名称。 但是，实际指派给该端口名称的端口号，在每个 backend Pod 中可能并不相同。 对于部署和设计 Service ，这种方式会提供更大的灵活性。 例如，可以在 backend 软件下一个版本中，修改 Pod 暴露的端口，并不会中断客户端的调用。&lt;/p&gt;
+&lt;p&gt;这样一来，对于购买彩票的人来说，他们买完后就不需要花较大的精力去关注自己是否中奖，也不需要当心自己的中奖彩票不能及时兑奖而过期，因为智能合约能够自动进行兑奖。对于彩票发行公司来说，有了这个系统后，不仅不需要大量的人来进行兑奖工作，在减少人工成本的同时，很大程度的提高了工作的效率。甚至不需要实体的店面来经营彩票，大大降低了彩票经营管理的成本，提高利润和市场竞争力。&lt;/p&gt;
 
-&lt;blockquote&gt;
-&lt;p&gt;Kubernetes Service 能够支持 TCP 和 UDP 协议，默认 TCP 协议。&lt;/p&gt;
-&lt;/blockquote&gt;
+&lt;h2 id=&#34;实现&#34;&gt;实现&lt;/h2&gt;
 
-&lt;h4 id=&#34;kube-proxy&#34;&gt;kube-proxy&lt;/h4&gt;
+&lt;p&gt;基于以太坊，做了一个彩票游戏。&lt;/p&gt;
 
-&lt;p&gt;Kubernetes中通过Node上的kube-proxy实现负载分配，只能提供本地 Node 上 Pod 的分担，kube-proxy 负责为 Service 实现了一种 VIP（虚拟 IP）的形式。主要有三种实现方式：&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;userspace，最开始的实现方式&lt;/li&gt;
-&lt;li&gt;iptables，目前的默认方式&lt;/li&gt;
-&lt;li&gt;ipvs，&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;ol&gt;
-&lt;li&gt;&lt;p&gt;userspace 代理模式&lt;/p&gt;
-
-&lt;p&gt;该模式下kube-proxy会为每一个Service创建一个监听端口。发向Cluster IP的请求被Iptables规则重定向到Kube-proxy监听的端口上，Kube-proxy根据LB算法选择一个提供服务的Pod并和其建立链接，以将请求转发到Pod上。&lt;/p&gt;
-
-&lt;p&gt;该模式下，Kube-proxy充当了一个四层Load balancer的角色。由于kube-proxy运行在userspace中，在进行转发处理时会增加两次内核和用户空间之间的数据拷贝，效率较另外两种模式低一些；好处是当后端的Pod不可用时，kube-proxy可以重试其他Pod。&lt;/p&gt;
-
-&lt;p&gt;默认的策略是，通过 round-robin 算法来选择 backend Pod。 实现基于客户端 IP 的会话亲和性，可以通过设置 service.spec.sessionAffinity 的值为 &amp;ldquo;ClientIP&amp;rdquo; （默认值为 &amp;ldquo;None&amp;rdquo;）。&lt;/p&gt;
-
-&lt;p&gt;&lt;img alt=&#34;index-cac4d870.png&#34; src=&#34;images/index-cac4d870.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
-图片 - userspace代理模式下Service概览图&lt;/p&gt;
-
-&lt;p&gt;作为一个例子，考虑前面提到的图片处理应用程序。 当创建 backend Service 时，Kubernetes master 会给它指派一个虚拟 IP 地址，比如 10.0.0.1。 假设 Service 的端口是 1234，该 Service 会被集群中所有的 kube-proxy 实例观察到。 当代理看到一个新的 Service， 它会打开一个新的端口，建立一个从该 VIP 重定向到新端口的 iptables，并开始接收请求连接。&lt;/p&gt;
-
-&lt;p&gt;当一个客户端连接到一个 VIP，iptables 规则开始起作用，它会重定向该数据包到 Service代理 的端口。 Service代理 选择一个 backend，并将客户端的流量代理到 backend 上。&lt;/p&gt;
-
-&lt;p&gt;这意味着 Service 的所有者能够选择任何他们想使用的端口，而不存在冲突的风险。 客户端可以简单地连接到一个 IP 和端口，而不需要知道实际访问了哪些 Pod。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;iptables 代理模式&lt;/p&gt;
-
-&lt;p&gt;为了避免增加内核和用户空间的数据拷贝操作，提高转发效率，Kube-proxy提供了iptables模式。在该模式下，Kube-proxy为service后端的每个Pod创建对应的iptables规则，直接将发向Cluster IP的请求重定向到一个Pod IP。&lt;/p&gt;
-
-&lt;p&gt;该模式下Kube-proxy不承担四层代理的角色，只负责创建iptables规则。该模式的优点是较userspace模式效率更高，但不能提供灵活的LB策略，当后端Pod不可用时也无法进行重试。&lt;/p&gt;
-
-&lt;p&gt;&lt;img alt=&#34;index-d7150e2c.png&#34; src=&#34;images/index-d7150e2c.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
-图片 - iptables代理模式下Service概览图&lt;/p&gt;
-
-&lt;p&gt;再次考虑前面提到的图片处理应用程序。 当创建 backend Service 时，Kubernetes master 会给它指派一个虚拟 IP 地址，比如 10.0.0.1。 假设 Service 的端口是 1234，该 Service 会被集群中所有的 kube-proxy 实例观察到。 当代理看到一个新的 Service， 它会安装一系列的 iptables 规则，从 VIP 重定向到 per-Service 规则。 该 per-Service 规则连接到 per-Endpoint 规则，该 per-Endpoint 规则会重定向（目标 NAT）到 backend。&lt;/p&gt;
-
-&lt;p&gt;当一个客户端连接到一个 VIP，iptables 规则开始起作用。一个 backend 会被选择（或者根据会话亲和性，或者随机），数据包被重定向到这个 backend。 不像 userspace 代理，数据包从来不拷贝到用户空间，kube-proxy 不是必须为该 VIP 工作而运行，并且客户端 IP 是不可更改的。 当流量打到 Node 的端口上，或通过负载均衡器，会执行相同的基本流程，但是在那些案例中客户端 IP 是可以更改的。&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;ipvs 代理模式&lt;/p&gt;
-
-&lt;p&gt;该模式和iptables类似，但是需要内核支持 ipvs，kube-proxy监控Pod的变化并创建相应的ipvs rules。ipvs也是在kernel模式下通过netfilter实现的，但采用了hash table来存储规则，因此在规则较多的情况下，Ipvs相对iptables转发效率更高。除此以外，ipvs支持更多的LB算法，例如：&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;rr：轮询调度&lt;/li&gt;
-&lt;li&gt;lc：最小连接数&lt;/li&gt;
-&lt;li&gt;dh：目标哈希&lt;/li&gt;
-&lt;li&gt;sh：源哈希&lt;/li&gt;
-&lt;li&gt;sed：最短期望延迟&lt;/li&gt;
-&lt;li&gt;nq： 不排队调度&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;blockquote&gt;
-&lt;p&gt;注意： ipvs模式假定在运行kube-proxy之前在节点上都已经安装了IPVS内核模块。当kube-proxy以ipvs代理模式启动时，kube-proxy将验证节点上是否安装了IPVS模块，如果未安装，则kube-proxy将回退到iptables代理模式。&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;&lt;img alt=&#34;index-02fe28c6.png&#34; src=&#34;images/index-02fe28c6.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
-图片 - ipvs代理模式下Service概览图&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
-
-&lt;h4 id=&#34;缺点&#34;&gt;缺点&lt;/h4&gt;
-
-&lt;p&gt;为 VIP 使用 userspace 代理，将只适合小型到中型规模的集群，不能够扩展到上千 Service 的大型集群。 查看 &lt;a href=&#34;http://issue.k8s.io/1107&#34; target=&#34;_blank&#34;&gt;最初设计方案&lt;/a&gt; 获取更多细节。&lt;/p&gt;
-
-&lt;p&gt;使用 userspace 代理，隐藏了访问 Service 的数据包的源 IP 地址。 这使得一些类型的防火墙无法起作用。 iptables 代理不会隐藏 Kubernetes 集群内部的 IP 地址，但却要求客户端请求必须通过一个负载均衡器或 Node 端口。&lt;/p&gt;
-
-&lt;blockquote&gt;
-&lt;p&gt;todo: userspace会引起源 IP 的修改？为啥 iptables 代理需要配置 loadbalancer 或者 NodePort？&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;Type 字段支持嵌套功能 —— 每一层需要添加到上一层里面。 不会严格要求所有云提供商（例如，GCE 就没必要为了使一个 LoadBalancer 能工作而分配一个 NodePort，但是 AWS 需要 ），但当前 API 是强制要求的。&lt;/p&gt;
-
-&lt;h2 id=&#34;ingress&#34;&gt;Ingress&lt;/h2&gt;
-
-&lt;p&gt;Ingress 是从Kubernetes集群外部访问集群内部服务的入口，service 和 pod 仅可在集群内部网络中通过 IP 地址访问。所有到达边界路由器的流量或被丢弃或被转发到其他地方。从概念上讲，可能像下面这样：&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;    internet
-        |
-  ------------
-  [ Services ]
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Ingress是授权入站连接到达集群服务的规则集合。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;    internet
-        |
-   [ Ingress ]
-   --|-----|--
-   [ Services ]
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;你可以给Ingress配置提供外部可访问的URL、负载均衡、SSL、基于名称的虚拟主机等。用户通过POST Ingress资源到API server的方式来请求ingress。 Ingress controller负责实现Ingress，通常使用负载平衡器，它还可以配置边界路由和其他前端，这有助于以HA方式处理流量。&lt;/p&gt;
-
-&lt;h3 id=&#34;ingress-resource&#34;&gt;Ingress Resource&lt;/h3&gt;
-
-&lt;p&gt;最简化的Ingress配置：&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;1: apiVersion: extensions/v1beta1
-2: kind: Ingress
-3: metadata:
-4:   name: test-ingress
-5: spec:
-6:   rules:
-7:   - http:
-8:       paths:
-9:       - path: /testpath
-10:        backend:
-11:           serviceName: test
-12:           servicePort: 80
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;blockquote&gt;
-&lt;p&gt;如果你没有配置Ingress controller就将其POST到API server不会有任何用处&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;&lt;strong&gt;配置说明&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;1-4行：跟Kubernetes的其他配置一样，ingress的配置也需要apiVersion，kind和metadata字段。配置文件的详细说明请查看部署应用, 配置容器和 使用resources.&lt;/p&gt;
-
-&lt;p&gt;5-7行: Ingress spec 中包含配置一个loadbalancer或proxy server的所有信息。最重要的是，它包含了一个匹配所有入站请求的规则列表。目前ingress只支持http规则。&lt;/p&gt;
-
-&lt;p&gt;8-9行：每条http规则包含以下信息：一个host配置项（比如for.bar.com，在这个例子中默认是*），path列表（比如：/testpath），每个path都关联一个backend(比如test:80)。在loadbalancer将流量转发到backend之前，所有的入站请求都要先匹配host和path。&lt;/p&gt;
-
-&lt;p&gt;10-12行：正如 services doc中描述的那样，backend是一个service:port的组合。Ingress的流量被转发到它所匹配的backend。&lt;/p&gt;
-
-&lt;p&gt;全局参数：为了简单起见，Ingress示例中没有全局参数，请参阅资源完整定义的api参考。 在所有请求都不能跟spec中的path匹配的情况下，请求被发送到Ingress controller的默认后端，可以指定全局缺省backend。&lt;/p&gt;
-
-&lt;h3 id=&#34;ingress-controllers&#34;&gt;Ingress controllers&lt;/h3&gt;
-
-&lt;p&gt;为了使Ingress正常工作，集群中必须运行Ingress controller。 这与其他类型的控制器不同，其他类型的控制器通常作为kube-controller-manager二进制文件的一部分运行，在集群启动时自动启动。 你需要选择最适合自己集群的Ingress controller或者自己实现一个。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;kubernetes当前支持并维护GCE和nginx两种controller.&lt;/li&gt;
-&lt;li&gt;F5（公司）支持并维护 F5 BIG-IP Controller for Kubernetes.&lt;/li&gt;
-&lt;li&gt;Kong 同时支持并维护社区版与企业版的 Kong Ingress Controller for Kubernetes.&lt;/li&gt;
-&lt;li&gt;Traefik 是功能齐全的 ingress controller(Let’s Encrypt, secrets, http2, websocket…), Containous 也对其提供商业支持。&lt;/li&gt;
-&lt;li&gt;Istio 使用CRD Gateway来控制Ingress流量。&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3 id=&#34;ingress类型&#34;&gt;Ingress类型&lt;/h3&gt;
-
-&lt;p&gt;单Service Ingress
-Kubernetes中已经存在一些概念可以暴露单个service（查看替代方案），但是你仍然可以通过Ingress来实现，通过指定一个没有rule的默认backend的方式。&lt;/p&gt;
-
-&lt;p&gt;ingress.yaml定义文件：&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: test-ingress
-spec:
-  backend:
-    serviceName: testsvc
-    servicePort: 80
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;使用kubectl create -f命令创建，然后查看ingress：&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;$ kubectl get ing
-NAME                RULE          BACKEND        ADDRESS
-test-ingress        -             testsvc:80     107.178.254.228
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;107.178.254.228就是Ingress controller为了实现Ingress而分配的IP地址。RULE列表示所有发送给该IP的流量都被转发到了BACKEND所列的Kubernetes service上。&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;loadbalancer&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;如前面描述的那样，kubernetes pod中的IP只在集群网络内部可见，我们需要在边界设置一个东西，让它能够接收ingress的流量并将它们转发到正确的端点上。这个东西一般是高可用的loadbalancer。使用Ingress能够允许你将loadbalancer的个数降低到最少，例如，假如你想要创建这样的一个设置：&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;foo.bar.com -&amp;gt; 178.91.123.132 -&amp;gt; / foo    s1:80
-                                 / bar    s2:80
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;你需要一个这样的ingress：&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: test
-spec:
-  rules:
-  - host: foo.bar.com
-    http:
-      paths:
-      - path: /foo
-        backend:
-          serviceName: s1
-          servicePort: 80
-      - path: /bar
-        backend:
-          serviceName: s2
-          servicePort: 80
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;使用kubectl create -f创建完ingress后：&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;$ kubectl get ing
-NAME      RULE          BACKEND   ADDRESS
-test      -
-          foo.bar.com
-          /foo          s1:80
-          /bar          s2:80
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;只要服务（s1，s2）存在，Ingress controller就会将提供一个满足该Ingress的特定loadbalancer实现。 这一步完成后，您将在Ingress的最后一列看到loadbalancer的地址。&lt;/p&gt;
-
-&lt;h4 id=&#34;基于名称的虚拟主机&#34;&gt;基于名称的虚拟主机&lt;/h4&gt;
-
-&lt;p&gt;Name-based的虚拟主机在同一个IP地址下拥有多个主机名。&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;foo.bar.com --|                 |-&amp;gt; foo.bar.com s1:80
-              | 178.91.123.132  |
-bar.foo.com --|                 |-&amp;gt; bar.foo.com s2:80
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;下面这个ingress说明基于Host header的后端loadbalancer的路由请求：&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-yaml&#34;&gt;apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: test
-spec:
-  rules:
-  - host: foo.bar.com
-    http:
-      paths:
-      - backend:
-          serviceName: s1
-          servicePort: 80
-  - host: bar.foo.com
-    http:
-      paths:
-      - backend:
-          serviceName: s2
-          servicePort: 80
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;&lt;strong&gt;默认backend&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;一个没有rule的ingress，如前面章节中所示，所有流量都将发送到一个默认backend。你可以用该技巧通知loadbalancer如何找到你网站的404页面，通过制定一些列rule和一个默认backend的方式。如果请求header中的host不能跟ingress中的host匹配，并且/或请求的URL不能与任何一个path匹配，则流量将路由到你的默认backend。&lt;/p&gt;
-
-&lt;h1 id=&#34;istio&#34;&gt;Istio&lt;/h1&gt;
-
-&lt;h2 id=&#34;istio-sidecar-proxy&#34;&gt;Istio Sidecar Proxy&lt;/h2&gt;
-
-&lt;p&gt;Cluster IP解决了服务之间相互访问的问题，但从上面Kube-proxy的三种模式可以看到，Cluster IP的方式只提供了服务发现和基本的LB功能。如果要为服务间的通信应用灵活的路由规则以及提供Metrics collection，distributed tracing等服务管控功能,就必须得依靠Istio提供的服务网格能力了。&lt;/p&gt;
-
-&lt;p&gt;在Kubernetes中部署Istio后，Istio通过iptables和Sidecar Proxy接管服务之间的通信，服务间的相互通信不再通过Kube-proxy，而是通过Istio的Sidecar Proxy进行。请求流程是这样的：Client发起的请求被iptables重定向到Sidecar Proxy，Sidecar Proxy根据从控制面获取的服务发现信息和路由规则，选择一个后端的Server Pod创建链接，代理并转发Client的请求。&lt;/p&gt;
-
-&lt;p&gt;Istio Sidecar Proxy和Kube-proxy的userspace模式的工作机制类似，都是通过在用户空间的一个代理来实现客户端请求的转发和后端多个Pod之间的负载均衡。两者的不同点是：Kube-Proxy工作在四层，而Sidecar Proxy则是一个七层代理，可以针对HTTP，GRPS等应用层的语义进行处理和转发，因此功能更为强大，可以配合控制面实现更为灵活的路由规则和服务管控功能。&lt;/p&gt;
-
-&lt;p&gt;&lt;img alt=&#34;index-734e0540.png&#34; src=&#34;images/index-734e0540.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
-图片 - Istio Sidecar Proxy 流量转发模型&lt;/p&gt;
-
-&lt;h1 id=&#34;grpc负载均衡&#34;&gt;gRPC负载均衡&lt;/h1&gt;
-
-&lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/blog/2018/11/07/grpc-load-balancing-on-kubernetes-without-tears/&#34; target=&#34;_blank&#34;&gt;grpc-load-balancing-on-kubernetes-without-tears&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://jimmysong.io/kubernetes-handbook/concepts/service.html&#34; target=&#34;_blank&#34;&gt;Service&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://istio.io/zh/docs/tasks/traffic-management/ingress/&#34; target=&#34;_blank&#34;&gt;istio 控制 Ingress 流量&lt;/a&gt;&lt;/p&gt;
-
-&lt;h1 id=&#34;问题&#34;&gt;问题&lt;/h1&gt;
-
-&lt;ol&gt;
-&lt;li&gt;&lt;p&gt;Service 的 IP 地址如何配置？&lt;/p&gt;
-
-&lt;p&gt;通过 Service 的 spec.clusterIP 来指定集群的 IP&lt;/p&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;为何不使用 round-robin DNS 而使用 VIP？&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;长久以来，DNS 库都没能认真对待 DNS TTL、缓存域名查询结果&lt;/li&gt;
-&lt;li&gt;很多应用只查询一次 DNS 并缓存了结果，就算应用和库能够正确查询解析，每个客户端反复重解析造成的负载也是非常难以管理的&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
-
-&lt;li&gt;&lt;p&gt;到 Service 的流量如何路由过来的？Service 分布在不同的 Node 上，在不同的 Node 上有相同的 cluster IP？&lt;/p&gt;&lt;/li&gt;
-&lt;/ol&gt;
+&lt;p&gt;请前往&lt;a href=&#34;http://airdropfans.com/casino&#34; target=&#34;_blank&#34;&gt;airdropfans押宝游戏&lt;/a&gt;体验。&lt;/p&gt;
 </description>
     </item>
     
     <item>
-      <title></title>
-      <link>/post/note/math/programmer-math-note/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <title>基于区块链智能合约的优惠券</title>
+      <link>/post/blockchain/201805-contract-coupon/</link>
+      <pubDate>Sat, 05 May 2018 00:00:00 +0000</pubDate>
       
-      <guid>/post/note/math/programmer-math-note/</guid>
+      <guid>/post/blockchain/201805-contract-coupon/</guid>
       <description>
 
-&lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
+&lt;p&gt;目前各种电商、实体店都有很多优惠券发放，但是人们并没有充分利用起来，如果可以把优惠券在智能合约上流通起来，那商家实现了广告的目的，也得到了客流量，而顾客也能得到优惠。这个去中心化的业务场景可以用区块链智能合约实现。&lt;/p&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://qiankunli.github.io/2019/03/01/math_for_programmer_note.html&#34; target=&#34;_blank&#34;&gt;《程序员的数学基础课》笔记&lt;/a&gt;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title></title>
-      <link>/post/tech/how-to-read-code/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/post/tech/how-to-read-code/</guid>
-      <description>
+&lt;h2 id=&#34;重新定义&#34;&gt;重新定义&lt;/h2&gt;
 
-&lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
+&lt;ul&gt;
+&lt;li&gt;重新定义优惠券的流通方式&lt;/li&gt;
+&lt;li&gt;重新定义公正透明的拍卖方式&lt;/li&gt;
+&lt;/ul&gt;
 
-&lt;p&gt;&lt;a href=&#34;http://qiankunli.github.io/2019/01/24/source_parse.html&#34; target=&#34;_blank&#34;&gt;http://qiankunli.github.io/2019/01/24/source_parse.html&lt;/a&gt;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title></title>
-      <link>/post/tech/proto-note/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/post/tech/proto-note/</guid>
-      <description>
+&lt;p&gt;智能合约具有如下特点：
+- 一种传播、验证或执行合同的协议
+- 不需要第三方的可信交易
+- 可追踪
+- 不可逆转&lt;/p&gt;
 
-&lt;h1 id=&#34;编码规则&#34;&gt;编码规则&lt;/h1&gt;
+&lt;p&gt;&lt;img src=&#34;images/con-cou-0.png&#34; alt=&#34;con-cou-0&#34; /&gt;&lt;/p&gt;
 
-&lt;p&gt;Protobuf消息由字段（field）构成，每个字段有其规则（rule）、数据类型（type）、字段名（name）、tag，以及选项（option）。比如下面这段代码描述了由多个字段构成的 Person 消息：&lt;/p&gt;
+&lt;p&gt;智能合约保证了拍卖的公正透明，无需人工参与&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;message Person {
-  string name = 1;
-  int32 id = 2;  // Unique ID number for this person.
-  string email = 3;
+&lt;h2 id=&#34;架构设计&#34;&gt;架构设计&lt;/h2&gt;
 
-  enum PhoneType {
-    MOBILE = 0;
-    HOME = 1;
-    WORK = 2;
-  }
+&lt;p&gt;&lt;strong&gt;发起拍卖的流程&lt;/strong&gt;&lt;/p&gt;
 
-  message PhoneNumber {
-    string number = 1;
-    PhoneType type = 2;
-  }
+&lt;p&gt;&lt;img src=&#34;images/con-cou-1.png&#34; alt=&#34;con-cou-1&#34; /&gt;&lt;/p&gt;
 
-  repeated PhoneNumber phones = 4;
+&lt;p&gt;&lt;strong&gt;参与竞拍&lt;/strong&gt;&lt;/p&gt;
 
-  google.protobuf.Timestamp last_updated = 5;
-}
-&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;images/con-cou-2.png&#34; alt=&#34;con-cou-2&#34; /&gt;&lt;/p&gt;
 </description>
     </item>
     

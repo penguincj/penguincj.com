@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>智能合约 on L CJ的博客</title>
+    <link>/tags/%E6%99%BA%E8%83%BD%E5%90%88%E7%BA%A6/</link>
+    <description>Recent content in 智能合约 on L CJ的博客</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>penguincj &amp;copy; 2019</copyright>
+    <lastBuildDate>Tue, 03 Jul 2018 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/%E6%99%BA%E8%83%BD%E5%90%88%E7%BA%A6/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>基于区块链智能合约的相亲</title>
+      <link>/post/blockchain/201807-contract-love/</link>
+      <pubDate>Tue, 03 Jul 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/post/blockchain/201807-contract-love/</guid>
+      <description>免费发布和获取对方信息的靠谱婚恋平台</description>
+    </item>
+    
+    <item>
+      <title>基于区块链智能合约的彩票</title>
+      <link>/post/blockchain/201806-contract-casino/</link>
+      <pubDate>Tue, 12 Jun 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/post/blockchain/201806-contract-casino/</guid>
+      <description>去中心化的、公平的彩票系统</description>
+    </item>
+    
+    <item>
+      <title>基于区块链智能合约的优惠券</title>
+      <link>/post/blockchain/201805-contract-coupon/</link>
+      <pubDate>Sat, 05 May 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/post/blockchain/201805-contract-coupon/</guid>
+      <description>去中心化的优惠券交易系统</description>
+    </item>
+    
+  </channel>
+</rss>
