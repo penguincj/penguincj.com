@@ -18,12 +18,12 @@ organizations:
   url: "http://airdropfans.com/"
 
 # Short bio (displayed in user profile at end of posts)
-bio: 我目前研究的方向主要在Microservice、Servicemesh、Serverless等和Cloud Native相关的领域，欢迎交流和指导
+bio: 欢迎交流和指导
 
 interests:
 - 微服务/Micro Service
 - 云原生/Cloud Native
-- 区块链/BlockChain
+- 区块链/Block Chain
 
 # Social/Academic Networking
 # For available icons, see: https://sourcethemes.com/academic/docs/widgets/#icons
@@ -58,4 +58,4 @@ user_groups:
 - Visitors
 ---
 
-专注于基础架构，Cloud Native 拥护者，希望成为坚守开发一线打磨匠艺的架构师。
+专注于基础架构，喜欢 Cloud Native，希望成为坚守开发一线打磨匠艺的架构师。
