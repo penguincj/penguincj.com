@@ -27,10 +27,10 @@
   
     
   
-  <meta name="description" content="容器云解决大量项目构建运营环境的效率问题">
+  <meta name="description" content="以 docker update 流程分析各组件之间的调用关系">
 
   
-  <link rel="alternate" hreflang="en-us" href="/post/cloud/container/201905-why-container-cloud/why-container/">
+  <link rel="alternate" hreflang="en-us" href="/post/cloud/container/201906-docker-update/">
 
   
 
@@ -93,7 +93,7 @@
   <link rel="icon" type="image/png" href="/img/icon.png">
   <link rel="apple-touch-icon" type="image/png" href="/img/icon-192.png">
 
-  <link rel="canonical" href="/post/cloud/container/201905-why-container-cloud/why-container/">
+  <link rel="canonical" href="/post/cloud/container/201906-docker-update/">
 
   
   
@@ -105,21 +105,21 @@
   <meta property="twitter:card" content="summary">
   
   <meta property="og:site_name" content="L CJ的博客">
-  <meta property="og:url" content="/post/cloud/container/201905-why-container-cloud/why-container/">
-  <meta property="og:title" content="Why 容器云 | L CJ的博客">
-  <meta property="og:description" content="容器云解决大量项目构建运营环境的效率问题"><meta property="og:image" content="/img/icon-192.png">
+  <meta property="og:url" content="/post/cloud/container/201906-docker-update/">
+  <meta property="og:title" content="Docker update 流程分析 | L CJ的博客">
+  <meta property="og:description" content="以 docker update 流程分析各组件之间的调用关系"><meta property="og:image" content="/img/icon-192.png">
   <meta property="og:locale" content="en-us">
   
-  <meta property="article:published_time" content="2019-05-07T00:00:00&#43;08:00">
+  <meta property="article:published_time" content="2019-06-15T00:00:00&#43;00:00">
   
-  <meta property="article:modified_time" content="2019-05-07T00:00:00&#43;08:00">
-  
-
+  <meta property="article:modified_time" content="2019-06-15T00:00:00&#43;00:00">
   
 
   
 
-  <title>Why 容器云 | L CJ的博客</title>
+  
+
+  <title>Docker update 流程分析 | L CJ的博客</title>
 
 </head>
 <body id="top" data-spy="scroll" data-target="#TableOfContents" data-offset="71" >
@@ -383,10 +383,10 @@
   
   
 <div class="article-container pt-3">
-  <h1 itemprop="name">Why 容器云</h1>
+  <h1 itemprop="name">Docker update 流程分析</h1>
 
   
-  <p class="page-subtitle">容器云解决大量项目构建运营环境的效率问题</p>
+  <p class="page-subtitle">以 docker update 流程分析各组件之间的调用关系</p>
   
 
   
@@ -394,8 +394,8 @@
 
 
 
-<meta content="2019-05-07 00:00:00 &#43;0800 CST" itemprop="datePublished">
-<meta content="2019-05-07 00:00:00 &#43;0800 CST" itemprop="dateModified">
+<meta content="2019-06-15 00:00:00 &#43;0000 UTC" itemprop="datePublished">
+<meta content="2019-06-15 00:00:00 &#43;0000 UTC" itemprop="dateModified">
 
 <div class="article-metadata">
 
@@ -408,7 +408,7 @@
     
       
     
-    <time>May 7, 2019</time>
+    <time>Jun 15, 2019</time>
   </span>
   
 
@@ -460,129 +460,328 @@
     <div class="article-style" itemprop="articleBody">
       
 
-<p>人们对云计算提出了更高的要求，为大量项目构建运营环境的效率问题，缩短新业务的上线部署时间，大规模的计算机房快速迁移需求；提高服务器资源的利用率，同时确保相同的性能和可用性，又有降低成本的需求。相较于传统的虚拟化解决方案，容器云可以较好的实现上述目标。</p>
+<p>根据前面的文章 <a href="/post/cloud/container/201903-container-component">容器组件</a> 我们知道组件之间的关系如下，本文通过 <code>docker update</code> 命令来追寻各组件之间的调用关系。</p>
 
-<p>容器云的核心功能：</p>
+<p><img alt="index-baacd10f.png" src="images/index-baacd10f.png" width="" height="" >
+图，docker 组件之间的调用关系</p>
 
-<ul>
-<li>快速扩容</li>
-<li>智能调度和编排</li>
-<li>弹性伸缩</li>
-</ul>
+<p>比如新增一个自定义的属性 <code>cacheProperty</code>，并且支持该属性的 update。</p>
 
-<h2 id="快速扩容">快速扩容</h2>
+<pre><code>docker update --cacheProperty test abebf7571666
+</code></pre>
 
-<ul>
-<li>扩容速度：
+<h1 id="docker">docker</h1>
 
-<ul>
-<li>VM - 扩容20个实例需要4分钟（扩容完成后需要再执行服务发布）</li>
-<li>docker - 扩容20个实例仅需30s，秒级别扩容（扩容完成即服务启动）</li>
-</ul></li>
-<li>扩容速度提高 8~12倍</li>
-<li>节约了用户手动操作申请/发布的成本</li>
-</ul>
+<h2 id="client">client</h2>
 
-<h2 id="智能调度">智能调度</h2>
+<p>在调用上面的 <code>docker update</code> 命令时首先调用的是 docker client，会进入到如下的流程。</p>
 
-<p>调度系统是云集群的中央处理器，要解决的核心问题是为容器选择合适的宿主机。有如下的指标：</p>
+<pre><code class="language-go">// cli/command/container/update.go
 
-<ul>
-<li>资源利用率，提高整体物理集群的资源利用率</li>
-<li>业务可用性保障：业务容器容灾能力、保障运行业务的稳定高可用</li>
-<li>并发调度能力：调度系统请求处理能力的体现</li>
-</ul>
+func runUpdate(dockerCli *command.DockerCli, opts *updateOptions) error {
 
-<h3 id="资源最大化利用">资源最大化利用</h3>
+	resources := containertypes.Resources{
+		...
+		CPURealtimePeriod:  opts.cpuRealtimePeriod,
+		CacheProperty: opts.cacheProperty,
+	}
 
-<ul>
-<li>按CPU/Mem/IO等类型对服务进行调度，最大化资源利用</li>
-<li>业务按需使用资源，提升资源利用率</li>
-</ul>
+	updateConfig := containertypes.UpdateConfig{
+		Resources:     resources,
+		RestartPolicy: restartPolicy,
+	}
 
-<h3 id="混布与独占">混布与独占</h3>
+    for _, container := range opts.containers {
+		r, err := dockerCli.Client().ContainerUpdate(ctx, container, updateConfig)
+        ......
+	}
+}
+</code></pre>
 
-<ul>
-<li>在线服务与离线任务混布</li>
-<li>重要业务资源池独占</li>
-</ul>
+<pre><code class="language-go">// client/container_update.go
 
-<h3 id="容器编排">容器编排</h3>
+func (cli *Client) ContainerUpdate(ctx context.Context, containerID string, updateConfig container.UpdateConfig) (container.ContainerUpdateOKBody, error) {
 
-<ul>
-<li>有调用关系的多个服务实例，优先部署到相同/相近的宿主机上</li>
-<li>同服务实例打散，分布到不同宿主机上，提高服务可用性</li>
-<li>高负载容器，自动迁移到低负载宿主机</li>
-<li>自动化容器实例健康检查，异常实例自动迁移</li>
-</ul>
+    serverResp, err := cli.post(ctx, &quot;/containers/&quot;+containerID+&quot;/update&quot;, nil, updateConfig, nil)
+}
+</code></pre>
 
-<h3 id="调度计算">调度计算</h3>
+<p>上面的流程组装了一个 <code>/containers/&quot;+containerID+&quot;/update</code> 的API 请求。</p>
 
-<p>通过先过滤filter之后排序打分rank的方式找到最优的部署位置。</p>
+<pre><code class="language-go">func (cli *Client) post(ctx context.Context, path string, query url.Values, obj interface{}, headers map[string][]string) (serverResponse, error) {
+	body, headers, err := encodeBody(obj, headers)
+	if err != nil {
+		return serverResponse{}, err
+	}
+	return cli.sendRequest(ctx, &quot;POST&quot;, path, query, body, headers)
+}
+</code></pre>
 
-<p>在一批宿主机中先过滤掉超售的，然后考虑到打散、混部、减少碎片和负载均衡之后找到合适的宿主机</p>
+<pre><code class="language-go">func (cli *Client) doRequest(ctx context.Context, req *http.Request) (serverResponse, error) {
+	serverResp := serverResponse{statusCode: -1}
 
-<h3 id="调度sla-service-level-agreement">调度SLA（Service Level Agreement）</h3>
+	resp, err := ctxhttp.Do(ctx, cli.client, req)
+    ...
+}
+</code></pre>
 
-<ul>
-<li>高可用：99.999</li>
-<li>调度成功率：99.99</li>
-<li>并发调度：单机并发处理200+，并发调度机器1000+</li>
-<li>低延迟：TCP90 63ms</li>
-<li>HA：分布式调度，横向扩展，多IDC部署容灾</li>
-<li>监控报警：Falcon</li>
-</ul>
+<h2 id="server">server</h2>
 
-<h2 id="弹性收缩">弹性收缩</h2>
+<pre><code class="language-go">//api/server/router/container/container.go
 
-<p><strong>周期收缩</strong></p>
+func (r *containerRouter) initRoutes() {
 
-<p>根据设定时间段伸缩（适合秒杀/直播等业务）</p>
+    router.NewPostRoute(&quot;/containers/{name:.*}/update&quot;, r.postContainerUpdate),
+}
+</code></pre>
 
-<p><strong>监控伸缩</strong></p>
+<pre><code class="language-go">// container_routes.go
 
-<ul>
-<li>根据QPS/CPU等触发条件伸缩</li>
-<li>线性可扩展的无状态服务</li>
-</ul>
+func (s *containerRouter) postContainerUpdate(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
+    resp, err := s.backend.ContainerUpdate(name, hostConfig)
+}
+</code></pre>
 
-<p><strong>服务画像</strong></p>
+<pre><code class="language-go">// daemon/update.go
 
-<p>针对数据建模，描绘服务特征：</p>
+func (daemon *Daemon) ContainerUpdate(name string, hostConfig *container.HostConfig) (container.ContainerUpdateOKBody, error) {
+	var warnings []string
 
-<ul>
-<li>服务画像：仿照用户画像，根据服务数据，抽取服务Tag
+	if err := daemon.update(name, hostConfig); err != nil {
+		return container.ContainerUpdateOKBody{Warnings: warnings}, err
+	}
 
-<ul>
-<li>QPS特征（高峰时段、QPS max/min等）</li>
-<li>资源利用率</li>
-<li>CPU密集型 or IO密集型</li>
-</ul></li>
-</ul>
+}
+</code></pre>
 
-<p>基于历史数据建模的服务画像可以做服务特征值的预测，比如QPS的预测：</p>
+<pre><code class="language-go">func (daemon *Daemon) update(name string, hostConfig *container.HostConfig) error {
+    // 更新container的配置
+    if err := container.UpdateContainer(hostConfig); err != nil {
+        restoreConfig = true
+        return errCannotUpdate(container.ID, err)
+    }
+    // 实时更新continer的状态
+    if container.IsRunning() &amp;&amp; !container.IsRestarting() {
+		if err := daemon.containerd.UpdateResources(container.ID, toContainerdResources(hostConfig.Resources)); err != nil {
+			restoreConfig = true
+			return errCannotUpdate(container.ID, err)
+		}
+    }
+}
+</code></pre>
 
-<ul>
-<li>QPS预测：RNN LSTM</li>
-<li>即使监控数据源完全不可用，无数据，也能较准确的扩缩容</li>
-</ul>
+<pre><code class="language-go">// container/container_unix.go
 
-<h2 id="异常处理">异常处理</h2>
+func (container *Container) UpdateContainer(hostConfig *containertypes.HostConfig) error {
+	container.Lock()
+	defer container.Unlock()
 
-<ul>
-<li>监控数据异常，怎么办？会不会因监控值偏低而一直缩容？</li>
-<li>监控数据有延迟，怎么办？</li>
-<li>监控数据没了，怎么办？</li>
-</ul>
+	// update resources of container
+	resources := hostConfig.Resources
+	cResources := &amp;container.HostConfig.Resources
+	if resources.BlkioWeight != 0 {
+		cResources.BlkioWeight = resources.BlkioWeight
+	}
+    if resources.cacheProperty != &quot;&quot; {
+        cResources.CacheProperty = resources.CacheProperty
+    }
+}
+</code></pre>
 
-<p>通过数据无关的缩容退避+熔断机制来保证异常情况下的正常运行：</p>
+<pre><code class="language-go">// libcontainerd/client_linux.go
 
-<ul>
-<li>针对监控数据偏低（异常）而触发持续缩容</li>
-<li>数据无关，不关心数据是否异常</li>
-<li>如果连续缩容，那么缩容速度会越来越慢 —&gt; 退避</li>
-<li>如果连续缩容次数超过阈值，一段时间内禁止缩容 —&gt; 熔断</li>
-</ul>
+func (clnt *client) UpdateResources(containerID string, resources Resources) error {
+    ...
+	_, err = clnt.remote.apiClient.UpdateContainer(context.Background(), &amp;containerd.UpdateContainerRequest{
+		Id:        containerID,
+		Pid:       InitFriendlyName,
+		Resources: (*containerd.UpdateResource)(&amp;resources),
+	})
+}
+</code></pre>
+
+<p>通过 RPC 向 <code>containerd</code> 调用 <code>UpdateContainer</code>，proto 定义如下</p>
+
+<pre><code class="language-go">// containerd/api/grpc/types/api.proto
+service API {
+    ...
+	rpc UpdateContainer(UpdateContainerRequest) returns (UpdateContainerResponse) {}
+}
+</code></pre>
+
+<p>proto 生成的代码如下</p>
+
+<pre><code class="language-go">// containerd/api/grpc/types/api.pb.go
+
+func (c *aPIClient) UpdateContainer(ctx context.Context, in *UpdateContainerRequest, opts ...grpc.CallOption) (*UpdateContainerResponse, error) {
+	out := new(UpdateContainerResponse)
+	err := grpc.Invoke(ctx, &quot;/types.API/UpdateContainer&quot;, in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+</code></pre>
+
+<pre><code class="language-go">// daemon/update_linux.go
+func toContainerdResources(resources container.Resources) libcontainerd.Resources {
+	var r libcontainerd.Resources
+	...
+	r.MemoryReservation = uint64(resources.MemoryReservation)
+	r.KernelMemoryLimit = uint64(resources.KernelMemory)
+	r.CacheProperty = uint64(resources.CacheProperty)
+	return r
+}
+</code></pre>
+
+<p>需要在 <code>containerd.UpdateResource</code> 中增加 <code>CacheProperty</code> 字段属性。</p>
+
+<pre><code class="language-go">// containerd/api/grpc/types/api.pb.go
+type UpdateResource struct {
+	CpuPeriod                    uint64            `protobuf:&quot;varint,3,opt,name=cpuPeriod&quot; json:&quot;cpuPeriod,omitempty&quot;`
+	CpuQuota                     uint64            `protobuf:&quot;varint,4,opt,name=cpuQuota&quot; json:&quot;cpuQuota,omitempty&quot;`
+	...
+	CacheProperty           uint64            `protobuf:&quot;varint,19,opt,name=...&quot; json:&quot;...,omitempty&quot;`
+}
+</code></pre>
+
+<h1 id="containerd">containerd</h1>
+
+<p>containerd 作为 gRPC server，接收 dockerd 的请求，具体的流程如下。</p>
+
+<pre><code class="language-go">// api/grpc/server/server.go
+
+func (s *apiServer) UpdateContainer(ctx context.Context, r *types.UpdateContainerRequest) (*types.UpdateContainerResponse, error) {
+	e := &amp;supervisor.UpdateTask{}
+	e.WithContext(ctx)
+	e.ID = r.Id
+	e.State = runtime.State(r.Status)
+	if r.Resources != nil {
+		rs := r.Resources
+		e.Resources = &amp;runtime.Resource{}
+		if rs.CpuShares != 0 {
+			e.Resources.CPUShares = int64(rs.CpuShares)
+		}
+    }
+    s.sv.SendTask(e)
+}
+</code></pre>
+
+<pre><code class="language-go">// supervisor/update.go
+
+func (s *Supervisor) updateContainer(t *UpdateTask) error {
+	i, ok := s.containers[t.ID]
+	if !ok {
+		return ErrContainerNotFound
+	}
+	container := i.container
+	if t.State != &quot;&quot; {
+		switch t.State {
+		case runtime.Running:
+			if err := container.Resume(); err != nil {
+				return err
+			}
+			s.notifySubscribers(Event{
+				ID:        t.ID,
+				Type:      StateResume,
+				Timestamp: time.Now(),
+			})
+		case runtime.Paused:
+			if err := container.Pause(); err != nil {
+				return err
+			}
+			s.notifySubscribers(Event{
+				ID:        t.ID,
+				Type:      StatePause,
+				Timestamp: time.Now(),
+			})
+		default:
+			return ErrUnknownContainerStatus
+		}
+		return nil
+	}
+	if t.Resources != nil {
+		return container.UpdateResources(t.Resources)
+	}
+	return nil
+}
+</code></pre>
+
+<pre><code class="language-go">// runtime/container_linux.go
+
+func (c *container) UpdateResources(r *Resource) error {
+	sr := ocs.Resources{
+		Memory: &amp;ocs.Memory{
+			Limit:       u64Ptr(uint64(r.Memory)),
+			Reservation: u64Ptr(uint64(r.MemoryReservation)),
+			Swap:        u64Ptr(uint64(r.MemorySwap)),
+			Kernel:      u64Ptr(uint64(r.KernelMemory)),
+			KernelTCP:   u64Ptr(uint64(r.KernelTCPMemory)),
+		},
+		CPU: &amp;ocs.CPU{
+			Shares:          u64Ptr(uint64(r.CPUShares)),
+			Quota:           u64Ptr(uint64(r.CPUQuota)),
+			Period:          u64Ptr(uint64(r.CPUPeriod)),
+			Cpus:            &amp;r.CpusetCpus,
+			Mems:            &amp;r.CpusetMems,
+			RealtimePeriod:  u64Ptr(uint64(r.CPURealtimePeriod)),
+			RealtimeRuntime: u64Ptr(uint64(r.CPURealtimeRuntime)),
+		},
+		BlockIO: &amp;ocs.BlockIO{
+			Weight: &amp;r.BlkioWeight,
+		},
+	}
+
+	srStr := bytes.NewBuffer(nil)
+	if err := json.NewEncoder(srStr).Encode(&amp;sr); err != nil {
+		return err
+	}
+
+	args := c.runtimeArgs
+	args = append(args, &quot;update&quot;, &quot;-r&quot;, &quot;-&quot;, c.id)
+	cmd := exec.Command(c.runtime, args...)
+	cmd.Stdin = srStr
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf(string(b))
+	}
+	return nil
+}
+</code></pre>
+
+<p>通过 exec 调用 runc 的命令行。</p>
+
+<h1 id="runc">runc</h1>
+
+<pre><code class="language-go">// update.go
+var updateCommand = cli.Command{
+	Name:      &quot;update&quot;,
+	Usage:     &quot;update container resource constraints&quot;,
+	ArgsUsage: `&lt;container-id&gt;`,
+	Action: func(context *cli.Context) error {
+			container, err := getContainer(context)
+			if err != nil {
+				return err
+			}
+
+			r := specs.Resources{
+				Memory: &amp;specs.Memory{
+					Limit:       u64Ptr(0),
+					Reservation: u64Ptr(0),
+					Swap:        u64Ptr(0),
+					Kernel:      u64Ptr(0),
+					KernelTCP:   u64Ptr(0),
+				},
+			}
+		 }
+	 }
+
+	config.Cgroups.Resources.BlkioWeight = *r.BlockIO.Weight
+	config.Cgroups.Resources.CpuPeriod = int64(*r.CPU.Period)
+}
+</code></pre>
+
+<p>自此 runc 接收到配置的更新并做相应的处理。后续的流程就不分析了。</p>
 
     </div>
 
@@ -594,8 +793,6 @@
 <div class="article-tags">
   
   <a class="badge badge-light" href="/tags/docker/">Docker</a>
-  
-  <a class="badge badge-light" href="/tags/cloud/">Cloud</a>
   
 </div>
 
@@ -675,6 +872,8 @@
         <h3>Related</h3>
         <ul>
           
+          <li><a href="/post/cloud/container/201905-why-container-cloud/why-container/">Why 容器云</a></li>
+          
           <li><a href="/post/cloud/container/201903-container-component/">Docker 容器组件</a></li>
           
         </ul>
@@ -695,20 +894,13 @@
 
       <nav id="TableOfContents">
 <ul>
-<li>
+<li><a href="#docker">docker</a>
 <ul>
-<li><a href="#快速扩容">快速扩容</a></li>
-<li><a href="#智能调度">智能调度</a>
-<ul>
-<li><a href="#资源最大化利用">资源最大化利用</a></li>
-<li><a href="#混布与独占">混布与独占</a></li>
-<li><a href="#容器编排">容器编排</a></li>
-<li><a href="#调度计算">调度计算</a></li>
-<li><a href="#调度sla-service-level-agreement">调度SLA（Service Level Agreement）</a></li>
+<li><a href="#client">client</a></li>
+<li><a href="#server">server</a></li>
 </ul></li>
-<li><a href="#弹性收缩">弹性收缩</a></li>
-<li><a href="#异常处理">异常处理</a></li>
-</ul></li>
+<li><a href="#containerd">containerd</a></li>
+<li><a href="#runc">runc</a></li>
 </ul>
 </nav>
 

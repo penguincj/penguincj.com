@@ -583,7 +583,7 @@ func newProxyServer(
 ## Proxier 初始化
 
 ```go
-kubernetes/pkg/proxy/iptables/proxier.go
+// kubernetes/pkg/proxy/iptables/proxier.go
 
 func NewProxier(...) (*Proxier, error) { //参数略
     ...
@@ -632,7 +632,7 @@ ProxyServer 及Proxier 这两个重要的结构体初始化完成以后，就进
 在Run方法中，主要关注一下对service 和endpoints资源变化的处理方法的注册过程。
 
 ```go
-//cmd/kube-proxy/app/server.go
+// cmd/kube-proxy/app/server.go
 
 func (s *ProxyServer) Run() error {
     ...
@@ -722,7 +722,7 @@ type ServiceConfig struct {
 上面以注释的方式描述了proxier中service处理方法的被调用流程：通过serviceConfig.RegisterEventHandler()方法实现了在serviceConfig中的handleAddService()等方法中调用proxier中的OnServiceAdd()等对应的方法。那么serviceConfig.handleAddService()等方法是在哪里以及何时被调用的呢？再次回看serviceConfig的实例化方法 NewServiceConfig() 挖掘handleAddService()的被调用处。
 
 ```go
-kubernetes/pkg/proxy/config/config.go
+// pkg/proxy/config/config.go
 
 func NewServiceConfig(serviceInformer coreinformers.ServiceInformer, resyncPeriod time.Duration) *ServiceConfig {
     result := &ServiceConfig{
@@ -808,6 +808,54 @@ func (proxier *Proxier) OnServiceDelete(service *v1.Service) {
 
 
 其中，增加、删除service 都是给OnServiceUpdate() 传入参数后，由OnServiceUpdate() 方法处理。因此，重点看一下OnServiceUpdate()调用的update() 方法的实现。
+
+proxy 用 ServiceChangeTracker 来记录资源的变化情况，ServiceChangeTracker 是在 NewProxier() 函数中创建的，它用了一个双重的 map，外面一层 map 如下：
+
+```go
+type ServiceChangeTracker struct {
+	items map[types.NamespacedName]*serviceChange
+}
+```
+
+其中每个服务用 `<namespace>/<name>` 来标识，服务的变化存储在  `serviceChange` 中。
+
+```go
+type serviceChange struct {
+	previous ServiceMap
+	current  ServiceMap
+}
+```
+
+previous 是变化之前的状态，current 是变化之后的状态。
+
+```go
+type ServiceMap map[ServicePortName]ServicePort
+
+// ServicePortName carries a namespace + name + portname.  This is the unique
+// identifier for a load-balanced service.
+type ServicePortName struct {
+	types.NamespacedName
+	Port string
+}
+
+// ServicePort is an interface which abstracts information about a service.
+type ServicePort interface {
+	// String returns service string.  An example format can be: `IP:Port/Protocol`.
+	String() string
+	// ClusterIPString returns service cluster IP in string format.
+	ClusterIPString() string
+	// GetProtocol returns service protocol.
+	GetProtocol() v1.Protocol
+	// GetHealthCheckNodePort returns service health check node port if present.  If return 0, it means not present.
+	GetHealthCheckNodePort() int
+	// GetNodePort returns a service Node port if present. If return 0, it means not present.
+	GetNodePort() int
+}
+```
+
+通过 ServicePort 来表示一个服务。
+
+通过 ServiceChangeTracker.Update() 来实现服务的更新。
 
 
 ```go
@@ -1056,7 +1104,7 @@ syncProxyRules()这一单个方法的代码较长（约700+ 行），具体的�
 
 10. 更新 iptable rule 的时候用什么策略？如果直接更新规则会影响正在转发的流量吗？
 
-	已经存在的规则不会变，先写入跟新后的规则，然后删除旧的规则。
+	只会影响有变化的配置，已经存在的规则不会变，先写入更新后的规则，然后删除旧的规则。
 
 
 

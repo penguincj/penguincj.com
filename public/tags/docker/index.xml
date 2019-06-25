@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>penguincj &amp;copy; 2019</copyright>
-    <lastBuildDate>Tue, 07 May 2019 00:00:00 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 15 Jun 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/docker/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Docker update 流程分析</title>
+      <link>/post/cloud/container/201906-docker-update/</link>
+      <pubDate>Sat, 15 Jun 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/container/201906-docker-update/</guid>
+      <description>以 docker update 流程分析各组件之间的调用关系</description>
+    </item>
     
     <item>
       <title>Why 容器云</title>
@@ -19,6 +28,15 @@
       
       <guid>/post/cloud/container/201905-why-container-cloud/why-container/</guid>
       <description>容器云解决大量项目构建运营环境的效率问题</description>
+    </item>
+    
+    <item>
+      <title>Docker 容器组件</title>
+      <link>/post/cloud/container/201903-container-component/</link>
+      <pubDate>Sun, 24 Mar 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/container/201903-container-component/</guid>
+      <description>Docker、Containerd、RunC&amp;hellip;：你应该知道的所有</description>
     </item>
     
   </channel>

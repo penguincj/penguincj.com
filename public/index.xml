@@ -7,7 +7,7 @@
     <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator>
     <language>en-us</language>
     <copyright>penguincj &amp;copy; 2019</copyright>
-    <lastBuildDate>Wed, 05 Jun 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 15 Jun 2019 00:00:00 +0000</lastBuildDate>
     
 	    <atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
@@ -81,6 +81,339 @@
 &lt;p&gt;Suspendisse a tincidunt lacus. Curabitur at urna sagittis, dictum ante sit amet, euismod magna. Sed rutrum massa id tortor commodo, vitae elementum turpis tempus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean purus turpis, venenatis a ullamcorper nec, tincidunt et massa. Integer posuere quam rutrum arcu vehicula imperdiet. Mauris ullamcorper quam vitae purus congue, quis euismod magna eleifend. Vestibulum semper vel augue eget tincidunt. Fusce eget justo sodales, dapibus odio eu, ultrices lorem. Duis condimentum lorem id eros commodo, in facilisis mauris scelerisque. Morbi sed auctor leo. Nullam volutpat a lacus quis pharetra. Nulla congue rutrum magna a ornare.&lt;/p&gt;
 
 &lt;p&gt;Aliquam in turpis accumsan, malesuada nibh ut, hendrerit justo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quisque sed erat nec justo posuere suscipit. Donec ut efficitur arcu, in malesuada neque. Nunc dignissim nisl massa, id vulputate nunc pretium nec. Quisque eget urna in risus suscipit ultricies. Pellentesque odio odio, tincidunt in eleifend sed, posuere a diam. Nam gravida nisl convallis semper elementum. Morbi vitae felis faucibus, vulputate orci placerat, aliquet nisi. Aliquam erat volutpat. Maecenas sagittis pulvinar purus, sed porta quam laoreet at.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Docker update 流程分析</title>
+      <link>/post/cloud/container/201906-docker-update/</link>
+      <pubDate>Sat, 15 Jun 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/container/201906-docker-update/</guid>
+      <description>
+
+&lt;p&gt;根据前面的文章 &lt;a href=&#34;/post/cloud/container/201903-container-component&#34;&gt;容器组件&lt;/a&gt; 我们知道组件之间的关系如下，本文通过 &lt;code&gt;docker update&lt;/code&gt; 命令来追寻各组件之间的调用关系。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-baacd10f.png&#34; src=&#34;images/index-baacd10f.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
+图，docker 组件之间的调用关系&lt;/p&gt;
+
+&lt;p&gt;比如新增一个自定义的属性 &lt;code&gt;cacheProperty&lt;/code&gt;，并且支持该属性的 update。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;docker update --cacheProperty test abebf7571666
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;docker&#34;&gt;docker&lt;/h1&gt;
+
+&lt;h2 id=&#34;client&#34;&gt;client&lt;/h2&gt;
+
+&lt;p&gt;在调用上面的 &lt;code&gt;docker update&lt;/code&gt; 命令时首先调用的是 docker client，会进入到如下的流程。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// cli/command/container/update.go
+
+func runUpdate(dockerCli *command.DockerCli, opts *updateOptions) error {
+
+	resources := containertypes.Resources{
+		...
+		CPURealtimePeriod:  opts.cpuRealtimePeriod,
+		CacheProperty: opts.cacheProperty,
+	}
+
+	updateConfig := containertypes.UpdateConfig{
+		Resources:     resources,
+		RestartPolicy: restartPolicy,
+	}
+
+    for _, container := range opts.containers {
+		r, err := dockerCli.Client().ContainerUpdate(ctx, container, updateConfig)
+        ......
+	}
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// client/container_update.go
+
+func (cli *Client) ContainerUpdate(ctx context.Context, containerID string, updateConfig container.UpdateConfig) (container.ContainerUpdateOKBody, error) {
+
+    serverResp, err := cli.post(ctx, &amp;quot;/containers/&amp;quot;+containerID+&amp;quot;/update&amp;quot;, nil, updateConfig, nil)
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;上面的流程组装了一个 &lt;code&gt;/containers/&amp;quot;+containerID+&amp;quot;/update&lt;/code&gt; 的API 请求。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func (cli *Client) post(ctx context.Context, path string, query url.Values, obj interface{}, headers map[string][]string) (serverResponse, error) {
+	body, headers, err := encodeBody(obj, headers)
+	if err != nil {
+		return serverResponse{}, err
+	}
+	return cli.sendRequest(ctx, &amp;quot;POST&amp;quot;, path, query, body, headers)
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func (cli *Client) doRequest(ctx context.Context, req *http.Request) (serverResponse, error) {
+	serverResp := serverResponse{statusCode: -1}
+
+	resp, err := ctxhttp.Do(ctx, cli.client, req)
+    ...
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;server&#34;&gt;server&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;//api/server/router/container/container.go
+
+func (r *containerRouter) initRoutes() {
+
+    router.NewPostRoute(&amp;quot;/containers/{name:.*}/update&amp;quot;, r.postContainerUpdate),
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// container_routes.go
+
+func (s *containerRouter) postContainerUpdate(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string) error {
+    resp, err := s.backend.ContainerUpdate(name, hostConfig)
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// daemon/update.go
+
+func (daemon *Daemon) ContainerUpdate(name string, hostConfig *container.HostConfig) (container.ContainerUpdateOKBody, error) {
+	var warnings []string
+
+	if err := daemon.update(name, hostConfig); err != nil {
+		return container.ContainerUpdateOKBody{Warnings: warnings}, err
+	}
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func (daemon *Daemon) update(name string, hostConfig *container.HostConfig) error {
+    // 更新container的配置
+    if err := container.UpdateContainer(hostConfig); err != nil {
+        restoreConfig = true
+        return errCannotUpdate(container.ID, err)
+    }
+    // 实时更新continer的状态
+    if container.IsRunning() &amp;amp;&amp;amp; !container.IsRestarting() {
+		if err := daemon.containerd.UpdateResources(container.ID, toContainerdResources(hostConfig.Resources)); err != nil {
+			restoreConfig = true
+			return errCannotUpdate(container.ID, err)
+		}
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// container/container_unix.go
+
+func (container *Container) UpdateContainer(hostConfig *containertypes.HostConfig) error {
+	container.Lock()
+	defer container.Unlock()
+
+	// update resources of container
+	resources := hostConfig.Resources
+	cResources := &amp;amp;container.HostConfig.Resources
+	if resources.BlkioWeight != 0 {
+		cResources.BlkioWeight = resources.BlkioWeight
+	}
+    if resources.cacheProperty != &amp;quot;&amp;quot; {
+        cResources.CacheProperty = resources.CacheProperty
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// libcontainerd/client_linux.go
+
+func (clnt *client) UpdateResources(containerID string, resources Resources) error {
+    ...
+	_, err = clnt.remote.apiClient.UpdateContainer(context.Background(), &amp;amp;containerd.UpdateContainerRequest{
+		Id:        containerID,
+		Pid:       InitFriendlyName,
+		Resources: (*containerd.UpdateResource)(&amp;amp;resources),
+	})
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;通过 RPC 向 &lt;code&gt;containerd&lt;/code&gt; 调用 &lt;code&gt;UpdateContainer&lt;/code&gt;，proto 定义如下&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// containerd/api/grpc/types/api.proto
+service API {
+    ...
+	rpc UpdateContainer(UpdateContainerRequest) returns (UpdateContainerResponse) {}
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;proto 生成的代码如下&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// containerd/api/grpc/types/api.pb.go
+
+func (c *aPIClient) UpdateContainer(ctx context.Context, in *UpdateContainerRequest, opts ...grpc.CallOption) (*UpdateContainerResponse, error) {
+	out := new(UpdateContainerResponse)
+	err := grpc.Invoke(ctx, &amp;quot;/types.API/UpdateContainer&amp;quot;, in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// daemon/update_linux.go
+func toContainerdResources(resources container.Resources) libcontainerd.Resources {
+	var r libcontainerd.Resources
+	...
+	r.MemoryReservation = uint64(resources.MemoryReservation)
+	r.KernelMemoryLimit = uint64(resources.KernelMemory)
+	r.CacheProperty = uint64(resources.CacheProperty)
+	return r
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;需要在 &lt;code&gt;containerd.UpdateResource&lt;/code&gt; 中增加 &lt;code&gt;CacheProperty&lt;/code&gt; 字段属性。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// containerd/api/grpc/types/api.pb.go
+type UpdateResource struct {
+	CpuPeriod                    uint64            `protobuf:&amp;quot;varint,3,opt,name=cpuPeriod&amp;quot; json:&amp;quot;cpuPeriod,omitempty&amp;quot;`
+	CpuQuota                     uint64            `protobuf:&amp;quot;varint,4,opt,name=cpuQuota&amp;quot; json:&amp;quot;cpuQuota,omitempty&amp;quot;`
+	...
+	CacheProperty           uint64            `protobuf:&amp;quot;varint,19,opt,name=...&amp;quot; json:&amp;quot;...,omitempty&amp;quot;`
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;containerd&#34;&gt;containerd&lt;/h1&gt;
+
+&lt;p&gt;containerd 作为 gRPC server，接收 dockerd 的请求，具体的流程如下。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// api/grpc/server/server.go
+
+func (s *apiServer) UpdateContainer(ctx context.Context, r *types.UpdateContainerRequest) (*types.UpdateContainerResponse, error) {
+	e := &amp;amp;supervisor.UpdateTask{}
+	e.WithContext(ctx)
+	e.ID = r.Id
+	e.State = runtime.State(r.Status)
+	if r.Resources != nil {
+		rs := r.Resources
+		e.Resources = &amp;amp;runtime.Resource{}
+		if rs.CpuShares != 0 {
+			e.Resources.CPUShares = int64(rs.CpuShares)
+		}
+    }
+    s.sv.SendTask(e)
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// supervisor/update.go
+
+func (s *Supervisor) updateContainer(t *UpdateTask) error {
+	i, ok := s.containers[t.ID]
+	if !ok {
+		return ErrContainerNotFound
+	}
+	container := i.container
+	if t.State != &amp;quot;&amp;quot; {
+		switch t.State {
+		case runtime.Running:
+			if err := container.Resume(); err != nil {
+				return err
+			}
+			s.notifySubscribers(Event{
+				ID:        t.ID,
+				Type:      StateResume,
+				Timestamp: time.Now(),
+			})
+		case runtime.Paused:
+			if err := container.Pause(); err != nil {
+				return err
+			}
+			s.notifySubscribers(Event{
+				ID:        t.ID,
+				Type:      StatePause,
+				Timestamp: time.Now(),
+			})
+		default:
+			return ErrUnknownContainerStatus
+		}
+		return nil
+	}
+	if t.Resources != nil {
+		return container.UpdateResources(t.Resources)
+	}
+	return nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// runtime/container_linux.go
+
+func (c *container) UpdateResources(r *Resource) error {
+	sr := ocs.Resources{
+		Memory: &amp;amp;ocs.Memory{
+			Limit:       u64Ptr(uint64(r.Memory)),
+			Reservation: u64Ptr(uint64(r.MemoryReservation)),
+			Swap:        u64Ptr(uint64(r.MemorySwap)),
+			Kernel:      u64Ptr(uint64(r.KernelMemory)),
+			KernelTCP:   u64Ptr(uint64(r.KernelTCPMemory)),
+		},
+		CPU: &amp;amp;ocs.CPU{
+			Shares:          u64Ptr(uint64(r.CPUShares)),
+			Quota:           u64Ptr(uint64(r.CPUQuota)),
+			Period:          u64Ptr(uint64(r.CPUPeriod)),
+			Cpus:            &amp;amp;r.CpusetCpus,
+			Mems:            &amp;amp;r.CpusetMems,
+			RealtimePeriod:  u64Ptr(uint64(r.CPURealtimePeriod)),
+			RealtimeRuntime: u64Ptr(uint64(r.CPURealtimeRuntime)),
+		},
+		BlockIO: &amp;amp;ocs.BlockIO{
+			Weight: &amp;amp;r.BlkioWeight,
+		},
+	}
+
+	srStr := bytes.NewBuffer(nil)
+	if err := json.NewEncoder(srStr).Encode(&amp;amp;sr); err != nil {
+		return err
+	}
+
+	args := c.runtimeArgs
+	args = append(args, &amp;quot;update&amp;quot;, &amp;quot;-r&amp;quot;, &amp;quot;-&amp;quot;, c.id)
+	cmd := exec.Command(c.runtime, args...)
+	cmd.Stdin = srStr
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf(string(b))
+	}
+	return nil
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;通过 exec 调用 runc 的命令行。&lt;/p&gt;
+
+&lt;h1 id=&#34;runc&#34;&gt;runc&lt;/h1&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// update.go
+var updateCommand = cli.Command{
+	Name:      &amp;quot;update&amp;quot;,
+	Usage:     &amp;quot;update container resource constraints&amp;quot;,
+	ArgsUsage: `&amp;lt;container-id&amp;gt;`,
+	Action: func(context *cli.Context) error {
+			container, err := getContainer(context)
+			if err != nil {
+				return err
+			}
+
+			r := specs.Resources{
+				Memory: &amp;amp;specs.Memory{
+					Limit:       u64Ptr(0),
+					Reservation: u64Ptr(0),
+					Swap:        u64Ptr(0),
+					Kernel:      u64Ptr(0),
+					KernelTCP:   u64Ptr(0),
+				},
+			}
+		 }
+	 }
+
+	config.Cgroups.Resources.BlkioWeight = *r.BlockIO.Weight
+	config.Cgroups.Resources.CpuPeriod = int64(*r.CPU.Period)
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;自此 runc 接收到配置的更新并做相应的处理。后续的流程就不分析了。&lt;/p&gt;
 </description>
     </item>
     
@@ -643,7 +976,7 @@ func newProxyServer(
 
 &lt;h2 id=&#34;proxier-初始化&#34;&gt;Proxier 初始化&lt;/h2&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;kubernetes/pkg/proxy/iptables/proxier.go
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// kubernetes/pkg/proxy/iptables/proxier.go
 
 func NewProxier(...) (*Proxier, error) { //参数略
     ...
@@ -692,7 +1025,7 @@ func NewProxier(...) (*Proxier, error) { //参数略
 
 &lt;p&gt;在Run方法中，主要关注一下对service 和endpoints资源变化的处理方法的注册过程。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;//cmd/kube-proxy/app/server.go
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// cmd/kube-proxy/app/server.go
 
 func (s *ProxyServer) Run() error {
     ...
@@ -779,7 +1112,7 @@ func (s *ProxyServer) Run() error {
 
 &lt;p&gt;上面以注释的方式描述了proxier中service处理方法的被调用流程：通过serviceConfig.RegisterEventHandler()方法实现了在serviceConfig中的handleAddService()等方法中调用proxier中的OnServiceAdd()等对应的方法。那么serviceConfig.handleAddService()等方法是在哪里以及何时被调用的呢？再次回看serviceConfig的实例化方法 NewServiceConfig() 挖掘handleAddService()的被调用处。&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;kubernetes/pkg/proxy/config/config.go
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// pkg/proxy/config/config.go
 
 func NewServiceConfig(serviceInformer coreinformers.ServiceInformer, resyncPeriod time.Duration) *ServiceConfig {
     result := &amp;amp;ServiceConfig{
@@ -858,6 +1191,51 @@ func (proxier *Proxier) OnServiceDelete(service *v1.Service) {
 处理一个已存在的service的变化。&lt;/p&gt;
 
 &lt;p&gt;其中，增加、删除service 都是给OnServiceUpdate() 传入参数后，由OnServiceUpdate() 方法处理。因此，重点看一下OnServiceUpdate()调用的update() 方法的实现。&lt;/p&gt;
+
+&lt;p&gt;proxy 用 ServiceChangeTracker 来记录资源的变化情况，ServiceChangeTracker 是在 NewProxier() 函数中创建的，它用了一个双重的 map，外面一层 map 如下：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;type ServiceChangeTracker struct {
+	items map[types.NamespacedName]*serviceChange
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;其中每个服务用 &lt;code&gt;&amp;lt;namespace&amp;gt;/&amp;lt;name&amp;gt;&lt;/code&gt; 来标识，服务的变化存储在  &lt;code&gt;serviceChange&lt;/code&gt; 中。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;type serviceChange struct {
+	previous ServiceMap
+	current  ServiceMap
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;previous 是变化之前的状态，current 是变化之后的状态。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;type ServiceMap map[ServicePortName]ServicePort
+
+// ServicePortName carries a namespace + name + portname.  This is the unique
+// identifier for a load-balanced service.
+type ServicePortName struct {
+	types.NamespacedName
+	Port string
+}
+
+// ServicePort is an interface which abstracts information about a service.
+type ServicePort interface {
+	// String returns service string.  An example format can be: `IP:Port/Protocol`.
+	String() string
+	// ClusterIPString returns service cluster IP in string format.
+	ClusterIPString() string
+	// GetProtocol returns service protocol.
+	GetProtocol() v1.Protocol
+	// GetHealthCheckNodePort returns service health check node port if present.  If return 0, it means not present.
+	GetHealthCheckNodePort() int
+	// GetNodePort returns a service Node port if present. If return 0, it means not present.
+	GetNodePort() int
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;通过 ServicePort 来表示一个服务。&lt;/p&gt;
+
+&lt;p&gt;通过 ServiceChangeTracker.Update() 来实现服务的更新。&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;//pkg/proxy/service.go
 
@@ -1099,7 +1477,7 @@ type ServicePortName struct {
 
 &lt;li&gt;&lt;p&gt;更新 iptable rule 的时候用什么策略？如果直接更新规则会影响正在转发的流量吗？&lt;/p&gt;
 
-&lt;p&gt;已经存在的规则不会变，先写入跟新后的规则，然后删除旧的规则。&lt;/p&gt;&lt;/li&gt;
+&lt;p&gt;只会影响有变化的配置，已经存在的规则不会变，先写入更新后的规则，然后删除旧的规则。&lt;/p&gt;&lt;/li&gt;
 &lt;/ol&gt;
 
 &lt;h1 id=&#34;总结&#34;&gt;总结&lt;/h1&gt;
@@ -2233,6 +2611,140 @@ metadata:
 &lt;li&gt;如果连续缩容，那么缩容速度会越来越慢 —&amp;gt; 退避&lt;/li&gt;
 &lt;li&gt;如果连续缩容次数超过阈值，一段时间内禁止缩容 —&amp;gt; 熔断&lt;/li&gt;
 &lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Docker 容器组件</title>
+      <link>/post/cloud/container/201903-container-component/</link>
+      <pubDate>Sun, 24 Mar 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/container/201903-container-component/</guid>
+      <description>
+
+&lt;h1 id=&#34;组件&#34;&gt;组件&lt;/h1&gt;
+
+&lt;p&gt;从 Docker 1.11 之后，Docker Daemon 被分成了多个模块以适应 OCI 标准。容器是由多个组件共同管理协同后才运行起来的，主要的组件有：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Docker&lt;/li&gt;
+&lt;li&gt;Docker Daemon&lt;/li&gt;
+&lt;li&gt;Containerd&lt;/li&gt;
+&lt;li&gt;RunC&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;img alt=&#34;容器组件-d6112864.png&#34; src=&#34;images/容器组件-d6112864.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
+图，容器组件图&lt;/p&gt;
+
+&lt;p&gt;其中，containerd 独立负责容器运行时和生命周期（如创建、启动、停止、中止、信号处理、删除等），其他一些如镜像构建、卷管理、日志等由 Docker Daemon 的其他模块处理。&lt;/p&gt;
+
+&lt;h2 id=&#34;docker&#34;&gt;Docker&lt;/h2&gt;
+
+&lt;p&gt;作为 Client 接受用户的指令并将指令发送给 Docker daemon 处理。是 Docker API 的最上层封装，直接面向操作用户。&lt;/p&gt;
+
+&lt;h2 id=&#34;docker-daemon&#34;&gt;Docker Daemon&lt;/h2&gt;
+
+&lt;p&gt;Docker 容器管理的守护进程，负责与 Docker client 交互，实现对 Docker 镜像和容器的管理。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;容器组件-1ca66860.png&#34; src=&#34;images/容器组件-1ca66860.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
+图，Docker daemon 的作用&lt;/p&gt;
+
+&lt;p&gt;从Docker 1.11开始，通过如下命令启动&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;dockerd
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;在 Hulk 中的进程如下&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;/usr/bin/dockerd-current --exec-opt native.cgroupdriver=systemd --userland-proxy-path=/usr/libexec/docker/docker-proxy-current --init-path=/usr/libexec/docker/docker-init-current --seccomp-profile=/etc/docker/seccomp.json --selinux-enabled --log-driver=json-file --log-opt max-size=100m --signature-verification=false --live-restore
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;containerd&#34;&gt;Containerd&lt;/h2&gt;
+
+&lt;p&gt;containerd是容器技术标准化之后的产物，为了能够兼容OCI 标准，将容器运行时及其管理功能从 Docker Daemon 剥离。理论上，即使不运行 dockerd，也能够直接通过 containerd 来管理容器。（当然，containerd 本身也只是一个守护进程，容器的实际运行时由后面介绍的 runC 控制。）&lt;/p&gt;
+
+&lt;p&gt;Containerd 主要职责是镜像管理（镜像、元信息等）、容器执行（调用最终运行时（RunC）组件执行）。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;容器组件-9496a0cf.png&#34; src=&#34;images/容器组件-9496a0cf.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
+图，Containerd 架构&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;容器组件-5c8b8ec6.png&#34; src=&#34;images/容器组件-5c8b8ec6.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;
+图，Containerd 整体架构&lt;/p&gt;
+
+&lt;p&gt;containerd 向上为 Docker Daemon 提供了 gRPC 接口，使得 Docker Daemon 屏蔽下面的结构变化，确保原有接口向下兼容。向下通过 containerd-shim 结合 runC，使得引擎可以独立升级，避免之前 Docker Daemon 升级会导致所有容器不可用的问题。&lt;/p&gt;
+
+&lt;p&gt;Docker、containerd 和 containerd-shim 之间的关系，可以通过启动一个 Docker 容器，观察进程之间的关联。首先启动一个容器，&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;# docker run -d busybox sleep 1000
+94325941834e353c137113d78158a114df3332e8759fba5176bfbd56049f7221
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;然后通过pstree命令查看进程之间的父子关系（其中 197979 是dockerd的 PID）：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;# pstree -l -a -A  197979
+dockerd-current --exec-opt native.cgroupdriver=systemd --userland-proxy-path=/usr/libexec/docker/docker-proxy-current --init-path=/usr/libexec/docker/docker-init-current --seccomp-profile=/etc/docker/seccomp.json --selinux-enabled --log-driver=json-file --log-opt max-size=100m --signature-verification=false --live-restore
+|-docker-containe -l unix:///var/run/docker/libcontainerd/docker-containerd.sock --metrics-interval=0 --start-timeout 2m --state-dir /var/run/docker/libcontainerd/containerd --shim docker-containerd-shim --runtime docker-runc --runtime-args --systemd-cgroup=true
+|   |-docker-containe 94325941834e353c137113d78158a114df3332e8759fba5176bfbd56049f7221 /var/run/docker/libcontainerd/94325941834e353c137113d78158a114df3332e8759fba5176bfbd56049f7221 docker-runc
+|   |   |-sleep 1000
+|   |   `-9*[{docker-containe}]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;由于 pstree 截断了进程名字，实际的进程名字是 &lt;code&gt;docker-containerd-shim&lt;/code&gt;。Docker daemon 启动之后，dockerd 和 docker-containerd 进程一直存在。当启动容器之后，docker-containerd 进程（也是这里介绍的 containerd 组件）会创建 docker-containerd-shim 进程，其中的参数 94325941834e353c137113d78158a114df3332e8759fba5176bfbd56049f7221 就是要启动容器的 id。最后 docker-containerd-shim 子进程，已经是实际在容器中运行的进程（既 sleep 1000）。&lt;/p&gt;
+
+&lt;p&gt;Hulk 中的 containerd 和 containerd-shim 进程如下&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;# ps aux | grep containerd
+root     134481  0.0  0.0 446412  5980 ?        Sl   10:31   0:00 /usr/bin/docker-containerd-shim-current 94325941834e353c137113d78158a114df3332e8759fba5176bfbd56049f7221 /var/run/docker/libcontainerd/94325941834e353c137113d78158a114df3332e8759fba5176bfbd56049f7221 docker-runc
+root     197990  0.0  0.0 3571764 41852 ?       Ssl  May17   8:26 /usr/bin/docker-containerd-current -l unix:///var/run/docker/libcontainerd/docker-containerd.sock --metrics-interval=0 --start-timeout 2m --state-dir /var/run/docker/libcontainerd/containerd --shim docker-containerd-shim --runtime docker-runc --runtime-args --systemd-cgroup=true
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;docker-containerd-shim 另一个参数，是一个和容器相关的目录 /var/run/docker/libcontainerd/94325941834e353c137113d78158a114df3332e8759fba5176bfbd56049f7221，里面的内容有：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;.
+├── config.json
+├── init-stderr
+├── init-stdin
+└── init-stdout
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;其中包括了容器配置和标准输入、标准输出、标准错误三个管道文件。&lt;/p&gt;
+
+&lt;p&gt;containerd 是dockerd和runc之间的一个中间交流组件。&lt;/p&gt;
+
+&lt;h2 id=&#34;containerd-shim&#34;&gt;Containerd-shim&lt;/h2&gt;
+
+&lt;p&gt;Containerd-shim 是一个真实运行的容器的真实垫片载体，每启动一个容器都会起一个新的 containerd-shim 的一个进程，指定的三个参数：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;容器id&lt;/li&gt;
+&lt;li&gt;boundle目录（containerd的对应某个容器生成的目录，一般位于：/var/run/docker/libcontainerd/containerID），&lt;/li&gt;
+&lt;li&gt;运行时二进制（默认为runc）来调用runc的api创建一个容器（比如创建容器：最后拼装的命令如下：runc create xxx）&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;runc&#34;&gt;RunC&lt;/h2&gt;
+
+&lt;p&gt;OCI 定义了容器运行时标准，runC 是 Docker 按照开放容器格式标准（OCF, Open Container Format）制定的一种具体实现。&lt;/p&gt;
+
+&lt;p&gt;runC 是从 Docker 的 libcontainer 中迁移而来的，实现了容器启停、资源隔离等功能。Docker 默认提供了 docker-runc 实现，事实上，通过 containerd 的封装，可以在 Docker Daemon 启动的时候指定 runc 的实现。&lt;/p&gt;
+
+&lt;p&gt;我们可以通过启动 Docker Daemon 时增加&amp;ndash;add-runtime参数来选择其他的 runC 现。例如：&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;docker daemon --add-runtime &amp;quot;custom=/usr/local/bin/my-runc-replacement&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;下面就让我们看下这几个模块如何工作。&lt;/p&gt;
+
+&lt;h2 id=&#34;总结&#34;&gt;总结&lt;/h2&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-baacd10f.png&#34; src=&#34;images/index-baacd10f.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;图，各组件的调用关系&lt;/p&gt;
+
+&lt;p&gt;可以查看 &lt;a href=&#34;/post/cloud/container/201906-docker-update/&#34;&gt;Docker update 流程分析&lt;/a&gt; 的代码调用流程。&lt;/p&gt;
+
+&lt;h1 id=&#34;参考&#34;&gt;参考&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://www.infoq.cn/article/2017/02/Docker-Containerd-RunC&#34; target=&#34;_blank&#34;&gt;Docker、Containerd、RunC&amp;hellip;：你应该知道的所有&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     

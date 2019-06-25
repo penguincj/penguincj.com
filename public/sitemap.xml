@@ -18,6 +18,34 @@
   </url>
   
   <url>
+    <loc>/tags/docker/</loc>
+    <lastmod>2019-06-15T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/post/cloud/container/201906-docker-update/</loc>
+    <lastmod>2019-06-15T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/</loc>
+    <lastmod>2019-06-15T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/</loc>
+    <lastmod>2019-06-15T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/post/</loc>
+    <lastmod>2019-06-15T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/post/cloud/k8s/201901-how-read-kubeproxy/</loc>
     <lastmod>2019-06-05T00:00:00+00:00</lastmod>
   </url>
@@ -26,23 +54,6 @@
     <loc>/tags/kubernetes/</loc>
     <lastmod>2019-06-05T00:00:00+00:00</lastmod>
     <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/</loc>
-    <lastmod>2019-06-05T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/tags/</loc>
-    <lastmod>2019-06-05T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/post/</loc>
-    <lastmod>2019-06-05T00:00:00+00:00</lastmod>
   </url>
   
   <url>
@@ -63,14 +74,13 @@
   </url>
   
   <url>
-    <loc>/tags/docker/</loc>
+    <loc>/post/cloud/container/201905-why-container-cloud/why-container/</loc>
     <lastmod>2019-05-07T00:00:00+08:00</lastmod>
-    <priority>0</priority>
   </url>
   
   <url>
-    <loc>/post/cloud/container/201905-why-container-cloud/why-container/</loc>
-    <lastmod>2019-05-07T00:00:00+08:00</lastmod>
+    <loc>/post/cloud/container/201903-container-component/</loc>
+    <lastmod>2019-03-24T00:00:00+00:00</lastmod>
   </url>
   
   <url>

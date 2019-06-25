@@ -113,7 +113,7 @@
   <meta property="og:description" content=""><meta property="og:image" content="/img/icon-192.png">
   <meta property="og:locale" content="en-us">
   
-  <meta property="og:updated_time" content="2019-05-28T00:00:00&#43;00:00">
+  <meta property="og:updated_time" content="2019-06-15T00:00:00&#43;00:00">
   
 
   
@@ -423,8 +423,8 @@
 
 
 
-<meta content="" itemprop="datePublished">
-<meta content="" itemprop="dateModified">
+<meta content="2018-05-05 00:00:00 &#43;0000 UTC" itemprop="datePublished">
+<meta content="2018-05-05 00:00:00 &#43;0000 UTC" itemprop="dateModified">
 
 <div class="article-metadata">
 
@@ -437,7 +437,7 @@
     
       
     
-    <time>Jan 1, 0001</time>
+    <time>May 5, 2018</time>
   </span>
   
 
@@ -462,39 +462,12 @@
   
 
   <h3 class="article-title mb-1 mt-3" itemprop="name">
-    <a href="/post/tech/proto-note/" itemprop="url"></a>
+    <a href="/post/blockchain/201805-contract-coupon/" itemprop="url">基于区块链智能合约的优惠券</a>
   </h3>
 
   
   <div class="article-style" itemprop="articleBody">
-    
-
-<h1 id="编码规则">编码规则</h1>
-
-<p>Protobuf消息由字段（field）构成，每个字段有其规则（rule）、数据类型（type）、字段名（name）、tag，以及选项（option）。比如下面这段代码描述了由多个字段构成的 Person 消息：</p>
-
-<pre><code class="language-go">message Person {
-  string name = 1;
-  int32 id = 2;  // Unique ID number for this person.
-  string email = 3;
-
-  enum PhoneType {
-    MOBILE = 0;
-    HOME = 1;
-    WORK = 2;
-  }
-
-  message PhoneNumber {
-    string number = 1;
-    PhoneType type = 2;
-  }
-
-  repeated PhoneNumber phones = 4;
-
-  google.protobuf.Timestamp last_updated = 5;
-}
-</code></pre>
-
+    去中心化的优惠券交易系统
   </div>
   
 

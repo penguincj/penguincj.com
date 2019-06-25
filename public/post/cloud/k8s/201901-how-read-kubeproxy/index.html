@@ -1011,7 +1011,7 @@ func newProxyServer(
 
 <h2 id="proxier-初始化">Proxier 初始化</h2>
 
-<pre><code class="language-go">kubernetes/pkg/proxy/iptables/proxier.go
+<pre><code class="language-go">// kubernetes/pkg/proxy/iptables/proxier.go
 
 func NewProxier(...) (*Proxier, error) { //参数略
     ...
@@ -1060,7 +1060,7 @@ func NewProxier(...) (*Proxier, error) { //参数略
 
 <p>在Run方法中，主要关注一下对service 和endpoints资源变化的处理方法的注册过程。</p>
 
-<pre><code class="language-go">//cmd/kube-proxy/app/server.go
+<pre><code class="language-go">// cmd/kube-proxy/app/server.go
 
 func (s *ProxyServer) Run() error {
     ...
@@ -1147,7 +1147,7 @@ func (s *ProxyServer) Run() error {
 
 <p>上面以注释的方式描述了proxier中service处理方法的被调用流程：通过serviceConfig.RegisterEventHandler()方法实现了在serviceConfig中的handleAddService()等方法中调用proxier中的OnServiceAdd()等对应的方法。那么serviceConfig.handleAddService()等方法是在哪里以及何时被调用的呢？再次回看serviceConfig的实例化方法 NewServiceConfig() 挖掘handleAddService()的被调用处。</p>
 
-<pre><code class="language-go">kubernetes/pkg/proxy/config/config.go
+<pre><code class="language-go">// pkg/proxy/config/config.go
 
 func NewServiceConfig(serviceInformer coreinformers.ServiceInformer, resyncPeriod time.Duration) *ServiceConfig {
     result := &amp;ServiceConfig{
@@ -1226,6 +1226,51 @@ func (proxier *Proxier) OnServiceDelete(service *v1.Service) {
 处理一个已存在的service的变化。</p>
 
 <p>其中，增加、删除service 都是给OnServiceUpdate() 传入参数后，由OnServiceUpdate() 方法处理。因此，重点看一下OnServiceUpdate()调用的update() 方法的实现。</p>
+
+<p>proxy 用 ServiceChangeTracker 来记录资源的变化情况，ServiceChangeTracker 是在 NewProxier() 函数中创建的，它用了一个双重的 map，外面一层 map 如下：</p>
+
+<pre><code class="language-go">type ServiceChangeTracker struct {
+	items map[types.NamespacedName]*serviceChange
+}
+</code></pre>
+
+<p>其中每个服务用 <code>&lt;namespace&gt;/&lt;name&gt;</code> 来标识，服务的变化存储在  <code>serviceChange</code> 中。</p>
+
+<pre><code class="language-go">type serviceChange struct {
+	previous ServiceMap
+	current  ServiceMap
+}
+</code></pre>
+
+<p>previous 是变化之前的状态，current 是变化之后的状态。</p>
+
+<pre><code class="language-go">type ServiceMap map[ServicePortName]ServicePort
+
+// ServicePortName carries a namespace + name + portname.  This is the unique
+// identifier for a load-balanced service.
+type ServicePortName struct {
+	types.NamespacedName
+	Port string
+}
+
+// ServicePort is an interface which abstracts information about a service.
+type ServicePort interface {
+	// String returns service string.  An example format can be: `IP:Port/Protocol`.
+	String() string
+	// ClusterIPString returns service cluster IP in string format.
+	ClusterIPString() string
+	// GetProtocol returns service protocol.
+	GetProtocol() v1.Protocol
+	// GetHealthCheckNodePort returns service health check node port if present.  If return 0, it means not present.
+	GetHealthCheckNodePort() int
+	// GetNodePort returns a service Node port if present. If return 0, it means not present.
+	GetNodePort() int
+}
+</code></pre>
+
+<p>通过 ServicePort 来表示一个服务。</p>
+
+<p>通过 ServiceChangeTracker.Update() 来实现服务的更新。</p>
 
 <pre><code class="language-go">//pkg/proxy/service.go
 
@@ -1467,7 +1512,7 @@ type ServicePortName struct {
 
 <li><p>更新 iptable rule 的时候用什么策略？如果直接更新规则会影响正在转发的流量吗？</p>
 
-<p>已经存在的规则不会变，先写入跟新后的规则，然后删除旧的规则。</p></li>
+<p>只会影响有变化的配置，已经存在的规则不会变，先写入更新后的规则，然后删除旧的规则。</p></li>
 </ol>
 
 <h1 id="总结">总结</h1>
