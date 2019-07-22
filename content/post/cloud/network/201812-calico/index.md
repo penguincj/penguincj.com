@@ -41,6 +41,7 @@ calico的网络规模受到BGP网络规模的限制。
 如果底层的网络是ip fabric的方式，三层网络是可靠的，只需要部署一套calico。
 
 剩下的关键点就是怎样设计BGP网络，[calico over ip fabrics](https://docs.projectcalico.org/v2.1/reference/private-cloud/l3-interconnect-fabric)中给出两种设计方式:
+
 1. AS per rack:   每个rack(机架)组成一个AS，每个rack的TOR交换机与核心交换机组成一个AS
 2. AS per server: 每个node做为一个AS，TOR交换机组成一个transit AS
 
@@ -71,9 +72,10 @@ endpoints之间的通信过程:
 #### 优化：“Downward Default model”减少需要记录的路由
 Downward Default Model在上面的几种组网方式的基础上，优化了路由的管理。
 
-在上面的三种方式中，每个node、每个TOR交换机、每个核心交换机都需要记录全网路由。
+在上面的方式中，每个node、每个TOR交换机、每个核心交换机都需要记录全网路由。
 
 “Downward Default model”模式中:
+
 1. 每个node向上(TOR)通告所有路由信息，而TOR向下(node)只通告一条默认路由
 2. 每个TOR向上(核心交换机)通告所有路由，核心交换机向下(TOR)只通告一条默认路由
 3. node只知晓本地的路由
@@ -84,10 +86,10 @@ Downward Default Model在上面的几种组网方式的基础上，优化了路�
 
 endpoints之间的通信过程:
 
-EndpointA发出报文  --> nodeA默认路由到TOR交换机A --> TOR交换机A默认路由到核心交换机 --+
-                                                                                      |
-                                                                                      v
-EndpointB收到了报文 <--  nodeB收到了报文 <-- TOR交换机B收到了报文 <-- 核心交换机找到了下一跳地址nodeB
+	EndpointA发出报文  --> nodeA默认路由到TOR交换机A --> TOR交换机A默认路由到核心交换机 --+
+	                                                                                      |
+	                                                                                      v
+	EndpointB收到了报文 <--  nodeB收到了报文 <-- TOR交换机B收到了报文 <-- 核心交换机找到了下一跳地址nodeB
 
 
 
@@ -181,14 +183,10 @@ EndpointB收到了报文 <--  nodeB收到了报文 <-- TOR交换机B收到了报
 
 在每台主机上均运行命令：
 
-	sudo calicoctl node run --node-image=calico/node:v2.6.10
 
 	sudo calicoctl node run --ip=10.48.35.14 --name node01 --node-image quay.io/calico/node:v2.6.0
 
-	k8s-ep98
-	sudo calicoctl node run --ip=10.48.35.35 --name node02 --node-image quay.io/calico/node:v2.6.0
-
-其中 calicoctl 命令里的 name，每台主机均可以根据自身 ip 来填写。 命令实际使用 calico/node 镜像启动了一个容器，执行输出内容如下：
+其中 calicoctl 命令里的 name 和 ip，每台主机均可以根据自身情况来填写。 命令实际使用 calico/node 镜像启动了一个容器，执行输出内容如下：
 
 	sudo calicoctl node run --name node01 --ip=10.48.32.5
 	Running command to load modules: modprobe -a xt_set ip6_tables
@@ -271,11 +269,8 @@ docker 创建网络的时候，会调用 calico 的网络驱动，由驱动完�
 
 node01:
 
-	ok
 	sudo docker run -tid --name=test1 --net=net1 busybox
 	sudo docker run --net net2 --name test2 -tid busybox
-
-	sudo docker run -tid --name=test5 --net=net1 busybox
 
 node02:
 
@@ -338,7 +333,7 @@ test1与test2在不同的网络中，无法ping通。
 	    inet6 fe80::ecee:eeff:feee:eeee/64 scope link
 	       valid_lft forever preferred_lft forever
 
-- 容器网卡cali0即15号网卡，对接host节点16号网卡；
+- 容器网卡cali0即16号网卡，对接host节点15号网卡；
 - 也再次印证容器获取的是/32位主机地址；
 - 注意容器网卡的mac地址”ee:ee:ee:ee:ee:ee”, 这是1个固定的特殊地址（所有calico生成的容器mac地址均一样），因为calico只关心三层的ip地址，而不关心二层mac地址
 
@@ -395,8 +390,6 @@ calico默认在每个节点上创建一个 26 位掩码的子网，该子网可�
 
 总的来说，可以认为 calico 把主机作为容器的默认网关来使用，所有的报文发到主机，然后主机根据路由表进行转发。和经典的网络架构不同的是，calico 并没有给默认网络配置一个 IP 地址（这样每个网络都会额外消耗一个 IP 资源，而且主机上也会增加对应的 IP 地址和路由信息），而是通过 arp proxy 和修改容器路由表来实现。
 
-### calico的使用
-
 在calico中，IP被称为Endpoint，宿主机上的容器IP称为workloadEndpoint，物理机IP称为hostEndpoint。ipPool等一同被作为资源管理。
 
 查看默认的地址段:
@@ -410,13 +403,6 @@ calico默认在每个节点上创建一个 26 位掩码的子网，该子网可�
 
 calico为每个宿主机的容器分配了一个网段
 宿主机上每个容器都有一条对应的路由表项，下一跳是veth pair，
-
-calico 并没有给默认网络配置一个 IP 地址（这样每个网络都会额外消耗一个 IP 资源，而且主机上也会增加对应的 IP 地址和路由信息）。
-calico开启了arp proxy，这样每个宿主机端的veth pair都会回复容器对默认网关的arp请求。
-主机这个 interface 不管 ARP 请求的内容，直接用自己的 MAC 地址作为应答的行为被成为 ARP proxy，是 calico 开启的，可以通过下面的命令确认：
-
-	$ cat /proc/sys/net/ipv4/conf/calif24874aae57/proxy_arp
-	1
 
 ### 组件和架构
 

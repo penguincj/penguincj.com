@@ -1,5 +1,5 @@
 ---
-title: "Kubernetes网络框架"
+title: "Kubernetes 网络框架"
 subtitle: "Kubernetes本身不提供容器网络，但具有可扩展的网络框架"
 summary: "Kubernetes本身不提供容器网络，但具有可扩展的网络框架"
 date: "2019-05-28"

@@ -7,7 +7,7 @@
     <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator>
     <language>en-us</language>
     <copyright>penguincj &amp;copy; 2019</copyright>
-    <lastBuildDate>Sat, 15 Jun 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 08 Jul 2019 00:00:00 +0000</lastBuildDate>
     
 	    <atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
@@ -81,6 +81,521 @@
 &lt;p&gt;Suspendisse a tincidunt lacus. Curabitur at urna sagittis, dictum ante sit amet, euismod magna. Sed rutrum massa id tortor commodo, vitae elementum turpis tempus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean purus turpis, venenatis a ullamcorper nec, tincidunt et massa. Integer posuere quam rutrum arcu vehicula imperdiet. Mauris ullamcorper quam vitae purus congue, quis euismod magna eleifend. Vestibulum semper vel augue eget tincidunt. Fusce eget justo sodales, dapibus odio eu, ultrices lorem. Duis condimentum lorem id eros commodo, in facilisis mauris scelerisque. Morbi sed auctor leo. Nullam volutpat a lacus quis pharetra. Nulla congue rutrum magna a ornare.&lt;/p&gt;
 
 &lt;p&gt;Aliquam in turpis accumsan, malesuada nibh ut, hendrerit justo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quisque sed erat nec justo posuere suscipit. Donec ut efficitur arcu, in malesuada neque. Nunc dignissim nisl massa, id vulputate nunc pretium nec. Quisque eget urna in risus suscipit ultricies. Pellentesque odio odio, tincidunt in eleifend sed, posuere a diam. Nam gravida nisl convallis semper elementum. Morbi vitae felis faucibus, vulputate orci placerat, aliquet nisi. Aliquam erat volutpat. Maecenas sagittis pulvinar purus, sed porta quam laoreet at.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>CNI 源码分析</title>
+      <link>/post/cloud/network/201907-cni/</link>
+      <pubDate>Mon, 08 Jul 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/network/201907-cni/</guid>
+      <description>
+
+&lt;p&gt;CNI (Container Network Interface) 插件是可执行文件，最早是由CoreOS发起的容器网络规范，现被CNCF(Cloud Native Computing Foundation)接管，是Kubernetes网络插件的基础。其基本思想为：Container Runtime在创建容器时，先创建好network namespace，然后调用CNI插件为这个netns配置网络，其后再启动容器内的进程。CNI仅关心容器创建时的网络分配，容器被删除时释放网络资源。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-dc36bbc6.png&#34; src=&#34;images/index-dc36bbc6.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;每个节点(Node)都运行kubelet，接受master的命令并向master汇报运行状态&lt;/p&gt;
+
+&lt;p&gt;kubelet通过CNI控制Pod的网络配置&lt;/p&gt;
+
+&lt;p&gt;CNI网络插件，网络配置(JSON格式)默认放置在/etc/cni/net.d目录，可执行二进制插件文件放置在/opt/cni/bin目录；知名的CNI插件包括bridge、calico等&lt;/p&gt;
+
+&lt;p&gt;CNI插件包括两部分：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;CNI Plugin负责给容器配置网络，它包括两个基本的接口&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;配置网络: AddNetwork(net NetworkConfig, rt RuntimeConf) (types.Result, error)&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;清理网络: DelNetwork(net NetworkConfig, rt RuntimeConf) error&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;IPAM(IP Adress Management) Plugin负责给容器分配IP地址，主要实现包括host-local和dhcp&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;cni-框架&#34;&gt;CNI 框架&lt;/h1&gt;
+
+&lt;h2 id=&#34;配置文件解析结果&#34;&gt;配置文件解析结果&lt;/h2&gt;
+
+&lt;p&gt;网络配置文件的解析结果存放在 &lt;code&gt;NetworkConfigList&lt;/code&gt; 中，有如下的数据结构来表示。&lt;/p&gt;
+
+&lt;p&gt;可以对照如下的网络配置来看&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
+    &amp;quot;cniVersion&amp;quot;: &amp;quot;0.4.0&amp;quot;,
+    &amp;quot;name&amp;quot;: &amp;quot;mynet&amp;quot;,
+    &amp;quot;type&amp;quot;: &amp;quot;sriov&amp;quot;,
+    &amp;quot;bridge&amp;quot;: &amp;quot;cni0&amp;quot;,
+    &amp;quot;pf&amp;quot;: [&amp;quot;p4p1&amp;quot;],
+    &amp;quot;ibgp&amp;quot;: false,
+    &amp;quot;ipam&amp;quot;: {
+        &amp;quot;type&amp;quot;: &amp;quot;static&amp;quot;,
+	&amp;quot;addresses&amp;quot;: [
+	    {&amp;quot;address&amp;quot;: &amp;quot;10.10.0.1/32&amp;quot;}
+	],
+	&amp;quot;routes&amp;quot;: [
+	    {&amp;quot;dst&amp;quot;: &amp;quot;0.0.0.0/0&amp;quot;, &amp;quot;gw&amp;quot;:&amp;quot;1.1.0.1&amp;quot;}
+	]
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;type IPAM struct {
+	Type string `json:&amp;quot;type,omitempty&amp;quot;`
+}
+
+type NetConf struct {
+	CNIVersion string `json:&amp;quot;cniVersion,omitempty&amp;quot;`                  #cni版本号
+
+	Name         string          `json:&amp;quot;name,omitempty&amp;quot;`             #网络名
+	Type         string          `json:&amp;quot;type,omitempty&amp;quot;`             #可执行cni插件名
+	Capabilities map[string]bool `json:&amp;quot;capabilities,omitempty&amp;quot;`     #本网络支持的特殊能力
+	IPAM         IPAM            `json:&amp;quot;ipam,omitempty&amp;quot;`             #ipam配置
+	DNS          DNS             `json:&amp;quot;dns&amp;quot;`                        #dns配置
+
+	RawPrevResult map[string]interface{} `json:&amp;quot;prevResult,omitempty&amp;quot;`
+	PrevResult    Result                 `json:&amp;quot;-&amp;quot;`                  #调用cni插件前，被赋值；第一次调用cni插件为空结构，第二次调用为上一次执行结果
+
+	#runtimeConfig:{}                                                #调用cni插件前，被buildOneConfig()赋值，根据配置项Capabilities，
+                                                                   #从参数CAP_ARGS传入中（临时存储在RuntimeConf.CapabilityA
+}
+
+###.conf/.json配置文件解析结果
+#配置文件格式
+#{
+#  &amp;quot;cniVersion&amp;quot;:&amp;quot;0.4.0&amp;quot;,
+#  &amp;quot;name&amp;quot;:&amp;quot;mynet&amp;quot;,
+#  &amp;quot;type&amp;quot;:&amp;quot;sriov&amp;quot;,
+#  ...
+#  &amp;quot;ipam&amp;quot;:{...}
+#}
+
+// libcni/api.go
+type NetworkConfig struct {
+	Network *types.NetConf           #CNI标准中的网络配置字段
+	Bytes   []byte                   #本网络配置的字节流
+}
+
+type NetworkConfigList struct {
+	Name         string              #网络名
+	CNIVersion   string              #cni版本号
+	DisableCheck bool                #禁止运行时执行CHECK动作，通常用于某些一定返回错误的cni插件，json字段&amp;quot;disableCheck&amp;quot;
+	Plugins      []*NetworkConfig    #网络配置
+	Bytes        []byte              #整个配置文件的字节流
+}
+
+###.conflist配置文件解析结果
+#配置文件格式
+#{
+#  &amp;quot;name&amp;quot;:&amp;quot;mynet&amp;quot;,
+#  &amp;quot;cniVersion&amp;quot;:&amp;quot;0.4.0&amp;quot;,
+#  &amp;quot;plugins&amp;quot;:[
+#    {&amp;quot;cniVersion&amp;quot;:&amp;quot;0.4.0&amp;quot;, &amp;quot;name&amp;quot;:&amp;quot;mynet&amp;quot;, &amp;quot;type&amp;quot;:&amp;quot;sriov&amp;quot;, ..., &amp;quot;ipam&amp;quot;:{...}}
+#  ]
+#}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;存储调用cni插件时的参数&#34;&gt;存储调用cni插件时的参数&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// libcni/api.go
+type RuntimeConf struct {
+	ContainerID string             #格式&amp;quot;cnitool-网络命名空间hash值&amp;quot;
+	NetNS       string             #网络命名空间，os.Args[3]
+	IfName      string             #接口名，通过变量CNI_IFNAME指定，默认eth0
+	Args        [][2]string        #通过变量CNI_ARGS=&amp;quot;key=val;key=val&amp;quot;传入，如果cni插件不识别可忽略
+	CapabilityArgs map[string]interface{}   #通过变量CAP_ARGS={key:val, key:val}传入，指定某特定key应该取的特定值
+                                          #后续通过函数buildOneConfig()构建key为runtimeConfig的字典，存放插件支持的特定值
+	CacheDir string                #缓存cni插件执行结果，默认值&amp;quot;/var/lib/cni&amp;quot;
+}                                #一般情况下，执行结果以文件形式存储到目录：/var/lib/cni/results/网络名-容器ID-容器接口名
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;cni插件返回结果&#34;&gt;cni插件返回结果&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// 路由信息，pkg/types/types.go
+type Route struct {
+	Dst net.IPNet
+	GW  net.IP
+}
+// cni插件返回结果(0.4.0版本)，pkg/types/current/types.go
+type IPConfig struct {          ##配置的IP
+	Version string        #“4”/“6”
+	Interface *int        #对应的接口，0-n, Index into Result structs Interfaces list
+	Address   net.IPNet   #IP+掩码, &amp;quot;10.22.0.4/16&amp;quot;
+	Gateway   net.IP      #IP地址, &amp;quot;10.22.0.1&amp;quot;
+}
+type Interface struct {         ##创建的接口
+	Name    string `json:&amp;quot;name&amp;quot;`
+	Mac     string `json:&amp;quot;mac,omitempty&amp;quot;`
+	Sandbox string `json:&amp;quot;sandbox,omitempty&amp;quot;`  #容器的网络命名空间路径，如&amp;quot;/var/run/netns/cni_test&amp;quot;
+}
+type Result struct {            ##cni插件返回结果
+	CNIVersion string         `json:&amp;quot;cniVersion,omitempty&amp;quot;`
+	Interfaces []*Interface   `json:&amp;quot;interfaces,omitempty&amp;quot;`  #接口数组
+	IPs        []*IPConfig    `json:&amp;quot;ips,omitempty&amp;quot;`         #IP地址数组
+	Routes     []*types.Route `json:&amp;quot;routes,omitempty&amp;quot;`      #路由信息
+	DNS        types.DNS      `json:&amp;quot;dns,omitempty&amp;quot;`         #DNS信息
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;cnitool-框架&#34;&gt;cnitool 框架&lt;/h1&gt;
+
+&lt;pre&gt;&lt;code&gt;###运行cnitool命令行如下，需提供三个参数，并根据需要指定搜索路径（配置文件、插件在默认路径不需前置变量）
+###三个参数：动作(os.Args[1]) 网络名(os.Args[2]) 网络命名空间(os.Args[3])
+#NETCONFPATH=$NETCONFPATH CNI_PATH=$CNI_PATH $CNI_PATH/cnitool add mynet /var/run/netns/cni_test
+-main()                               入口，cnitool/cnitool.go
+  -LoadConfList()                     查找、加载配置文件，libcni/conf.go
+    -ConfFiles()                         搜索&amp;quot;.conflist&amp;quot;后缀配置文件
+    -ConfListFromFile()                  粗略解析，查找&amp;quot;Name&amp;quot;字段=os.Args[2]的配置文件
+    -LoadConf()                          搜索&amp;quot;.conf&amp;quot;/&amp;quot;.json&amp;quot;后缀配置文件
+    -ConfListFromConf()                  转换为NetworkConfigList类型
+  -sha512.Sum512()                    将网络命名空间路径hash，作为容器ID：&amp;quot;cnitool-hash值&amp;quot;
+  0-AddNetworkList()                  添加网络，libcni/api.go
+    -addNetwork()                       构建执行上下文，libcni/api.go
+      -FindInPath()                     查找cni插件
+      -buildOneConfig()                 配置信息中添加&amp;quot;runtimeConfig:{}&amp;quot;,以支持约定能力
+      -ExecPluginWithResult()           pkg/invoke/exec.go
+        1-ExecPlugin()
+          -os.exec.CommandContext()     调用具体插件，pkg/invoke/raw_exec.go
+                                        环境变量如下os.Cmd.Env
+                                            CNI_COMMAND=ADD
+                                            CNI_CONTAINERID=&amp;quot;cnitool-网络命名空间hash值&amp;quot;
+                                            CNI_NETNS=os.Args[3]
+                                            CNI_ARGS=命令行变量(CNI_ARGS)
+                                            CNI_IFNAME=命令行变量(CNI_IFNAME)
+                                            CNI_PATH=命令行变量(CNI_PATH)
+                                            os.Environ()                #也传入系统参数，且放置在最后，避免覆盖用户自定义参数
+                                        标准输入输出
+                                            os.Cmd.Stdin=配置文件字节流
+                                            os.Cmd.Stdout=设定的bytes.Buffer，以便接收返回结果
+                                            os.Cmd.Stderr=执行环境的.Stderr
+        1-version.NewResult()           处理返回结果, pkg/version/version.go
+          -NewResult()                      版本&amp;gt;=0.3.0，pkg/types/current/types.go
+                                            版本&amp;lt;=0.2.0，pkg/types/020/types.go
+    -setCachedResult()                存储返回信息，缓存文件名：&amp;quot;/var/lib/cni/results/网络名-容器ID-容器接口名&amp;quot;,libcni/api.go
+
+###注意点：
+#1. 配置文件后缀支持.conflist/.conf/.json，其中.conflist为新版本配置形式，而.conf/.json为老版本配置形式
+#   因此，查找网络名对应的配置文件后，都统一转换为NetworkConfigList内存形式
+#2. 可通过变量CAP_ARGS={key:val, key:val}，传入特定能力
+#3. 可通过变量CNI_ARGS=&amp;quot;key=val;key=val&amp;quot;，传入可忽略参数
+#4. 可通过变量CNI_IFNAME=eth0，作为容器内接口名，默认eth0
+#5. 可通过变量CNI_PATH传入插件搜索路径
+#6. 可通过变量NETCONFPATH传入网络配置搜索路径
+#7. 如果配置了plugins，即执行多个cni插件，调用每个cni插件前将上次执行结果带入，最后cni插件的执行结果返回到stdout
+
+0-DelNetworkList()                删除网络，libcni/api.go
+  -getCachedResult()                读取对应的缓存文件，&amp;quot;/var/lib/cni/results/网络名-容器ID-容器接口名&amp;quot;
+  -delNetwork()
+    -buildOneConfig()
+    -ExecPluginWithoutResult()      删除配置，pkg/invoke/exec.go
+      -ExecPlugin()                 和添加不同点：1）参数CNI_COMMAND=DEL；
+                                               2）配置文件NetworkConfigList.Plugins[xxx].NetConf.PrevResult预置为ADD命令缓存结果
+  -delCachedResult()
+    -os.Remove()                    删除缓存文件
+
+0-CheckNetworkList()              检查网络，libcni/api.go
+                                  和DelNetworkList()流程完全一致，仅在执行插件时，参数CNI_COMMAND=CHECK
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;bridge-插件&#34;&gt;bridge 插件&lt;/h1&gt;
+
+&lt;p&gt;Bridge是最简单的CNI网络插件，它首先在Host创建一个网桥，然后再通过veth pair连接该网桥到container netns&lt;/p&gt;
+
+&lt;p&gt;Bridge模式下，多主机网络通信需要额外配置主机路由，或使用overlay网络(如下图绿色粗体标识)&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-e02b4fb5.png&#34; src=&#34;images/index-e02b4fb5.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;bridge-流程&#34;&gt;bridge 流程&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code&gt;###命令行参数、stdin、stdout、stderr可参考 ***REMOVED***
+-main()                                  bridge插件入口，plugins/main/bridge/bridge.go
+  -PluginMain()                          插件框架入口，vendor/github.com/containernetworking/cni/pkg/skel/skel.go
+    -PluginMainWithError()
+      -pluginMain()
+        -getCmdArgsFromEnv()             获取命令、参数、stdin输入等，组织到&amp;quot;CmdArgs&amp;quot;
+        -checkVersionAndCall()           ADD/DEL命令入口
+          -VersionReconciler.Check()     检查stdin传入的配置文件版本号是否支持，vendor/github.com/containernetworking/cni/pkg/version/reconcile.go
+          -cmdAdd/cmdDel()               插件执行函数，入参&amp;quot;CmdArgs&amp;quot;，plugins/main/bridge/bridge.go
+
+
+###添加网络配置
+-cmdAdd()                                         bridge插件添加命令入口，plugins/main/bridge/bridge.go
+  -loadNetConf()                                  解析配置文件
+#----------------------------以下为二层配置---------------------
+  -setupBridge()
+    -ensureBridge()                               构建宿主机网桥，&amp;lt;TK!!!&amp;gt;如果不存在新建，存在仅读取属性
+      -netlink.LinkAdd()                            创建网桥，$(netlink)/link_linux.go
+      -netlink.SetPromiscOn()                       根据需要设置混杂模式
+      -bridgeByName()                               如果网桥已存在，则读取其属性
+        -netlink.LinkByName()
+      -netlink.LinkSetUp()                          启动网桥，link up
+  -ns.GetNS()                                     打开网络空间（其实就是文件），pkg/ns/ns_linux.go
+  -setupVeth()                                    创建vetp接口
+    1-NetNS.Do()                                    在容器网络命名空间执行，pkg/ns/ns_linux.go
+      -ip.SetupVeth()                               pkg/ip/link_linux.go
+        -makeVeth()
+          -RandomVethName()                         构建宿主机侧接口名，&amp;quot;veth+4字节随机数&amp;quot;
+          -makeVethPair()                           创建veth接口对
+            -netlink.LinkAdd()
+            -netlink.LinkByName()
+        -netlink.LinkSetUp()
+        -netlink.LinkSetNsFd()                      宿主机接口设置到宿主机网络空间
+        -ifaceFromNetlinkLink()                     构建创建结果信息，&amp;quot;net.Interface&amp;quot;
+    1-netlink.LinkSetMaster()                       宿主机veth口添加到网桥
+    -netlink.LinkSetHairpin()                       宿主机veth口按需设置发卡模式
+#----------------------------以下为三层配置--------------------
+  -ipam.ExecAdd()                                 运行三层IPAM插件, &amp;lt;TK!!!&amp;gt;仅传入stdin数据，共用此程序的环境os.Getenv()
+    -invoke.DelegateAdd()                           vendor/github.com/containernetworking/cni/pkg/invoke/delegate.go
+      -delegateCommon()
+      -ExecPluginWithResult()                       vendor/github.com/containernetworking/cni/pkg/invoke/exec.go
+        -ExecPlugin()
+        -version.NewResult()
+  -current.NewResultFromResult()                  解析返回结果，&amp;quot;Result&amp;quot;，vendor/github.com/containernetworking/cni/pkg/types/current/types.go
+  -calcGateways()                                 根据返回结果计算网关IP地址、默认路由
+  -NetNS.Do()                                     容器命名空间
+    -ipam.ConfigureIface()                          配置容器IP地址
+    -arping.GratuitousArpOverIface()                免费Arp
+  -ensureAddr()                                   网桥作为网关，需要配置IP地址
+    -netlink.AddrAdd()
+  -enableIPForward()                              设置网桥forward属性
+  -ip.SetupIPMasq()                               设置iptables, pkg/ip/ipmasq_linux.go
+#----------------------------打印结果-------------------------
+  -types.PrintResult()
+    -Print()                                      打印返回结果到&amp;quot;stdout&amp;quot;，vendor/github.com/containernetworking/cni/pkg/types/current/types.go
+      -PrintTo()
+
+###删除网络配置
+-cmdDel()                                         bridge插件删除命令入口，plugins/main/bridge/bridge.go
+  -loadNetConf()                                  解析配置文件
+  -ipam.ExecDel()                                 运行三层IPAM插件
+  -ip.DelLinkByNameAddr()
+  -ip.TeardownIPMasq()
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;主要的流程：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;调用setupBridge确保机器上有对应的bridge，然后再调用setupVeth在容器对应的namespace下创建好虚拟网络接口。&lt;/li&gt;
+&lt;li&gt;创建完成，就需要通过ipam.ExecAdd(n.IPAM.Type, args.StdinData)向IPAM插件获取IP地址了。
+拿到了IP地址，就会根据IP地址计算对应的路由和网关，然后调用ipam.ConfigureIface(args.IfName, result)将IP地址设置到对应的虚拟网络接口上。&lt;/li&gt;
+&lt;li&gt;还需要将主机上的bridge加上网关的IP，并且开启主机的ip_forward&lt;/li&gt;
+&lt;li&gt;最后再调用ip.SetupIPMasq(ip.Network(&amp;amp;ipc.Address), chain, comment)加上IP转发规则，一切正常，按要求输出结果到stdout整个Add操作结束。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;运行-bridge-插件&#34;&gt;运行 bridge 插件&lt;/h2&gt;
+
+&lt;p&gt;bridge 插件网络配置示例&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;###bridge插件配置示例
+{
+    &amp;quot;cniVersion&amp;quot;: &amp;quot;0.3.0&amp;quot;,           #CNI版本号
+    &amp;quot;name&amp;quot;: &amp;quot;mynet&amp;quot;,                 #网络名称，需保证唯一性
+    &amp;quot;type&amp;quot;: &amp;quot;bridge&amp;quot;,                #插件类型，即插件可执行文件名
+    &amp;quot;bridge&amp;quot;: &amp;quot;mynet0&amp;quot;,              #
+    &amp;quot;isDefaultGateway&amp;quot;: true,        #
+    &amp;quot;forceAddress&amp;quot;: false,           #
+    &amp;quot;ipMasq&amp;quot;: true,                  #将宿主机做网关，路由到container
+    &amp;quot;hairpinMode&amp;quot;: true,             #
+    &amp;quot;ipam&amp;quot;: {                        #
+        &amp;quot;type&amp;quot;: &amp;quot;host-local&amp;quot;,        #IPAM可执行插件名
+        &amp;quot;subnet&amp;quot;: &amp;quot;10.10.0.0/16&amp;quot;     #
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code&gt;创建 ns
+$ sudo ip netns add cni_test
+
+在 plugin 路径下
+$ cat /etc/cni/net.d/11-mynet.conf | sudo CNI_COMMAND=ADD CNI_NETNS=/var/run/netns/cni_test CNI_PATH=./bin CNI_IFNAME=eth0 CNI_CONTAINERID=xxx ./bin/bridge
+
+或者通过 cnitool 来运行插件，cnitool 调用对应的 type 的插件并且传递响应的参数
+$ sudo CNI_PATH=./bin cnitool add bridge /var/run/netns/testing
+
+{
+    &amp;quot;cniVersion&amp;quot;: &amp;quot;0.4.0&amp;quot;,
+    &amp;quot;interfaces&amp;quot;: [
+        {
+            &amp;quot;name&amp;quot;: &amp;quot;cni0&amp;quot;,
+            &amp;quot;mac&amp;quot;: &amp;quot;9a:f2:1f:e9:2a:ae&amp;quot;
+        },
+        {
+            &amp;quot;name&amp;quot;: &amp;quot;vethc895566c&amp;quot;,
+            &amp;quot;mac&amp;quot;: &amp;quot;ca:06:5a:81:3b:2d&amp;quot;
+        },
+        {
+            &amp;quot;name&amp;quot;: &amp;quot;eth0&amp;quot;,
+            &amp;quot;mac&amp;quot;: &amp;quot;32:fb:77:5b:58:9e&amp;quot;,
+            &amp;quot;sandbox&amp;quot;: &amp;quot;/var/run/netns/cni_test&amp;quot;
+        }
+    ],
+    &amp;quot;ips&amp;quot;: [
+        {
+            &amp;quot;version&amp;quot;: &amp;quot;4&amp;quot;,
+            &amp;quot;interface&amp;quot;: 2,
+            &amp;quot;address&amp;quot;: &amp;quot;10.22.0.2/16&amp;quot;,
+            &amp;quot;gateway&amp;quot;: &amp;quot;10.22.0.1&amp;quot;
+        }
+    ],
+    &amp;quot;routes&amp;quot;: [
+        {
+            &amp;quot;dst&amp;quot;: &amp;quot;0.0.0.0/0&amp;quot;
+        }
+    ],
+    &amp;quot;dns&amp;quot;: {}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;查看配置结果&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ ifconfig  cni0
+cni0      Link encap:Ethernet  HWaddr 9a:f2:1f:e9:2a:ae
+          inet addr:10.22.0.1  Bcast:10.22.255.255  Mask:255.255.0.0
+
+$ brctl show
+bridge name	bridge id		STP enabled	interfaces
+cni0		8000.9af21fe92aae	no		vethc895566c
+
+
+$ sudo ip netns exec cni_test ifconfig
+eth0      Link encap:Ethernet  HWaddr 32:fb:77:5b:58:9e
+          inet addr:10.22.0.2  Bcast:10.22.255.255  Mask:255.255.0.0
+
+
+$ sudo ip netns exec cni_test ip route
+default via 10.22.0.1 dev eth0
+10.22.0.0/16 dev eth0  proto kernel  scope link  src 10.22.0.2
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;删除网络配置&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$ sudo ip netns del cni_test
+$ sudo iifconfig cni0 down
+$ sudo ibrctl delbr cni0
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;ipam&#34;&gt;IPAM&lt;/h1&gt;
+
+&lt;p&gt;host-local是最常用的CNI IPAM插件，用来给container分配IP地址，以 local-host 为例。&lt;/p&gt;
+
+&lt;h2 id=&#34;数据结构&#34;&gt;数据结构&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;###路由信息，vendor/github.com/containernetworking/cni/pkg/types/types.go
+type IPNet net.IPNet
+type Route struct {
+	Dst net.IPNet
+	GW  net.IP
+}
+###IPAM插件关注的网络配置，plugins/ipam/host-local/backend/allocator/config.go
+type Range struct {
+	RangeStart net.IP      `json:&amp;quot;rangeStart,omitempty&amp;quot;` #起始值
+	RangeEnd   net.IP      `json:&amp;quot;rangeEnd,omitempty&amp;quot;`   #结束值
+	Subnet     types.IPNet `json:&amp;quot;subnet&amp;quot;`               #所属段
+	Gateway    net.IP      `json:&amp;quot;gateway,omitempty&amp;quot;`    #配置此IP段中的IP时，对应的gw
+}
+type RangeSet []Range
+type IPAMConfig struct {
+	*Range
+	Name       string
+	Type       string         `json:&amp;quot;type&amp;quot;`
+	Routes     []*types.Route `json:&amp;quot;routes&amp;quot;`
+	DataDir    string         `json:&amp;quot;dataDir&amp;quot;`      #存储IPAM插件结果，默认值&amp;quot;/var/lib/cni/networks&amp;quot;
+	ResolvConf string         `json:&amp;quot;resolvConf&amp;quot;`
+	Ranges     []RangeSet     `json:&amp;quot;ranges&amp;quot;`       #可分配IP段集合
+	IPArgs     []net.IP       `json:&amp;quot;-&amp;quot;`            #存储从命令行参数CNI_ARGS，或配置参数args传入的需要配置的指定的IP地址
+}
+
+type IPAMArgs struct {
+	IPs []net.IP `json:&amp;quot;ips&amp;quot;`                      #配置文件可指定接口需要配置的IP
+}
+
+type Net struct {
+	Name          string      `json:&amp;quot;name&amp;quot;`        #网络名
+	CNIVersion    string      `json:&amp;quot;cniVersion&amp;quot;`  #
+	IPAM          *IPAMConfig `json:&amp;quot;ipam&amp;quot;`        #本插件关注的配置
+	RuntimeConfig struct {                         #The capability arg
+		IPRanges []RangeSet `json:&amp;quot;ipRanges,omitempty&amp;quot;`
+	} `json:&amp;quot;runtimeConfig,omitempty&amp;quot;`
+	Args *struct {                                 #可忽略的配置项
+		A *IPAMArgs `json:&amp;quot;cni&amp;quot;`
+	} `json:&amp;quot;args&amp;quot;`
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;local-host插件流程&#34;&gt;local-host插件流程&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;###框架流程同CNI插件，略过
+
+###ADD指令: 每个IP range都分配一个IP，并且返回其配置的gw；
+###        如果配置文件通过args，或通过CNI_ARGS传入了必须配置的IP，则要求此IP属于配置的IP段，否则报错
+###        配置的IP总个数为IP range数，要求的IP必须位于配置的IP range，如果没有指定IP，则从IP range顺序取
+-cmdAdd()                             入口函数,plugins/ipam/host-local/main.go
+  -LoadIPAMConfig()                   解析参数、配置文件，提取IP段范围，plugins/ipam/host-local/backend/allocator/config.go
+    -types.LoadArgs()                   解析${CNI_ARGS}，&amp;lt;TK!!!&amp;gt;仅解析&amp;quot;ip=xxx&amp;quot;, 并且仅保存最后一个
+    -解析&amp;quot;Net.args&amp;quot;                      存储到&amp;quot;IPAMConfig.IPArgs&amp;quot;
+    -将&amp;quot;IPAMConfig.Range&amp;quot;添加到&amp;quot;IPAMConfig.Ranges&amp;quot;
+    -将&amp;quot;Net.runtimeConfig.IPRanges&amp;quot;添加到&amp;quot;IPAMConfig.Ranges&amp;quot;
+    -Overlaps()                          判断地址段是否存在重叠, plugins/ipam/host-local/backend/allocator/range.go
+  -parseResolvConf()                  解析指定的DNS配置文件，获取DNS地址, plugins/ipam/host-local/dns.go
+  -disk.New()                         创建结果缓存目录，默认&amp;quot;/var/lib/cni/networks/网络名&amp;quot;, plugins/ipam/host-local/backend/disk/backend.go
+  -allocator.Get()                    获取符合要求的某个具体IP地址,plugins/ipam/host-local/backend/allocator/allocator.go
+    -Store.Reserve()                     plugins/ipam/host-local/backend/disk/backend.go
+                                         &amp;quot;/var/lib/cni/networks/网络名/已分配IP地址&amp;quot;存储&amp;quot;容器ID\n接口名&amp;quot;
+                                         &amp;quot;/var/lib/cni/networks/网络名/last_reserved_ip.IPAMConfig-Ranges数组索引&amp;quot;存储&amp;quot;已分配IP地址&amp;quot;
+  -types.PrintResult()                输出分配结果到stdout
+                                         Result.Routes = IPAMConfig.Routes
+                                         Result.IPs = 提取的IP、网关
+                                         Result.DNS = IPAMConfig.ResolvConf配置解析结果
+
+###DEL指令
+-cmdDel()                             入口函数,plugins/ipam/host-local/main.go
+  -LoadIPAMConfig()
+  -disk.New()
+  -ipAllocator.Release()              释放IP，清理记录的缓存目录，plugins/ipam/host-local/backend/disk/backend.go
+    -Store.ReleaseByID()                 删除文件&amp;quot;/var/lib/cni/networks/网络名/已分配IP地址&amp;quot;
+      -ReleaseByKey()
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;运行-host-local-插件&#34;&gt;运行 host-local 插件&lt;/h2&gt;
+
+&lt;p&gt;host-local 配置示例&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
+    &amp;quot;ipam&amp;quot;: {                              
+        &amp;quot;type&amp;quot;: &amp;quot;host-local&amp;quot;,
+        &amp;quot;subnet&amp;quot;: &amp;quot;10.10.0.0/16&amp;quot;,          
+        &amp;quot;rangeStart&amp;quot;: &amp;quot;10.10.1.20&amp;quot;,        
+        &amp;quot;rangeEnd&amp;quot;: &amp;quot;10.10.3.50&amp;quot;,          
+        &amp;quot;gateway&amp;quot;: &amp;quot;10.10.0.254&amp;quot;,          
+        &amp;quot;routes&amp;quot;: [                        
+            { &amp;quot;dst&amp;quot;: &amp;quot;0.0.0.0/0&amp;quot; },
+            { &amp;quot;dst&amp;quot;: &amp;quot;192.168.0.0/16&amp;quot;, &amp;quot;gw&amp;quot;: &amp;quot;10.10.5.1&amp;quot; }
+        ],
+        &amp;quot;dataDir&amp;quot;: &amp;quot;/var/my-orchestrator/container-ipam-state&amp;quot;     
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;cat ./net.d/10-mynet.conf  | sudo CNI_COMMAND=ADD CNI_CONTAINERID=xxx CNI_NETNS=/var/run/netns/cni_test CNI_IFNAME=eth0 CNI_PATH=./bin ./bin/host-local
+{
+    &amp;quot;cniVersion&amp;quot;: &amp;quot;0.4.0&amp;quot;,
+    &amp;quot;ips&amp;quot;: [
+        {
+            &amp;quot;version&amp;quot;: &amp;quot;4&amp;quot;,
+            &amp;quot;address&amp;quot;: &amp;quot;10.22.0.5/16&amp;quot;,
+            &amp;quot;gateway&amp;quot;: &amp;quot;10.22.0.1&amp;quot;
+        }
+    ],
+    &amp;quot;routes&amp;quot;: [
+        {
+            &amp;quot;dst&amp;quot;: &amp;quot;0.0.0.0/0&amp;quot;
+        }
+    ],
+    &amp;quot;dns&amp;quot;: {}
+}
+&lt;/code&gt;&lt;/pre&gt;
 </description>
     </item>
     
@@ -1513,7 +2028,7 @@ type ServicePortName struct {
     </item>
     
     <item>
-      <title>Kubernetes网络框架</title>
+      <title>Kubernetes 网络框架</title>
       <link>/post/cloud/k8s/201905-k8s-network-arch/</link>
       <pubDate>Tue, 28 May 2019 00:00:00 +0000</pubDate>
       
@@ -3087,9 +3602,12 @@ func doSomething(pod) {
 
 &lt;p&gt;如果底层的网络是ip fabric的方式，三层网络是可靠的，只需要部署一套calico。&lt;/p&gt;
 
-&lt;p&gt;剩下的关键点就是怎样设计BGP网络，&lt;a href=&#34;https://docs.projectcalico.org/v2.1/reference/private-cloud/l3-interconnect-fabric&#34; target=&#34;_blank&#34;&gt;calico over ip fabrics&lt;/a&gt;中给出两种设计方式:
-1. AS per rack:   每个rack(机架)组成一个AS，每个rack的TOR交换机与核心交换机组成一个AS
-2. AS per server: 每个node做为一个AS，TOR交换机组成一个transit AS&lt;/p&gt;
+&lt;p&gt;剩下的关键点就是怎样设计BGP网络，&lt;a href=&#34;https://docs.projectcalico.org/v2.1/reference/private-cloud/l3-interconnect-fabric&#34; target=&#34;_blank&#34;&gt;calico over ip fabrics&lt;/a&gt;中给出两种设计方式:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;AS per rack:   每个rack(机架)组成一个AS，每个rack的TOR交换机与核心交换机组成一个AS&lt;/li&gt;
+&lt;li&gt;AS per server: 每个node做为一个AS，TOR交换机组成一个transit AS&lt;/li&gt;
+&lt;/ol&gt;
 
 &lt;p&gt;这两种方式采用的是&lt;a href=&#34;https://tools.ietf.org/html/draft-ietf-rtgwg-bgp-routing-large-dc-11&#34; target=&#34;_blank&#34;&gt;Use of BGP for routing in large-scale data centers&lt;/a&gt;中的建议。&lt;/p&gt;
 
@@ -3119,23 +3637,27 @@ EndpointB收到了报文 &amp;lt;--  nodeB收到了报文 &amp;lt;-- TOR交换�
 
 &lt;p&gt;Downward Default Model在上面的几种组网方式的基础上，优化了路由的管理。&lt;/p&gt;
 
-&lt;p&gt;在上面的三种方式中，每个node、每个TOR交换机、每个核心交换机都需要记录全网路由。&lt;/p&gt;
+&lt;p&gt;在上面的方式中，每个node、每个TOR交换机、每个核心交换机都需要记录全网路由。&lt;/p&gt;
 
-&lt;p&gt;“Downward Default model”模式中:
-1. 每个node向上(TOR)通告所有路由信息，而TOR向下(node)只通告一条默认路由
-2. 每个TOR向上(核心交换机)通告所有路由，核心交换机向下(TOR)只通告一条默认路由
-3. node只知晓本地的路由
-4. TOR只知道接入到自己的所有node上的路由
-5. 核心交换机知晓所有的路由&lt;/p&gt;
+&lt;p&gt;“Downward Default model”模式中:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;每个node向上(TOR)通告所有路由信息，而TOR向下(node)只通告一条默认路由&lt;/li&gt;
+&lt;li&gt;每个TOR向上(核心交换机)通告所有路由，核心交换机向下(TOR)只通告一条默认路由&lt;/li&gt;
+&lt;li&gt;node只知晓本地的路由&lt;/li&gt;
+&lt;li&gt;TOR只知道接入到自己的所有node上的路由&lt;/li&gt;
+&lt;li&gt;核心交换机知晓所有的路由&lt;/li&gt;
+&lt;/ol&gt;
 
 &lt;p&gt;这种模式减少了TOR交换机和node上的路由数量，但缺点是，发送到无效IP的流量必须到达核心交换机以后，才能被确定为无效。&lt;/p&gt;
 
 &lt;p&gt;endpoints之间的通信过程:&lt;/p&gt;
 
-&lt;p&gt;EndpointA发出报文  &amp;ndash;&amp;gt; nodeA默认路由到TOR交换机A &amp;ndash;&amp;gt; TOR交换机A默认路由到核心交换机 &amp;ndash;+
+&lt;pre&gt;&lt;code&gt;EndpointA发出报文  --&amp;gt; nodeA默认路由到TOR交换机A --&amp;gt; TOR交换机A默认路由到核心交换机 --+
                                                                                       |
                                                                                       v
-EndpointB收到了报文 &amp;lt;&amp;ndash;  nodeB收到了报文 &amp;lt;&amp;ndash; TOR交换机B收到了报文 &amp;lt;&amp;ndash; 核心交换机找到了下一跳地址nodeB&lt;/p&gt;
+EndpointB收到了报文 &amp;lt;--  nodeB收到了报文 &amp;lt;-- TOR交换机B收到了报文 &amp;lt;-- 核心交换机找到了下一跳地址nodeB
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;h2 id=&#34;calico验证&#34;&gt;calico验证&lt;/h2&gt;
 
@@ -3225,15 +3747,10 @@ mv calicoctl /user/local/bin/
 
 &lt;p&gt;在每台主机上均运行命令：&lt;/p&gt;
 
-&lt;pre&gt;&lt;code&gt;sudo calicoctl node run --node-image=calico/node:v2.6.10
-
-sudo calicoctl node run --ip=10.48.35.14 --name node01 --node-image quay.io/calico/node:v2.6.0
-
-k8s-ep98
-sudo calicoctl node run --ip=10.48.35.35 --name node02 --node-image quay.io/calico/node:v2.6.0
+&lt;pre&gt;&lt;code&gt;sudo calicoctl node run --ip=10.48.35.14 --name node01 --node-image quay.io/calico/node:v2.6.0
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;其中 calicoctl 命令里的 name，每台主机均可以根据自身 ip 来填写。 命令实际使用 calico/node 镜像启动了一个容器，执行输出内容如下：&lt;/p&gt;
+&lt;p&gt;其中 calicoctl 命令里的 name 和 ip，每台主机均可以根据自身情况来填写。 命令实际使用 calico/node 镜像启动了一个容器，执行输出内容如下：&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;sudo calicoctl node run --name node01 --ip=10.48.32.5
 Running command to load modules: modprobe -a xt_set ip6_tables
@@ -3319,11 +3836,8 @@ d8af5a88e634        net2                calico              global
 
 &lt;p&gt;node01:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code&gt;ok
-sudo docker run -tid --name=test1 --net=net1 busybox
+&lt;pre&gt;&lt;code&gt;sudo docker run -tid --name=test1 --net=net1 busybox
 sudo docker run --net net2 --name test2 -tid busybox
-
-sudo docker run -tid --name=test5 --net=net1 busybox
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;node02:&lt;/p&gt;
@@ -3392,7 +3906,7 @@ PING 192.168.246.196 (192.168.246.196): 56 data bytes
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;ul&gt;
-&lt;li&gt;容器网卡cali0即15号网卡，对接host节点16号网卡；&lt;/li&gt;
+&lt;li&gt;容器网卡cali0即16号网卡，对接host节点15号网卡；&lt;/li&gt;
 &lt;li&gt;也再次印证容器获取的是/32位主机地址；&lt;/li&gt;
 &lt;li&gt;注意容器网卡的mac地址”ee:ee:ee:ee:ee:ee”, 这是1个固定的特殊地址（所有calico生成的容器mac地址均一样），因为calico只关心三层的ip地址，而不关心二层mac地址&lt;/li&gt;
 &lt;/ul&gt;
@@ -3455,8 +3969,6 @@ default via 169.254.1.1 dev cali0
 
 &lt;p&gt;总的来说，可以认为 calico 把主机作为容器的默认网关来使用，所有的报文发到主机，然后主机根据路由表进行转发。和经典的网络架构不同的是，calico 并没有给默认网络配置一个 IP 地址（这样每个网络都会额外消耗一个 IP 资源，而且主机上也会增加对应的 IP 地址和路由信息），而是通过 arp proxy 和修改容器路由表来实现。&lt;/p&gt;
 
-&lt;h3 id=&#34;calico的使用&#34;&gt;calico的使用&lt;/h3&gt;
-
 &lt;p&gt;在calico中，IP被称为Endpoint，宿主机上的容器IP称为workloadEndpoint，物理机IP称为hostEndpoint。ipPool等一同被作为资源管理。&lt;/p&gt;
 
 &lt;p&gt;查看默认的地址段:&lt;/p&gt;
@@ -3471,14 +3983,6 @@ fd80:24e2:f998:72d6::/64   false   false
 
 &lt;p&gt;calico为每个宿主机的容器分配了一个网段
 宿主机上每个容器都有一条对应的路由表项，下一跳是veth pair，&lt;/p&gt;
-
-&lt;p&gt;calico 并没有给默认网络配置一个 IP 地址（这样每个网络都会额外消耗一个 IP 资源，而且主机上也会增加对应的 IP 地址和路由信息）。
-calico开启了arp proxy，这样每个宿主机端的veth pair都会回复容器对默认网关的arp请求。
-主机这个 interface 不管 ARP 请求的内容，直接用自己的 MAC 地址作为应答的行为被成为 ARP proxy，是 calico 开启的，可以通过下面的命令确认：&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;$ cat /proc/sys/net/ipv4/conf/calif24874aae57/proxy_arp
-1
-&lt;/code&gt;&lt;/pre&gt;
 
 &lt;h3 id=&#34;组件和架构&#34;&gt;组件和架构&lt;/h3&gt;
 
