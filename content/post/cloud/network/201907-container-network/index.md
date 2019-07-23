@@ -1,7 +1,7 @@
 ---
 title: "高性能、高可靠的容器网络"
-subtitle: "基于 OVS、SR-IOV、BGP 高性能、大规模的可靠网络"
-summary: "基于 OVS、SR-IOV、BGP 高性能、大规模的可靠网络"
+subtitle: "基于 OVS、SR-IOV、BGP 组网的高性能、大规模的可靠网络"
+summary: "基于 OVS、SR-IOV、BGP 组网的高性能、大规模的可靠网络"
 date: "2019-07-22"
 draft: false
 tags: ["Network"]
