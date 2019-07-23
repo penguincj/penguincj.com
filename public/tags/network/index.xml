@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>penguincj &amp;copy; 2019</copyright>
-    <lastBuildDate>Mon, 08 Jul 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 22 Jul 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/network/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>高性能、高可靠的容器网络</title>
+      <link>/post/cloud/network/201907-container-network/</link>
+      <pubDate>Mon, 22 Jul 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/network/201907-container-network/</guid>
+      <description>基于 OVS、SR-IOV、BGP 高性能、大规模的可靠网络</description>
+    </item>
     
     <item>
       <title>CNI 源码分析</title>
@@ -19,6 +28,15 @@
       
       <guid>/post/cloud/network/201907-cni/</guid>
       <description>CNI 让虚拟网络的创建和删除变得统一而又方便定制和扩展</description>
+    </item>
+    
+    <item>
+      <title>基于 Arp to Host 的去堆叠高可用网络</title>
+      <link>/post/cloud/network/201906-stackless/</link>
+      <pubDate>Mon, 17 Jun 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/network/201906-stackless/</guid>
+      <description>去堆叠才能实现网络真正的高可用</description>
     </item>
     
     <item>

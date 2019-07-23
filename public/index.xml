@@ -7,7 +7,7 @@
     <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator>
     <language>en-us</language>
     <copyright>penguincj &amp;copy; 2019</copyright>
-    <lastBuildDate>Mon, 08 Jul 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 22 Jul 2019 00:00:00 +0000</lastBuildDate>
     
 	    <atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
@@ -81,6 +81,106 @@
 &lt;p&gt;Suspendisse a tincidunt lacus. Curabitur at urna sagittis, dictum ante sit amet, euismod magna. Sed rutrum massa id tortor commodo, vitae elementum turpis tempus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean purus turpis, venenatis a ullamcorper nec, tincidunt et massa. Integer posuere quam rutrum arcu vehicula imperdiet. Mauris ullamcorper quam vitae purus congue, quis euismod magna eleifend. Vestibulum semper vel augue eget tincidunt. Fusce eget justo sodales, dapibus odio eu, ultrices lorem. Duis condimentum lorem id eros commodo, in facilisis mauris scelerisque. Morbi sed auctor leo. Nullam volutpat a lacus quis pharetra. Nulla congue rutrum magna a ornare.&lt;/p&gt;
 
 &lt;p&gt;Aliquam in turpis accumsan, malesuada nibh ut, hendrerit justo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quisque sed erat nec justo posuere suscipit. Donec ut efficitur arcu, in malesuada neque. Nunc dignissim nisl massa, id vulputate nunc pretium nec. Quisque eget urna in risus suscipit ultricies. Pellentesque odio odio, tincidunt in eleifend sed, posuere a diam. Nam gravida nisl convallis semper elementum. Morbi vitae felis faucibus, vulputate orci placerat, aliquet nisi. Aliquam erat volutpat. Maecenas sagittis pulvinar purus, sed porta quam laoreet at.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>高性能、高可靠的容器网络</title>
+      <link>/post/cloud/network/201907-container-network/</link>
+      <pubDate>Mon, 22 Jul 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/network/201907-container-network/</guid>
+      <description>
+
+&lt;p&gt;随着容器和云原生的发展，对网络提出了新的要求，无论是平台的分布化以及业务的微服务化，都需要一个强大的网络来支撑大规模虚拟节点以及微服务之间的通信。&lt;/p&gt;
+
+&lt;p&gt;具体到技术层面，云原生对于网络的要求，一是基础的二三层网络联通，二是4~7层的高级网络功能。&lt;/p&gt;
+
+&lt;p&gt;本文主要描述适用于容器的二三层网络，该网络需要满足如下的需求：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;大规模，连接成千上万的容器&lt;/li&gt;
+&lt;li&gt;高性能（低延时、高带宽）&lt;/li&gt;
+&lt;li&gt;高可靠&lt;/li&gt;
+&lt;li&gt;高效的网络监控，及早发现故障，跟踪故障和故障自愈&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;拓扑&#34;&gt;拓扑&lt;/h1&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-e03510b7.png&#34; src=&#34;images/index-e03510b7.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;服务器的双网卡做 bond 绑定之后双归到两台的不同的 ToR 上，两台 ToR 组成去堆叠组网，这样的基础物理网络具有高可靠性、大带宽的优点。&lt;/p&gt;
+
+&lt;h1 id=&#34;虚拟网络&#34;&gt;虚拟网络&lt;/h1&gt;
+
+&lt;p&gt;服务器内部连接容器的虚拟网络基于 OVS 和智能网卡的方案，兼顾了 OVS 的 SDN 转发灵活控制的特点，又可以将 Openflow 流表 offload 到智能网卡上，通过硬件转发来提高转发性能。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-44abf33f.png&#34; src=&#34;images/index-44abf33f.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;容器网络由 &lt;a href=&#34;/post/cloud/network/201907-cni&#34;&gt;CNI&lt;/a&gt; 创建和删除，在 Kubernetes 创建应用 Pod 之前配置网络时调用。&lt;/p&gt;
+
+&lt;h2 id=&#34;ovs&#34;&gt;OVS&lt;/h2&gt;
+
+&lt;p&gt;OpenvSwitch 以其丰富的功能，作为多层虚拟交换机，已经广泛应用于云环境中。Open vSwitch的主要功能是为物理机上的VM提供二层网络接入，和云环境中的其它物理交换机 并行工作在Layer 2。&lt;/p&gt;
+
+&lt;h2 id=&#34;sr-iov&#34;&gt;SR-IOV&lt;/h2&gt;
+
+&lt;p&gt;SR-IOV(PCI-SIG Single Root I/O Virtualization and Sharing)是PCI-SIG组织发布的规范。&lt;/p&gt;
+
+&lt;p&gt;SR-IOV 设计目标：通过为虚拟机提供独立的I/O地址空间、中断和DMA流而避免VMM的介入；允许设备支持多个虚拟功能，并且最小化每个附加功能的硬件成本。&lt;/p&gt;
+
+&lt;p&gt;SR-IOV引入了两个PCIe的function types&lt;/p&gt;
+
+&lt;p&gt;Physical Functions(PFs)：包括管理SR-IOV功能在内的所有PCIe function。&lt;/p&gt;
+
+&lt;p&gt;Virtual Functions(VFs)：一部分轻量级的PCIe function，只能进行必要的数据操作和配置。&lt;/p&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-276cce23.png&#34; src=&#34;images/index-276cce23.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;SR-IOV机制提供独立多个可配置的VF，每一个VF具有独立的PCIe配置空间。VF是“轻量级”PCIe功能，包含数据传输所需的资源，提供了一种数据输入和输出的机制。&lt;/p&gt;
+
+&lt;p&gt;虚拟机中的VF驱动程序应该是半虚拟化驱动程序(知道它在虚拟化环境中)，并且只执行它可用的操作。&lt;/p&gt;
+
+&lt;p&gt;VF驱动程序是一个专门的驱动程序，它只有某些可用的功能，例如能够在VF中配置DMA描述符、配置MAC地址、VLAN标签等。&lt;/p&gt;
+
+&lt;p&gt;通常，VF提供发送和接收数据的能力, 以及执行复位的功能，复位仅影响VF本身，而不影响整个物理设备。对于超出VF复位或发送和接收数据的动作，VF驱动程序需要与主驱动程序通信。&lt;/p&gt;
+
+&lt;h2 id=&#34;容器&#34;&gt;容器&lt;/h2&gt;
+
+&lt;p&gt;将 SR-IOV 的 VF 加入到容器的 namespace 中，将 VF 对应的 rep 口加入到 OVS 网桥上。这样就连接了宿主机与容器网络。&lt;/p&gt;
+
+&lt;p&gt;容器的 IP 由 IPAM 分配，一般一个 ToR 下有两个 24 位网段的地址来支持最多 506 个容器 IP。&lt;/p&gt;
+
+&lt;p&gt;容器的网关配置在 ToR 上，在容器中设置默认路由，下一跳为网关地址。&lt;/p&gt;
+
+&lt;h2 id=&#34;宿主机&#34;&gt;宿主机&lt;/h2&gt;
+
+&lt;p&gt;通过 OVS 流表来转发内部的流量，通过将 OVS 流表 offload 到智能网卡来提高转发性能、降低时延、增大吞吐。&lt;/p&gt;
+
+&lt;p&gt;对每个容器都增加一条流表，当收到目的 IP 为容器 IP 的报文时，修改报文目的 MAC 为容器的 MAC 然后转发给容器的 VTEP 端口&lt;/p&gt;
+
+&lt;p&gt;宿主机路由表配置一条到宿主机网关的默认路由，宿主机与容器的网段一般是不同的，网关也是不同的，但都是落在 ToR 上。&lt;/p&gt;
+
+&lt;p&gt;从容器发出的流量首先发送到宿主机的 OVS bridge，bridge 查看是否有匹配的流表，如果是到本宿主机内部的流量则直接从对应的 VTEP 发送给容器。如果没有匹配则通过宿主机上的默认路由发送给网关，即 ToR 交换机。&lt;/p&gt;
+
+&lt;h1 id=&#34;物理网络&#34;&gt;物理网络&lt;/h1&gt;
+
+&lt;h2 id=&#34;tor&#34;&gt;ToR&lt;/h2&gt;
+
+&lt;p&gt;ToR 使用 &lt;a href=&#34;/post/cloud/network/201906-stackless&#34;&gt;去堆叠方案&lt;/a&gt; 方案，具有很高的可靠性，在其上生成到服务器和容器的 32 位主机路由，所有到服务器和容器的流量都是经过三层路由转发。&lt;/p&gt;
+
+&lt;p&gt;交换机作为服务器和容器的网关，交换机上有：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;到本机下联服务器、容器 IP 的 32 位主机路由&lt;/li&gt;
+&lt;li&gt;到其他服务器、容器的 24 位网段路由&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;推荐在 ToR 上运行 EBGP 协议来发布路由。&lt;/p&gt;
+
+&lt;h1 id=&#34;总结&#34;&gt;总结&lt;/h1&gt;
+
+&lt;p&gt;该方案基于智能网卡构建的基础网络具有很高的性能和控制的灵活性，不需要做 Overlay，具有很高的稳定性，网络拓扑简单，物理网络无需改造。缺点是智能网卡成本高。&lt;/p&gt;
 </description>
     </item>
     
@@ -596,6 +696,58 @@ type Net struct {
     &amp;quot;dns&amp;quot;: {}
 }
 &lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>基于 Arp to Host 的去堆叠高可用网络</title>
+      <link>/post/cloud/network/201906-stackless/</link>
+      <pubDate>Mon, 17 Jun 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/network/201906-stackless/</guid>
+      <description>
+
+&lt;p&gt;基础网络就好比建筑的地基一样，是保证业务，乃至公司正常运转的第一道防线，要做到基础网络的高可用，这个目标看起来简单，却并不是那么容易做到。本文介绍一种双上联去堆叠设计，为高可用的目标增加了强有力的支撑。&lt;/p&gt;
+
+&lt;h1 id=&#34;为什么去堆叠&#34;&gt;为什么去堆叠？&lt;/h1&gt;
+
+&lt;p&gt;为了支持业务的高可用，物理网络架构往往采用双上行接入的方式，ToR 交换机采用了堆叠机构，从 Server 的接入 link 到 ToR 的层面实现了双活备份，当一台TOR的故障或者单网卡，单条网线的故障时，对于业务系统的可用性影响降到最低，当然对上层业务也会有一定影响，会出现高水位时性能的损失，但是不会出现服务不可用。&lt;/p&gt;
+
+&lt;p&gt;传统的双活接入的方式主要有如下几种：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;堆叠（常用，各厂商私有）&lt;/li&gt;
+&lt;li&gt;VPC（思科私有）&lt;/li&gt;
+&lt;li&gt;M-LAG（各厂商私有）&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;传统双活接入技术的缺点：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;多设备统一控制面，可靠性低、升级困难&lt;/li&gt;
+&lt;li&gt;数量受限，规模受限&lt;/li&gt;
+&lt;li&gt;横向连接浪费端口&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;上述的技术都是要求两台交换机之间通过协议交互共享转发表项信息，甚至堆叠技术要求两台 ToR 在管理和转发层面都 merge 成为一台设备，这在无形中增加了技术复杂度和出问题的概率。实际运行过程中也体现了这一点，两台 ToR 由于堆叠系统的软硬件 bug 原因导致同时宕机的情况屡见不鲜，对业务系统的稳定性形成了很大的挑战。&lt;/p&gt;
+
+&lt;p&gt;需要一种技术能够增加带宽提高网卡冗余的同时，真正解决了交换机接入硬件和软件同时冗余。目前在国内的 BAT 都有一些落地实践。&lt;/p&gt;
+
+&lt;h1 id=&#34;去堆叠组网&#34;&gt;去堆叠组网&lt;/h1&gt;
+
+&lt;p&gt;&lt;img alt=&#34;index-dbf25a4e.png&#34; src=&#34;images/index-dbf25a4e.png&#34; width=&#34;&#34; height=&#34;&#34; &gt;&lt;/p&gt;
+
+&lt;p&gt;服务器双网卡采用 bond + mod4，依靠捆绑实现分担与保护，交换机依靠 ECMP 实现负载分担与保护，此方式依赖：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;接入交换机独立，但作为网关，需要配置相同的 IP &amp;amp; MAC&lt;/li&gt;
+&lt;li&gt;服务器网卡捆绑做负载分担&lt;/li&gt;
+&lt;li&gt;服务器网卡与交换机运行 LACP&lt;/li&gt;
+&lt;li&gt;交换机做 LACP 欺骗，两台交换机配置相同的 LACP SystemID，不同的 PortID&lt;/li&gt;
+&lt;li&gt;交换机支持 ARP 代理，所有的 ARP 请求都以网关 MAC 回应，将交换机的流量都转成路由转发&lt;/li&gt;
+&lt;li&gt;交换机将 ARP 转化为主机路由并发布&lt;/li&gt;
+&lt;li&gt;服务器网卡双发 ARP，确保交换机都学习到 ARP&lt;/li&gt;
+&lt;/ul&gt;
 </description>
     </item>
     
