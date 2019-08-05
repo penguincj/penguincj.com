@@ -99,10 +99,24 @@ VxLAN （Virtual eXtensible Local Area Network，虚拟扩展局域网）正是�
 
 - 组网相对复杂
 
-
-
-
 ## OVS
+
+说到虚拟网络不得不提到大名鼎鼎的 [OVS（Open vSwitch）](https://www.openvswitch.org/)，OVS 是由 Nicira Networks 公司用 C 语言开发的高质量、多层虚拟交换机，为连接虚拟主机构建复杂网络应用提供支持，支持多种数据面和管理面协议，如：VxLAN、sFlow、CLI、LACP 等。
+
+OVS 支持 Openflow 协议，可以使用任何支持 Openflow 协议的控制器集成，比如可以与 OpenStack Neutron 的网络插件对接；在没有 Openflow 控制器的情况下 OVS 可以作为传统的二层交换机通过 MAC 学习来完成二层数据转发。Linux Bridge 也可以通过 MAC 地址学习实现二层转发，但是功能比较简单，而 OVS 支持更多的高级特性，比如 Openflow、QoS、ACL 及多种隧道封装，这也是 OVS 更加适用于 SDN 的原因。
+
+
+主要包括以下模块和特性：
+
+-
+
+
+以其对 Openflow 的支持，可以灵活的实现多种网络协议和各种网络需求，而被广泛应用在云计算虚拟网络中，
+
+
+### 问题
+
+OVS 支持 ACL QoS ？
 
 
 

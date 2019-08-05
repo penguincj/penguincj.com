@@ -85,6 +85,15 @@
     </item>
     
     <item>
+      <title>OVS 虚拟交换机</title>
+      <link>/post/cloud/network/201904-ovs/</link>
+      <pubDate>Sat, 13 Apr 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/network/201904-ovs/</guid>
+      <description>介绍 OVS 在云计算中的应用</description>
+    </item>
+    
+    <item>
       <title>Docker 容器组件</title>
       <link>/post/cloud/container/201903-container-component/</link>
       <pubDate>Sun, 24 Mar 2019 00:00:00 +0000</pubDate>

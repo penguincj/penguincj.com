@@ -49,6 +49,15 @@
     </item>
     
     <item>
+      <title>OVS 虚拟交换机</title>
+      <link>/post/cloud/network/201904-ovs/</link>
+      <pubDate>Sat, 13 Apr 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/network/201904-ovs/</guid>
+      <description>介绍 OVS 在云计算中的应用</description>
+    </item>
+    
+    <item>
       <title>Calico 架构与实践</title>
       <link>/post/cloud/network/201812-calico/</link>
       <pubDate>Fri, 07 Dec 2018 00:00:00 +0000</pubDate>

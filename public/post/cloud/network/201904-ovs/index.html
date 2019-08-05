@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="generator" content="Source Themes Academic 4.3.1">
+
+  
+
+  
+  
+  
+  
+  
+    
+    
+    
+  
+  
+
+  <meta name="author" content="L CJ">
+
+  
+  
+  
+    
+  
+  <meta name="description" content="介绍 OVS 在云计算中的应用">
+
+  
+  <link rel="alternate" hreflang="en-us" href="/post/cloud/network/201904-ovs/">
+
+  
+
+
+  
+
+  
+  
+  
+  <meta name="theme-color" content="#4caf50">
+  
+
+  
+  
+  
+  
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.8.6/css/academicons.min.css" integrity="sha256-uFVgMKfistnJAfoCUQigIl+JfUaP47GrRKjf6CTPVmw=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.0/css/all.css" integrity="sha384-aOkxzJ5uQz7WBObEZcHvV5JvRW3TUc2rNPA7pe3AwnsUohiw1Vj2Rgx2KSOkF5+h" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" integrity="sha256-ygkqlh3CYSUri3LhQxzdcm0n1EQvH2Y+U5S2idbLtxs=" crossorigin="anonymous">
+
+    
+    
+    
+      
+    
+    
+      
+      
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/rainbow.min.css" crossorigin="anonymous" title="hl-light">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/rainbow.min.css" crossorigin="anonymous" title="hl-dark" disabled>
+      
+    
+
+    
+
+    
+
+  
+
+  
+  
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Montserrat:400,700|Roboto:400,400italic,700|Roboto+Mono">
+  
+
+  
+  
+  
+  <link rel="stylesheet" href="/css/academic.min.49dfa1f0690a8fd34d45bd1ad9b6524c.css">
+
+  
+
+  
+  
+    <script>
+      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+      ga('create', 'UA-144280273-1', 'auto');
+      
+      ga('require', 'eventTracker');
+      ga('require', 'outboundLinkTracker');
+      ga('require', 'urlChangeTracker');
+      ga('send', 'pageview');
+    </script>
+    <script async src="//www.google-analytics.com/analytics.js"></script>
+    
+    <script async src="https://cdnjs.cloudflare.com/ajax/libs/autotrack/2.4.1/autotrack.js" integrity="sha512-HUmooslVKj4m6OBu0OgzjXXr+QuFYy/k7eLI5jdeEy/F4RSgMn6XRWRGkFi5IFaFgy7uFTkegp3Z0XnJf3Jq+g==" crossorigin="anonymous"></script>
+    
+  
+  
+
+  
+
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" type="image/png" href="/img/icon.png">
+  <link rel="apple-touch-icon" type="image/png" href="/img/icon-192.png">
+
+  <link rel="canonical" href="/post/cloud/network/201904-ovs/">
+
+  
+  
+  
+  
+    
+    
+  
+  <meta property="twitter:card" content="summary">
+  
+  <meta property="og:site_name" content="L CJ的博客">
+  <meta property="og:url" content="/post/cloud/network/201904-ovs/">
+  <meta property="og:title" content="OVS 虚拟交换机 | L CJ的博客">
+  <meta property="og:description" content="介绍 OVS 在云计算中的应用"><meta property="og:image" content="/img/icon-192.png">
+  <meta property="og:locale" content="en-us">
+  
+  <meta property="article:published_time" content="2019-04-13T00:00:00&#43;00:00">
+  
+  <meta property="article:modified_time" content="2019-04-13T00:00:00&#43;00:00">
+  
+
+  
+
+  
+
+  <title>OVS 虚拟交换机 | L CJ的博客</title>
+
+  <meta name="baidu-site-verification" content="qmf99YtDx4" />
+
+  <script>
+  (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      if (curProtocol === 'https') {
+          bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+      }
+      else {
+          bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+      }
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+  })();
+  </script>
+
+
+  
+  
+
+
+</head>
+<body id="top" data-spy="scroll" data-target="#TableOfContents" data-offset="71" >
+  <aside class="search-results" id="search">
+  <div class="container">
+    <section class="search-header">
+
+      <div class="row no-gutters justify-content-between mb-3">
+        <div class="col-6">
+          <h1>Search</h1>
+        </div>
+        <div class="col-6 col-search-close">
+          <a class="js-search" href="#"><i class="fas fa-times-circle text-muted" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div id="search-box">
+        
+        <input name="q" id="search-query" placeholder="Search..." autocapitalize="off"
+        autocomplete="off" autocorrect="off" role="textbox" spellcheck="false" type="search">
+        
+      </div>
+
+    </section>
+    <section class="section-search-results">
+
+      <div id="search-hits">
+        
+      </div>
+
+    </section>
+  </div>
+</aside>
+
+
+
+<nav class="navbar navbar-light fixed-top navbar-expand-lg py-0" id="navbar-main">
+  <div class="container">
+
+    
+      <a class="navbar-brand" href="/">L CJ的博客</a>
+      
+      <button type="button" class="navbar-toggler" data-toggle="collapse"
+              data-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+        <span><i class="fas fa-bars"></i></span>
+      </button>
+      
+
+    
+    <div class="collapse navbar-collapse" id="navbar">
+
+      
+      
+      <ul class="navbar-nav mr-auto">
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#posts">
+            
+            <span>首页</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+
+        <li class="nav-item">
+          <a class="nav-link  active" href="/post/">
+            
+            <span>技术博客</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#projects">
+            
+            <span>开源项目</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#tags">
+            
+            <span>内容标签</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#about">
+            
+            <span>关于</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+      
+      </ul>
+      <ul class="navbar-nav ml-auto">
+      
+
+        
+
+        
+        <li class="nav-item">
+          <a class="nav-link js-search" href="#"><i class="fas fa-search" aria-hidden="true"></i></a>
+        </li>
+        
+
+        
+
+        
+        <li class="nav-item">
+          <a class="nav-link js-dark-toggle" href="#"><i class="fas fa-moon" aria-hidden="true"></i></a>
+        </li>
+        
+
+      </ul>
+
+    </div>
+  </div>
+</nav>
+
+
+<article class="article" itemscope itemtype="http://schema.org/Article">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  
+  
+<div class="article-container pt-3">
+  <h1 itemprop="name">OVS 虚拟交换机</h1>
+
+  
+  <p class="page-subtitle">介绍 OVS 在云计算中的应用</p>
+  
+
+  
+    
+
+
+
+<meta content="2019-04-13 00:00:00 &#43;0000 UTC" itemprop="datePublished">
+<meta content="2019-04-13 00:00:00 &#43;0000 UTC" itemprop="dateModified">
+
+<div class="article-metadata">
+
+  
+  
+
+  
+  <span class="article-date">
+    
+    
+      
+    
+    <time>Apr 13, 2019</time>
+  </span>
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+    
+
+  
+
+</div>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+</div>
+
+
+  <div class="row">
+
+       <div class="col-md-2">
+       </div>
+
+
+       
+  <div class="article-container col-md-8">
+
+    <div class="article-style" itemprop="articleBody">
+      
+
+<p>在云计算之前，应用程序直接运行在数据中心服务器的操作系统上，网络流量通过与服务器相连的硬件交换机转发。随着云计算虚拟化技术的发展，在服务器中可以运行大量的虚拟机或者容器，应用程序运行在虚拟环境中对虚拟网络提出了新的要求，需要一张连通性、隔离性、安全性更好，以及灵活的虚拟网络。需要在服务器中运行虚拟交换机，连接虚拟机和宿主机网络，有几种虚拟交换机方案：Linux bridge, VMware virtual switch, Cisco Nexus 1000V 和 Open vSwitch。</p>
+
+<p><a href="https://www.openvswitch.org/" target="_blank">OVS（Open vSwitch）</a> 是运行在虚拟化平台的虚拟交换机，OVS 是由 Nicira Networks 公司用 C 语言开发的高质量、多层虚拟交换机，为连接虚拟主机构建复杂网络应用提供支持，支持多种数据面和管理面协议，如：VxLAN、sFlow、CLI、LACP 等。</p>
+
+<p>OVS 支持 Openflow 协议，可以使用任何支持 Openflow 协议的控制器集成，比如可以与 OpenStack Neutron 的网络插件对接；在没有 Openflow 控制器的情况下 OVS 可以作为传统的二层交换机通过 MAC 学习来完成二层数据转发。Linux Bridge 也可以通过 MAC 地址学习实现二层转发，但是功能比较简单，而 OVS 支持更多的高级特性，比如 Openflow、QoS、ACL 及多种隧道封装，这也是 OVS 更加适用于 SDN 的原因。</p>
+
+<p>OVS 主要支持如下的 <a href="http://www.openvswitch.org//features/" target="_blank">特性</a>：</p>
+
+<ul>
+<li>VM 通信的网络可视化，通过 NetFlow, sFlow&reg;, IPFIX, SPAN, RSPAN 和 GRE 隧道镜像的方式</li>
+<li>LACP，802.1Q VLAN</li>
+<li>组播</li>
+<li>BFD 双向转发检测和 802.1ag 链路监控</li>
+<li>STP 和 RSTP</li>
+<li>精细的 QoS 控制</li>
+<li>基于端口的流量策略</li>
+<li>网卡绑定，主备切换和四层负载均衡</li>
+<li>支持 Openflow</li>
+<li>支持 IPv6</li>
+<li>多种隧道协议支持，GRE, VXLAN, STT, and Geneve, with IPsec support</li>
+<li>支持用户控件和内核转发引擎的选项配置</li>
+<li>flow-caching 引擎的多流表转发</li>
+<li>转发层的抽象更易于移植到新的软硬件平台。</li>
+</ul>
+
+<h1 id="ovs-架构">OVS 架构</h1>
+
+<p><img alt="index-fad5529d.png" src="images/index-fad5529d.png" width="" height="" ></p>
+
+<p>先看下 OVS 整体架构，内核空间运行着转发功能的 datapath，用户空间运行着 ovs-vswitchd，第一条报文要上送 ovs-vswitchd 转发，ovsdb-server 保存着数据信息。OVS 控制器可以通过 OVSDB 或者 Openflow 协议与 OVS 通信。</p>
+
+<p>OVS 包括以下的核心模块：</p>
+
+<ul>
+<li>ovs-vswitchd 主要模块，实现switch的daemon，包括一个支持流交换的Linux内核模块；</li>
+<li>ovsdb-server 轻量级数据库服务器，提供ovs-vswitchd获取配置信息；</li>
+<li>openvswitch.ko Linux 内核模块中的转发实现</li>
+</ul>
+
+<p>提供了一些工具来方便管理和配置：</p>
+
+<ul>
+<li>ovs-dpctl：用来配置交换机内核模块</li>
+<li>ovs-vsctl：用于查询和更新ovs-vswitchd的配置信息，操作对象为ovsdb-server。更新配置时，命令会等待配置在ovs-vswitchd生效后才返回。</li>
+<li>ovs-appctl：向ovs-vswitchd发送命令。</li>
+<li>ovs-ofctl: 用来配置交换机的flow相关。</li>
+</ul>
+
+<h2 id="组件关系">组件关系</h2>
+
+<p><img alt="index-2fe4c111.png" src="images/index-2fe4c111.png" width="" height="" ></p>
+
+<ul>
+<li>ovs-vswitchd 和 ovsdb-server 运行在用户空间，ovs-vswitchd 通过 unix domain socket 向 ovsdb-server 获取和更新配置信息，ovsdb 通常是一个文件 <code>/etc/openvswitch/conf.db</code>。</li>
+<li>openvswitch.ko 运行在内核空间实现报文的转发，与 ovs-vswitchd 通过 netlink 交互。</li>
+<li>数据交换是通过内核空间的 datapath 转发的，datapath 通过 flow table 来指导转发，当收到一个报文时，按照匹配到的 flow 的 action 来转发。</li>
+</ul>
+
+<h2 id="转发路径">转发路径</h2>
+
+<p>当收到新的一条报文时，在 datapath 中的 flow table 中找不到匹配项，发送给用户空间的 ovs-vswitchd，后者查询数据库判断转发 action，然后把匹配的actions返回给datapath并设置一条datapath flows到 datapath 中，这样后续进入的同类型的数据包因为缓存匹配会被 datapath 直接处理，不用再次进入用户空间。</p>
+
+<p>datapath 专注于数据交换，它不需要知道 OpenFlow 的存在。与 OpenFlow 打交道的是 ovs-vswitchd，ovs-vswitchd 存储所有 Flow 规则供 datapath 查询或缓存。</p>
+
+<p>转发路径参考下图</p>
+
+<p><img alt="index-d2e75602.png" src="images/index-d2e75602.png" width="" height="" ></p>
+
+<h1 id="ovs-常用操作">OVS 常用操作</h1>
+
+<p>以下操作都需要root权限运行，在所有命令中br0表示网桥名称，eth0为网卡名称。</p>
+
+<h2 id="ovs-vsctl">ovs-vsctl</h2>
+
+<p>添加网桥：</p>
+
+<pre><code>#ovs-vsctl add-br br0
+</code></pre>
+
+<p>列出open vswitch中的所有网桥：</p>
+
+<pre><code>#ovs-vsctl list-br
+</code></pre>
+
+<p>判断网桥是否存在</p>
+
+<pre><code>#ovs-vsctl br-exists br0
+</code></pre>
+
+<p>将物理网卡挂接到网桥：</p>
+
+<pre><code>#ovs-vsctl add-port br0 eth0
+</code></pre>
+
+<p>列出网桥中的所有端口：</p>
+
+<pre><code>#ovs-vsctl list-ports br0
+</code></pre>
+
+<p>列出所有挂接到网卡的网桥：</p>
+
+<pre><code>#ovs-vsctl port-to-br eth0
+</code></pre>
+
+<p>查看open vswitch的网络状态：</p>
+
+<pre><code>#ovs-vsctl show
+</code></pre>
+
+<p>删除网桥上已经挂接的网口：</p>
+
+<pre><code>#vs-vsctl del-port br0 eth0
+</code></pre>
+
+<p>删除网桥：</p>
+
+<pre><code>#ovs-vsctl del-br br0
+</code></pre>
+
+<h1 id="ovs-dpdk">OVS DPDK</h1>
+
+<h2 id="dpdk-介绍">DPDK 介绍</h2>
+
+<p>DPDK是X86平台报文快速处理的库和驱动的集合，不是网络协议栈，不提供二层，三层转发功能，不具备防火墙ACL功能，但通过DPDK可以轻松的开发出上述功能。</p>
+
+<p>DPDK的优势在于，可以将用户态的数据，不经过内核直接转发到网卡，实现加速目的。主要架构如图所示：</p>
+
+<p><img alt="index-d68f09d5.png" src="images/index-d68f09d5.png" width="" height="" ></p>
+
+<p>DPDK关键技术点：</p>
+
+<ul>
+<li>使用大页缓存支持来提高内存访问效率。</li>
+<li>利用UIO支持，提供应用空间下驱动程序的支持，也就是说网卡驱动是运行在用户空间的，减小了报文在用户空间和应用空间的多次拷贝。</li>
+<li>利用 Linux 亲和性支持，把控制面线程及各个数据面线程绑定到不同的CPU核，节省了线程在各个CPU核来回调度。</li>
+<li>Lockless， 提供无锁环形缓存管理，加快内存访问效率。</li>
+<li>收发包批处理 ，多个收发包集中到一个cache line，在内存池中实现，无需反复申请和释放。</li>
+<li>PMD驱动，用户态轮询驱动，可以减小上下文切换开销，方便实现虚拟机和主机零拷贝。</li>
+</ul>
+
+<h2 id="ovs-流表转发">OVS 流表转发</h2>
+
+<p>OVS 工作在内核态，与 guest virtio 的数据传输需要多次内核态和用户态的数据切换, 带来性能瓶颈。</p>
+
+<p>OVS当前版本采用Megaflow Cache+Microflow Cache的流Cache组织形式，仍保留了Microflow Cache作为一级Cache，即报文进入后首先查这一级Cache，获取到一个索引值，指向的是最近一次查Megaflow Cache表项。那么报文的首次查表就不需要进行线性地链式搜索，可直接对应到其中一张Megaflow的元组表。这样提高了查表效率和转发性能。</p>
+
+<p>ovs-dpdk 结合了DPDK和vhost-user技术的优势，vhost-user是一个用户态的vhost-backend程序，从虚拟机到host上实现了数据的zero copy。DPDK 高性能(user space) 网卡驱动、大页内存、无锁化结构设计，可以实现万兆网卡线速的性能。ovs-dpdk使vm到vm和nic到vm的整个数据传输都工作在用户态，极大的提升了ovs的性能。</p>
+
+<p><img alt="index-87915860.png" src="images/index-87915860.png" width="" height="" ></p>
+
+<h2 id="转发性能">转发性能</h2>
+
+<p>ovs-dpdk的小包处理能力是原ovs的约3~4倍，网络处理性能有了显著提高。高带宽用户vm，部署在ovs-dpdk上，能降低公网IP网络访问延迟，提高网络并发量。</p>
+
+<h1 id="ovn">OVN</h1>
+
+<p><a href="http://openvswitch.org/support/dist-docs/ovn-architecture.7.html" target="_blank">OVN (Open Virtual Network)</a> 是 OVS 的控制平面，为 OVS 提供的原生虚拟化网络方案，旨在解决传统SDN架构的性能问题。其主要功能包括：</p>
+
+<ul>
+<li>L2/L3虚拟网络以及逻辑交换机(logical switch)</li>
+<li>L2/L3/L4 ACL</li>
+<li>IPv4/IPv6分布式L3路由</li>
+<li>ARP and IPv6 Neighbor Discovery suppression for known IP-MAC bindings</li>
+<li>Native support for NAT and load balancing using OVS connection tracking</li>
+<li>Native fully distributed support for DHCP</li>
+<li>Works with any OVS datapath (such as the default Linux kernel datapath, DPDK, or Hyper-V) that supports all required features (namely Geneve tunnels and OVS connection tracking)</li>
+<li>Supports L3 gateways from logical to physical networks</li>
+<li>Supports software-based L2 gateways</li>
+<li>Supports TOR (Top of Rack) based L2 gateways that implement the hardware_vtep schema</li>
+<li>Can provide networking for both VMs and containers running inside of those VMs, without a second layer of overlay networking</li>
+</ul>
+
+<h2 id="ovn架构">OVN架构</h2>
+
+<p>OVN由以下组件构成：</p>
+
+<ul>
+<li>northbound database：存储逻辑交换机、路由器、ACL、端口等的信息，目前基于ovsdb-server，未来可能会支持etcd v3</li>
+<li>ovn-northd: 集中式控制器，负责把northbound database数据分发到各个ovn-controller</li>
+<li>ovn-controller: 运行在每台机器上的本地SDN控制器，将配置转换为流表</li>
+<li>southbound database：基于ovsdb-server（未来可能会支持etcd v3），包含三类数据
+
+<ul>
+<li>物理网络数据，比如VM的IP地址和隧道封装格式</li>
+<li>逻辑网络数据，比如报文转发方式</li>
+<li>物理网络和逻辑网络的绑定关系</li>
+</ul></li>
+</ul>
+
+<p><img alt="index-b7022870.png" src="images/index-b7022870.png" width="" height="" ></p>
+
+<h2 id="ovn-kubernetes">OVN Kubernetes</h2>
+
+<p><a href="https://github.com/openvswitch/ovn-kubernetes" target="_blank">ovn-kubernetes</a> 提供了一个 OVN CNI 网络插件，支持underlay和overlay两种模式。</p>
+
+<ul>
+<li>underlay：容器运行在虚拟机中，而ovs则运行在虚拟机所在的物理机上，OVN将容器网络和虚拟机网络连接在一起</li>
+<li>overlay：OVN通过logical overlay network连接所有节点的容器，此时ovs可以直接运行在物理机或虚拟机上</li>
+</ul>
+
+<h3 id="cni插件原理">CNI插件原理</h3>
+
+<p><strong>ADD操作</strong></p>
+
+<ul>
+<li>从ovn annotation获取ip/mac/gateway</li>
+<li>在容器netns中配置接口和路由</li>
+
+<li><p>添加ovs端口</p>
+
+<p>ovs-vsctl add-port br-int veth_outside <br />
+  &ndash;set interface veth_outside <br />
+    external_ids:attached_mac=mac_address <br />
+    external_ids:iface-id=namespace_pod <br />
+    external_ids:ip_address=ip_address</p></li>
+</ul>
+
+<p><strong>DEL操作</strong></p>
+
+<pre><code>ovs-vsctl del-port br-int port
+</code></pre>
+
+    </div>
+
+
+
+
+    
+
+<div class="article-tags">
+  
+  <a class="badge badge-light" href="/tags/network/">Network</a>
+  
+</div>
+
+
+
+    
+      
+
+
+
+      
+      
+      <div class="article-widget">
+        <div class="hr-light"></div>
+        <h3>Related</h3>
+        <ul>
+          
+          <li><a href="/post/cloud/network/201812-calico/">Calico 架构与实践</a></li>
+          
+        </ul>
+      </div>
+      
+    
+
+    
+
+    
+
+
+  </div>
+         <div class="d-none d-xl-block col-xl-2 docs-toc col-md-2">
+      
+      <p class="docs-toc-title">On this page</p>
+      
+
+      <nav id="TableOfContents">
+<ul>
+<li><a href="#ovs-架构">OVS 架构</a>
+<ul>
+<li><a href="#组件关系">组件关系</a></li>
+<li><a href="#转发路径">转发路径</a></li>
+</ul></li>
+<li><a href="#ovs-常用操作">OVS 常用操作</a>
+<ul>
+<li><a href="#ovs-vsctl">ovs-vsctl</a></li>
+</ul></li>
+<li><a href="#ovs-dpdk">OVS DPDK</a>
+<ul>
+<li><a href="#dpdk-介绍">DPDK 介绍</a></li>
+<li><a href="#ovs-流表转发">OVS 流表转发</a></li>
+<li><a href="#转发性能">转发性能</a></li>
+</ul></li>
+<li><a href="#ovn">OVN</a>
+<ul>
+<li><a href="#ovn架构">OVN架构</a></li>
+<li><a href="#ovn-kubernetes">OVN Kubernetes</a>
+<ul>
+<li><a href="#cni插件原理">CNI插件原理</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+
+      <ul class="nav toc-top">
+        <li><a href="#">Back to top</a></li>
+      </ul>
+
+      
+    </div>
+    </div>
+
+</article>
+
+<div class="container">
+  <footer class="site-footer">
+  
+
+  <p class="powered-by">
+    penguincj &copy; 2019 &middot; 
+
+    Powered by the
+    <a href="https://sourcethemes.com/academic/" target="_blank" rel="noopener">Academic theme</a> for
+    <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a>.
+
+    
+    <span class="float-right" aria-hidden="true">
+      <a href="#" id="back_to_top">
+        <span class="button_icon">
+          <i class="fas fa-chevron-up fa-2x"></i>
+        </span>
+      </a>
+    </span>
+    
+  </p>
+</footer>
+
+</div>
+
+
+<div id="modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cite</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <pre><code class="tex hljs"></code></pre>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-primary my-1 js-copy-cite" href="#" target="_blank">
+          <i class="fas fa-copy"></i> Copy
+        </a>
+        <a class="btn btn-outline-primary my-1 js-download-cite" href="#" target="_blank">
+          <i class="fas fa-download"></i> Download
+        </a>
+        <div id="modal-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+    
+
+    
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/4.1.4/imagesloaded.pkgd.min.js" integrity="sha256-lqvxZrPLtfffUl2G/e7szqSvPBILGbwmsGE1MKlOi0Q=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.isotope/3.0.6/isotope.pkgd.min.js" integrity="sha256-CBrpuqrMhXwcLLUd5tvQ4euBHCdh7wGlDfNz8vbu/iI=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" integrity="sha256-X5PoE3KU5l+JcX+w09p/wHl9AzK333C4hJ2I9S5mD4M=" crossorigin="anonymous"></script>
+
+      
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js" integrity="sha256-aYTdUrn6Ow1DDgh5JTc3aDGnnju48y/1c8s1dgkYPQ8=" crossorigin="anonymous"></script>
+        
+        <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js"></script>
+        
+        <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/yaml.min.js"></script>
+        
+      
+
+      
+      
+    
+
+    
+    
+
+    
+    
+    
+
+    
+    
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+
+    
+    
+    <script>
+      const search_index_filename = "/index.json";
+      const i18n = {
+        'placeholder': "Search...",
+        'results': "results found",
+        'no_results': "No results found"
+      };
+      const content_type = {
+        'post': "Posts",
+        'project': "Projects",
+        'publication' : "Publications",
+        'talk' : "Talks"
+        };
+    </script>
+    
+
+    
+    
+
+    
+    
+    <script id="search-hit-fuse-template" type="text/x-template">
+      <div class="search-hit" id="summary-{{key}}">
+      <div class="search-hit-content">
+        <div class="search-hit-name">
+          <a href="{{relpermalink}}">{{title}}</a>
+          <div class="article-metadata search-hit-type">{{type}}</div>
+          <p class="search-hit-description">{{snippet}}</p>
+        </div>
+      </div>
+      </div>
+    </script>
+    
+
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.2.1/fuse.min.js" integrity="sha256-VzgmKYmhsGNNN4Ph1kMW+BjoYJM2jV5i4IlFoeZA9XI=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+    
+
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+      
+    
+    
+    
+    
+    <script src="/js/academic.min.15494b02d66be9b96bab2e305f69c460.js"></script>
+
+  </body>
+</html>
+
