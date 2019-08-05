@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="generator" content="Source Themes Academic 4.3.1">
+
+  
+
+  
+  
+  
+  
+  
+    
+    
+    
+  
+  
+
+  <meta name="author" content="L CJ">
+
+  
+  
+  
+    
+  
+  <meta name="description" content="介绍 SONiC 技术架构和白盒交换机落地实施的步骤">
+
+  
+  <link rel="alternate" hreflang="en-us" href="/post/cloud/network/201907-sonic/">
+
+  
+
+
+  
+
+  
+  
+  
+  <meta name="theme-color" content="#4caf50">
+  
+
+  
+  
+  
+  
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.8.6/css/academicons.min.css" integrity="sha256-uFVgMKfistnJAfoCUQigIl+JfUaP47GrRKjf6CTPVmw=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.0/css/all.css" integrity="sha384-aOkxzJ5uQz7WBObEZcHvV5JvRW3TUc2rNPA7pe3AwnsUohiw1Vj2Rgx2KSOkF5+h" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" integrity="sha256-ygkqlh3CYSUri3LhQxzdcm0n1EQvH2Y+U5S2idbLtxs=" crossorigin="anonymous">
+
+    
+    
+    
+      
+    
+    
+      
+      
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/rainbow.min.css" crossorigin="anonymous" title="hl-light">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/rainbow.min.css" crossorigin="anonymous" title="hl-dark" disabled>
+      
+    
+
+    
+
+    
+
+  
+
+  
+  
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Montserrat:400,700|Roboto:400,400italic,700|Roboto+Mono">
+  
+
+  
+  
+  
+  <link rel="stylesheet" href="/css/academic.min.49dfa1f0690a8fd34d45bd1ad9b6524c.css">
+
+  
+
+  
+  
+    <script>
+      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+      ga('create', 'UA-144280273-1', 'auto');
+      
+      ga('require', 'eventTracker');
+      ga('require', 'outboundLinkTracker');
+      ga('require', 'urlChangeTracker');
+      ga('send', 'pageview');
+    </script>
+    <script async src="//www.google-analytics.com/analytics.js"></script>
+    
+    <script async src="https://cdnjs.cloudflare.com/ajax/libs/autotrack/2.4.1/autotrack.js" integrity="sha512-HUmooslVKj4m6OBu0OgzjXXr+QuFYy/k7eLI5jdeEy/F4RSgMn6XRWRGkFi5IFaFgy7uFTkegp3Z0XnJf3Jq+g==" crossorigin="anonymous"></script>
+    
+  
+  
+
+  
+
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" type="image/png" href="/img/icon.png">
+  <link rel="apple-touch-icon" type="image/png" href="/img/icon-192.png">
+
+  <link rel="canonical" href="/post/cloud/network/201907-sonic/">
+
+  
+  
+  
+  
+    
+    
+  
+  <meta property="twitter:card" content="summary">
+  
+  <meta property="og:site_name" content="L CJ的博客">
+  <meta property="og:url" content="/post/cloud/network/201907-sonic/">
+  <meta property="og:title" content="SONiC - 云计算开放网络系统 | L CJ的博客">
+  <meta property="og:description" content="介绍 SONiC 技术架构和白盒交换机落地实施的步骤"><meta property="og:image" content="/img/icon-192.png">
+  <meta property="og:locale" content="en-us">
+  
+  <meta property="article:published_time" content="2019-07-30T00:00:00&#43;00:00">
+  
+  <meta property="article:modified_time" content="2019-07-30T00:00:00&#43;00:00">
+  
+
+  
+
+  
+
+  <title>SONiC - 云计算开放网络系统 | L CJ的博客</title>
+
+  <meta name="baidu-site-verification" content="qmf99YtDx4" />
+
+  <script>
+  (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      if (curProtocol === 'https') {
+          bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+      }
+      else {
+          bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+      }
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+  })();
+  </script>
+
+
+  
+  
+
+
+</head>
+<body id="top" data-spy="scroll" data-target="#TableOfContents" data-offset="71" >
+  <aside class="search-results" id="search">
+  <div class="container">
+    <section class="search-header">
+
+      <div class="row no-gutters justify-content-between mb-3">
+        <div class="col-6">
+          <h1>Search</h1>
+        </div>
+        <div class="col-6 col-search-close">
+          <a class="js-search" href="#"><i class="fas fa-times-circle text-muted" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div id="search-box">
+        
+        <input name="q" id="search-query" placeholder="Search..." autocapitalize="off"
+        autocomplete="off" autocorrect="off" role="textbox" spellcheck="false" type="search">
+        
+      </div>
+
+    </section>
+    <section class="section-search-results">
+
+      <div id="search-hits">
+        
+      </div>
+
+    </section>
+  </div>
+</aside>
+
+
+
+<nav class="navbar navbar-light fixed-top navbar-expand-lg py-0" id="navbar-main">
+  <div class="container">
+
+    
+      <a class="navbar-brand" href="/">L CJ的博客</a>
+      
+      <button type="button" class="navbar-toggler" data-toggle="collapse"
+              data-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+        <span><i class="fas fa-bars"></i></span>
+      </button>
+      
+
+    
+    <div class="collapse navbar-collapse" id="navbar">
+
+      
+      
+      <ul class="navbar-nav mr-auto">
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#posts">
+            
+            <span>首页</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+
+        <li class="nav-item">
+          <a class="nav-link  active" href="/post/">
+            
+            <span>技术博客</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#projects">
+            
+            <span>开源项目</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#tags">
+            
+            <span>内容标签</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#about">
+            
+            <span>关于</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+      
+      </ul>
+      <ul class="navbar-nav ml-auto">
+      
+
+        
+
+        
+        <li class="nav-item">
+          <a class="nav-link js-search" href="#"><i class="fas fa-search" aria-hidden="true"></i></a>
+        </li>
+        
+
+        
+
+        
+        <li class="nav-item">
+          <a class="nav-link js-dark-toggle" href="#"><i class="fas fa-moon" aria-hidden="true"></i></a>
+        </li>
+        
+
+      </ul>
+
+    </div>
+  </div>
+</nav>
+
+
+<article class="article" itemscope itemtype="http://schema.org/Article">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  
+  
+<div class="article-container pt-3">
+  <h1 itemprop="name">SONiC - 云计算开放网络系统</h1>
+
+  
+  <p class="page-subtitle">介绍 SONiC 技术架构和白盒交换机落地实施的步骤</p>
+  
+
+  
+    
+
+
+
+<meta content="2019-07-30 00:00:00 &#43;0000 UTC" itemprop="datePublished">
+<meta content="2019-07-30 00:00:00 &#43;0000 UTC" itemprop="dateModified">
+
+<div class="article-metadata">
+
+  
+  
+
+  
+  <span class="article-date">
+    
+    
+      
+    
+    <time>Jul 30, 2019</time>
+  </span>
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+    
+
+  
+
+</div>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+</div>
+
+
+  <div class="row">
+
+       <div class="col-md-2">
+       </div>
+
+
+       
+  <div class="article-container col-md-8">
+
+    <div class="article-style" itemprop="articleBody">
+      
+
+<p>当前的数据中心基本都是采用 Clos 架构，可以更好的支持东西向流量无阻塞转发，适用于数据中心的分布式应用。Clos 架构可以只用盒式交换机堆出一个大规模的网络，这种组网具有以低成本而且方便水平扩展的优势。数据中心的网络需求单一，因此很多公司自研盒式交换机，白盒交换机生态系统也因此得到了很大的发展，随着标准的制定和越来越多的上下游厂商支持，自研白盒交换机的难度越来越低。</p>
+
+<p><a href="https://azure.github.io/SONiC/" target="_blank">SONiC （Software for Open Networking in the Cloud）</a> 是有微软开源的适用于数据中心云网络的交换机系统，目前托管在 OCP，支持多种厂商的硬件和 ASIC 转发芯片，基于 Linux 系统。提供在数据中心广泛应用的 BGP 和 RDMA 等功能。并且有一个活跃的社区来共建丰富多样的功能，可以帮助用户根据自己的需求灵活定制实现自己的网络功能。</p>
+
+<h1 id="技术架构">技术架构</h1>
+
+<p>SONiC是第一个将单一的交换机软件分解成多个组件的解决方案，方便开发和扩展新功能。基于现有的开源技术，如容器 Docker，key-value 数据库 Redis，Quagga BGP 和 LLDPD 等协议，以及配置化工具 Ansible。</p>
+
+<p>交换机抽象接口 <a href="https://github.com/opencomputeproject/SAI" target="_blank">SAI（Switch Abstraction Interface）</a> 为网络硬件供应商定义了标准化编程接口，通过 SAI 的接口可以对交换机硬件下发配置和获取状态，能够在无需任何修改的前提下，使得软件支持多个交换机芯片。</p>
+
+<p>SONiC 系统框架如下图：</p>
+
+<p><img src="images/so-s-1.png" alt="so-s-1" /></p>
+
+<p>主要有以下几个核心部分组成：</p>
+
+<ul>
+<li>最底层的是交换机硬件，包括电源、风扇、光模块等外设，核心是交换芯片 ASIC</li>
+<li>在硬件之上的是操作系统 Linux 内核，运行着系统和外设的驱动，核心是 ASIC 驱动</li>
+<li>在系统之上的用户空间，运行着 SONiC 核心程序，包括对接 SAI 接口和 ASIC 接口，维护交换机状态数据库</li>
+<li>最上一层是各种网络应用程序，像 BGP、SNMP 等，从下层的数据库获取交换机状态信息，同时根据协议状态修改交换机的状态。这些应用程序广泛采用了开源的组件。</li>
+</ul>
+
+<p>SONiC 关键的组件都以容器的方式运行，下面介绍 SONiC 核心的组件 SwSS</p>
+
+<h2 id="swss">SwSS</h2>
+
+<p>SwSS（Switch state Servic） 是 SONiC 最重要的组件提供了数据库通讯接口，和网络应用和交换机硬件的状态标识。</p>
+
+<p><img src="images/so-s-2.png" alt="so-s-2" /></p>
+
+<p>网络应用层（netwowrk applications）通过对象库接口可以从 <code>APP_DB</code> 读取和写入。例如：netlink route syncer, quagga FPM route syncer，ACL、QoS、load balancer等。</p>
+
+<p>Orchestration agents 通过对象库接口可以在 APP 和 ASIC 数据库之间读取和写入数据。Orchestration agents 负责必要的逻辑整理，并将应用层数据传送到 SAI objects</p>
+
+<p>The syncd process 在 ASIC_DB and the SAI SDK 之间进行读取和写入 SAI objects.</p>
+
+<ol>
+<li><p>key-value 键值型数据库：Redis</p>
+
+<ul>
+<li>数据可全部放入内存，适用于频繁访问数据的场景</li>
+<li>SONiC 在 Redis 中创建多个表分别用来记录配置、运行状态、数据统计等</li>
+<li>Redis 支持对表项的订阅，可以由数据库的同步机制来驱动应用程序接受数据。</li>
+</ul>
+
+<p>用于提供一个独立于语言的接口，数据可持久化、复制和进行多进程通信的方法。Redis 作为底层数据库引擎。</p></li>
+
+<li><p>netwowrk applications</p>
+
+<p>使用 SwSS API，SONiC 网络应用不需要知道底层通信细节，完全独立于硬件。网络应用之需要关注他们需要的数据，并不需要关心其他实现细节。</p>
+
+<p>比如需要 SwSS 实现功能有：3层2层桥接、路由、ACL，QOS，遥测流、隧道、链路聚合、负载均衡和基于策略的路由等等。</p></li>
+
+<li><p>Orchestration Agent</p>
+
+<p>这个功能实现了 APP_DB 和 ASIC_DB 中表之间的逻辑转化和拷贝。</p>
+
+<p>每个 ASIC 表必须只有一个 producer ，这就是 orchestration agent 来实现。只能由 orchestration agent 来写入 ASIC_DB table.</p></li>
+
+<li><p>syncd</p>
+
+<p>switch sync 是个守护进程，在 ASIC_DB 表 和一个 SAI 兼容的 ASIC SDK 之间进行数据拷贝。 每个 SAI SDK 实例只有一 syncd 过程。</p></li>
+
+<li><p>Database 的实现</p>
+
+<p>SwSS 在 redis 中实现表概念是通过关键字做前缀命名的。</p>
+
+<p>app_table 设计成：route_table 和 neigh_table。</p>
+
+<p>ASIC_ tables 是从 SAI 头文件中创建出来. 如： asic_sai_unicast_route_entry_t 和 asic_sai_neighbor_entry_t。</p>
+
+<p>SwSS 提供了数据库通讯接口，和网络应用和交换机硬件的状态标识。包含以下功能模块：fpmsyncd neighsyncd intfsyncd portsyncd orchagent swssconfig cfgmgr</p>
+
+<p>各个模块管理以下功能：</p>
+
+<ul>
+<li>teamsyncd/teamsyncd</li>
+<li>fpmsyncd/fpmsyncd</li>
+<li>intfsyncd/intfsyncd</li>
+<li>cfgmgr/intfmgrd</li>
+<li>cfgmgr/vlanmgrd</li>
+<li>neighsyncd/neighsyncd</li>
+<li>portsyncd/portsyncd</li>
+<li>orchagent/orchagent</li>
+<li>orchagent/routeresync</li>
+<li>swssconfig/swssconfig</li>
+<li>swssconfig/swssplayer</li>
+</ul></li>
+</ol>
+
+<p><strong>总结</strong></p>
+
+<p>Sonic-swss 为各个模快加载配置，执行用户操操作，写入到APPL_DB数据，并通过NETLINK与内核进行通讯。</p>
+
+<h1 id="白盒交换机落地">白盒交换机落地</h1>
+
+<p>白盒交换机的落地一般有如下几个阶段：</p>
+
+<ul>
+<li>需求分析</li>
+<li>软硬件选型</li>
+<li>ODM 定制和生产</li>
+<li>软件开发</li>
+<li>整机测试</li>
+<li>上线部署</li>
+</ul>
+
+<h2 id="需求分析">需求分析</h2>
+
+<p>自研可以先从 ToR 开始，然后才是 Leaf、Spine，因为 ToR 相对来讲功能单一一些，出故障后影响面最小，部署量也是最大的，方便后面上线灰度测试。</p>
+
+<p>首先对 ToR 功能需求梳理，主要是二三层交换路由功能，主要的路由协议是 BGP，有一些功能不一定非要在 ToR 上实现，可以在网络的其他环节配置，如 ACL 可以在 Spine 上配置。然后对需求进行重要性和优先级排序，需求是分批实现的。</p>
+
+<h2 id="软硬件选型">软硬件选型</h2>
+
+<p>根据前面的需求可以指导软硬件的选型，软件选型的逻辑：</p>
+
+<ul>
+<li>功能要满足大部分需求，最好不需要很大的开发量就可以满足需求；另外软件框架的性能要好，这样很多性能问题才能有优化的空间。</li>
+<li>硬件支持和适配，软件要能做到与硬件解耦，方便切换硬件芯片，不至于被硬件厂家绑定。</li>
+<li>系统扩展性，方便根据自己的应用场景和需求灵活定制开发功能，比如在交换机上做网络监控。</li>
+<li>开源社区，一个氛围活跃的社区可以帮助自研交换机的小团队解决很多问题，共建社区良性发展。</li>
+</ul>
+
+<p>硬件选型的逻辑：</p>
+
+<ul>
+<li>功能，主要是转发芯片的功能要满足当前和以后潜在的需求，还有一些网络监控的需求，比如 INT（Inband Network Telemetry）、芯片丢包的抓取能力等。还要关注芯片厂商后续升级换代芯片的 Roadmap。</li>
+<li>性能，转发芯片的吞吐，buffer 大小，64 字节小包线速转发，CPU 和内存是否足够强，以支持后续的开发和扩展。</li>
+<li>稳定性，交换机作为网络最重要的节点，硬件的稳定性比软件的稳定性更加重要，这个一般要采用有经验的厂商来避免出问题。</li>
+<li>服务，互联网自研交换机的团队一般不会很大，需要芯片和硬件厂商提供很多底层的支持，包括硬件和驱动的测试和故障定位。选取一个可靠的队友相当重要。</li>
+</ul>
+
+<p>软硬件选型要结合自己的应用场景综合考虑，比如通用的 ToR 场景下使用常见的转发芯片就可以满足需求，而一些网络节点，比如网关可以采用可编程芯片灵活控制，这样以硬件的高性能和软件的灵活性可以创造出创新的解决方案。</p>
+
+<h2 id="odm-定制和生产">ODM 定制和生产</h2>
+
+<p>根据硬件选型就可以选择 ODM 厂商了，最好让硬件设计成模块化的，CPU 和 内存方便移植和扩展的，这样无论是定位问题、维修还是后期的提升性能都很方便。另外就是选取靠谱的 ODM 厂商很重要。</p>
+
+<h2 id="软件开发">软件开发</h2>
+
+<p>软件开发应该聚焦在特别重要和紧急的需求上，多关注社区的 Roadmap，如果是标注的功能，以后社区可能也做这个功能，最好采用社区的版本，方便与社区同步。</p>
+
+<p>可以聚焦在网络监控功能的开发上，因为这种功能需求大家都不太一样，社区可能不会去做。网络监控一直是最大的痛点，这个做好了也是自研交换机价值的最大体现。</p>
+
+<h2 id="整机测试">整机测试</h2>
+
+<p>测试工作将是自研交换机所有工作的重点，因为不像商用交换机有很大的测试团队和经过市场验证的环节，即使是开源系统 SONiC 也存在很多 bug，因为各家的应用场景不一样，各个用户和厂商只会测试自己关注的功能和模块。就需要用户自己充分测试来保证系统的稳定性。</p>
+
+<p>测试是一种重复耗时、枯燥且容易出错但是又极其重要的工作，互联网公司的自研交换机团队一般没有多少人，需要搭建一套自动化测试环境，通过编写测试脚本来提高测试效率。也要积极争取厂商的测试资源，他们有成熟的测试团队，可以帮助发现和解决问题。</p>
+
+<h2 id="上线部署">上线部署</h2>
+
+<p>在前面的这么多工作做完之后，终于可以落地部署了，在部署之前要做好部署规划，除了功能验证之外还要与公司现有的网络监控平台对接。提前设想一些问题发生后，如何发现、处理和恢复网络故障。甚至要比商用交换机有更强的监控机制，充分了解设备的运行状态，给用户以足够的部署信心。还要注意在开始灰度阶段选择上线的业务最好是离线业务场景，对网络的质量不是特别敏感，这样出问题也能将损失降低。最好是按照一定的节奏灰度部署，开始量太大了容易出现大问题，量太少了又不容易发现问题。</p>
+
+    </div>
+
+
+
+
+    
+
+<div class="article-tags">
+  
+  <a class="badge badge-light" href="/tags/network/">Network</a>
+  
+</div>
+
+
+
+    
+      
+
+
+
+      
+      
+      <div class="article-widget">
+        <div class="hr-light"></div>
+        <h3>Related</h3>
+        <ul>
+          
+          <li><a href="/post/cloud/network/201907-container-network/">高性能、高可靠的容器网络</a></li>
+          
+          <li><a href="/post/cloud/network/201907-cni/">CNI 源码分析</a></li>
+          
+          <li><a href="/post/cloud/network/201906-stackless/">基于 Arp to Host 的去堆叠高可用网络</a></li>
+          
+          <li><a href="/post/cloud/network/201812-calico/">Calico 架构与实践</a></li>
+          
+        </ul>
+      </div>
+      
+    
+
+    
+
+    
+
+
+  </div>
+         <div class="d-none d-xl-block col-xl-2 docs-toc col-md-2">
+      
+      <p class="docs-toc-title">On this page</p>
+      
+
+      <nav id="TableOfContents">
+<ul>
+<li><a href="#技术架构">技术架构</a>
+<ul>
+<li><a href="#swss">SwSS</a></li>
+</ul></li>
+<li><a href="#白盒交换机落地">白盒交换机落地</a>
+<ul>
+<li><a href="#需求分析">需求分析</a></li>
+<li><a href="#软硬件选型">软硬件选型</a></li>
+<li><a href="#odm-定制和生产">ODM 定制和生产</a></li>
+<li><a href="#软件开发">软件开发</a></li>
+<li><a href="#整机测试">整机测试</a></li>
+<li><a href="#上线部署">上线部署</a></li>
+</ul></li>
+</ul>
+</nav>
+
+      <ul class="nav toc-top">
+        <li><a href="#">Back to top</a></li>
+      </ul>
+
+      
+    </div>
+    </div>
+
+</article>
+
+<div class="container">
+  <footer class="site-footer">
+  
+
+  <p class="powered-by">
+    penguincj &copy; 2019 &middot; 
+
+    Powered by the
+    <a href="https://sourcethemes.com/academic/" target="_blank" rel="noopener">Academic theme</a> for
+    <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a>.
+
+    
+    <span class="float-right" aria-hidden="true">
+      <a href="#" id="back_to_top">
+        <span class="button_icon">
+          <i class="fas fa-chevron-up fa-2x"></i>
+        </span>
+      </a>
+    </span>
+    
+  </p>
+</footer>
+
+</div>
+
+
+<div id="modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cite</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <pre><code class="tex hljs"></code></pre>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-primary my-1 js-copy-cite" href="#" target="_blank">
+          <i class="fas fa-copy"></i> Copy
+        </a>
+        <a class="btn btn-outline-primary my-1 js-download-cite" href="#" target="_blank">
+          <i class="fas fa-download"></i> Download
+        </a>
+        <div id="modal-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+    
+
+    
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/4.1.4/imagesloaded.pkgd.min.js" integrity="sha256-lqvxZrPLtfffUl2G/e7szqSvPBILGbwmsGE1MKlOi0Q=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.isotope/3.0.6/isotope.pkgd.min.js" integrity="sha256-CBrpuqrMhXwcLLUd5tvQ4euBHCdh7wGlDfNz8vbu/iI=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" integrity="sha256-X5PoE3KU5l+JcX+w09p/wHl9AzK333C4hJ2I9S5mD4M=" crossorigin="anonymous"></script>
+
+      
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js" integrity="sha256-aYTdUrn6Ow1DDgh5JTc3aDGnnju48y/1c8s1dgkYPQ8=" crossorigin="anonymous"></script>
+        
+        <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js"></script>
+        
+        <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/yaml.min.js"></script>
+        
+      
+
+      
+      
+    
+
+    
+    
+
+    
+    
+    
+
+    
+    
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+
+    
+    
+    <script>
+      const search_index_filename = "/index.json";
+      const i18n = {
+        'placeholder': "Search...",
+        'results': "results found",
+        'no_results': "No results found"
+      };
+      const content_type = {
+        'post': "Posts",
+        'project': "Projects",
+        'publication' : "Publications",
+        'talk' : "Talks"
+        };
+    </script>
+    
+
+    
+    
+
+    
+    
+    <script id="search-hit-fuse-template" type="text/x-template">
+      <div class="search-hit" id="summary-{{key}}">
+      <div class="search-hit-content">
+        <div class="search-hit-name">
+          <a href="{{relpermalink}}">{{title}}</a>
+          <div class="article-metadata search-hit-type">{{type}}</div>
+          <p class="search-hit-description">{{snippet}}</p>
+        </div>
+      </div>
+      </div>
+    </script>
+    
+
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.2.1/fuse.min.js" integrity="sha256-VzgmKYmhsGNNN4Ph1kMW+BjoYJM2jV5i4IlFoeZA9XI=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+    
+
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+      
+    
+    
+    
+    
+    <script src="/js/academic.min.15494b02d66be9b96bab2e305f69c460.js"></script>
+
+  </body>
+</html>
+
