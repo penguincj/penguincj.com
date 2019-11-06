@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>penguincj &amp;copy; 2019</copyright>
-    <lastBuildDate>Wed, 05 Jun 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 17 Aug 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/kubernetes/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Kubernetes Event 事件源码解析</title>
+      <link>/post/cloud/k8s/201908-k8s-event/</link>
+      <pubDate>Sat, 17 Aug 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/k8s/201908-k8s-event/</guid>
+      <description>Kubernetes 事件用于记录各组件运行过程中的调试信息</description>
+    </item>
     
     <item>
       <title>Kube proxy 源码解读</title>
