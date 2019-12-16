@@ -4909,8 +4909,8 @@ kind: CronJob
 Kubernetes的对象分两种：
 
 &lt;ul&gt;
-&lt;li&gt;核心API对象（如Pod、Node），是不需要Group的，直接在 &lt;code&gt;/api&lt;/code&gt;这个下面进行解析&lt;/li&gt;
-&lt;li&gt;非核心API对象，在 &lt;code&gt;/apis&lt;/code&gt; 下先解析出Group，根据batch这个Group找到 &lt;code&gt;/apis/batch&lt;/code&gt;，API Group的分类是以对象功能为依据的。&lt;/li&gt;
+&lt;li&gt;核心API对象（如Pod、Node），是不需要Group的，直接在 &lt;code&gt;/api&lt;/code&gt;这个前缀下面进行解析&lt;/li&gt;
+&lt;li&gt;非核心API对象，在 &lt;code&gt;/apis&lt;/code&gt; 前缀下先解析出Group，根据batch这个Group找到 &lt;code&gt;/apis/batch&lt;/code&gt;，API Group的分类是以对象功能为依据的。&lt;/li&gt;
 &lt;/ul&gt;&lt;/li&gt;
 &lt;li&gt;解析API对象的版本号&lt;/li&gt;
 &lt;li&gt;匹配API对象的资源类型&lt;/li&gt;

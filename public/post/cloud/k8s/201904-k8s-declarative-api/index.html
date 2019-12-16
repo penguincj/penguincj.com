@@ -526,8 +526,8 @@ kind: CronJob
 Kubernetes的对象分两种：
 
 <ul>
-<li>核心API对象（如Pod、Node），是不需要Group的，直接在 <code>/api</code>这个下面进行解析</li>
-<li>非核心API对象，在 <code>/apis</code> 下先解析出Group，根据batch这个Group找到 <code>/apis/batch</code>，API Group的分类是以对象功能为依据的。</li>
+<li>核心API对象（如Pod、Node），是不需要Group的，直接在 <code>/api</code>这个前缀下面进行解析</li>
+<li>非核心API对象，在 <code>/apis</code> 前缀下先解析出Group，根据batch这个Group找到 <code>/apis/batch</code>，API Group的分类是以对象功能为依据的。</li>
 </ul></li>
 <li>解析API对象的版本号</li>
 <li>匹配API对象的资源类型</li>
@@ -874,6 +874,7 @@ func doSomething(pod) {
     Powered by the
     <a href="https://sourcethemes.com/academic/" target="_blank" rel="noopener">Academic theme</a> for
     <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a>.
+    <span> 京ICP备18033817 </span>
 
     
     <span class="float-right" aria-hidden="true">
