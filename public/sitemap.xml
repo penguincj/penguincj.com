@@ -130,6 +130,11 @@
   </url>
   
   <url>
+    <loc>/post/cloud/network/201908-idc-network/</loc>
+    <lastmod>2018-12-07T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/post/cloud/k8s/201811-k8s-arch/</loc>
     <lastmod>2018-11-20T00:00:00+00:00</lastmod>
   </url>

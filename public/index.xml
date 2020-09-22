@@ -5927,6 +5927,16 @@ calicoctl delete node node01
     </item>
     
     <item>
+      <title>Calico 架构与实践</title>
+      <link>/post/cloud/network/201908-idc-network/</link>
+      <pubDate>Fri, 07 Dec 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/network/201908-idc-network/</guid>
+      <description>&lt;p&gt;大型互联网公司会有多个数据中心，有负载分担，冗余备份和成本等方面的考虑，数据中心间需要打通&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Kubernetes 框架</title>
       <link>/post/cloud/k8s/201811-k8s-arch/</link>
       <pubDate>Tue, 20 Nov 2018 00:00:00 +0000</pubDate>
@@ -6246,7 +6256,9 @@ k8s系统的梳理了任务的形态以及任务之间的关系，并为未来�
       <pubDate>Mon, 27 Aug 2018 00:00:00 +0000</pubDate>
       
       <guid>/project/mirror-project/</guid>
-      <description>&lt;p&gt;支持一下功能：&lt;/p&gt;
+      <description>&lt;p&gt;基于树莓派，iPad 显示器，原子镜，麦克风阵列&lt;/p&gt;
+
+&lt;p&gt;支持以下功能：&lt;/p&gt;
 
 &lt;ul&gt;
 &lt;li&gt;照镜子&lt;/li&gt;
@@ -6268,7 +6280,9 @@ k8s系统的梳理了任务的形态以及任务之间的关系，并为未来�
       <guid>/project/blockchain-airdrop/</guid>
       <description>&lt;p&gt;专业的区块链、数字币空投搜集网址，通过做一些简单的任务即可获取空投币，可以体验一些区块链小游戏，还可以实时预览多种主流数字币的价格。&lt;/p&gt;
 
-&lt;p&gt;点击前往 &lt;a href=&#34;http://www.airdropfans.com&#34; target=&#34;_blank&#34;&gt; airdropfans.com &lt;/a&gt; 体验&lt;/p&gt;
+&lt;p&gt;网站已下线。。。&lt;/p&gt;
+
+&lt;p&gt;源码在 &lt;a href=&#34;https://github.com/penguincj/airdropfans&#34; target=&#34;_blank&#34;&gt;github&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -6279,6 +6293,8 @@ k8s系统的梳理了任务的形态以及任务之间的关系，并为未来�
       
       <guid>/project/blockchain-project/</guid>
       <description>&lt;p&gt;周期性获取火币网的多种交易对行情，可以方便的新增交易对、自定义行情周期，获取的结果存储到 MySQL 中。&lt;/p&gt;
+
+&lt;p&gt;前往 &lt;a href=&#34;https://github.com/penguincj/BitcoinPrice&#34; target=&#34;_blank&#34;&gt;github&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -6331,9 +6347,9 @@ k8s系统的梳理了任务的形态以及任务之间的关系，并为未来�
 
 &lt;h2 id=&#34;实现&#34;&gt;实现&lt;/h2&gt;
 
-&lt;p&gt;基于以太坊，做了一个简单的demo&lt;/p&gt;
+&lt;p&gt;基于以太坊测试网络，做了一个简单的demo&lt;/p&gt;
 
-&lt;p&gt;请前往&lt;a href=&#34;http://airdropfans.com/love&#34; target=&#34;_blank&#34;&gt;airdropfans区块恋&lt;/a&gt;体验。&lt;/p&gt;
+&lt;p&gt;网站已下线。。。&lt;/p&gt;
 </description>
     </item>
     
@@ -6372,7 +6388,7 @@ k8s系统的梳理了任务的形态以及任务之间的关系，并为未来�
 
 &lt;p&gt;基于以太坊，做了一个彩票游戏。&lt;/p&gt;
 
-&lt;p&gt;请前往&lt;a href=&#34;http://airdropfans.com/casino&#34; target=&#34;_blank&#34;&gt;airdropfans押宝游戏&lt;/a&gt;体验。&lt;/p&gt;
+&lt;p&gt;网站已下线。。。&lt;/p&gt;
 </description>
     </item>
     

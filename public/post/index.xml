@@ -130,6 +130,15 @@
     </item>
     
     <item>
+      <title>Calico 架构与实践</title>
+      <link>/post/cloud/network/201908-idc-network/</link>
+      <pubDate>Fri, 07 Dec 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/post/cloud/network/201908-idc-network/</guid>
+      <description>一种便捷强大的容器网络方案</description>
+    </item>
+    
+    <item>
       <title>Kubernetes 框架</title>
       <link>/post/cloud/k8s/201811-k8s-arch/</link>
       <pubDate>Tue, 20 Nov 2018 00:00:00 +0000</pubDate>
